@@ -1,4 +1,4 @@
-#! python3.9
+#! python3.10
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -21,6 +21,8 @@ class DimControl:
         self.dim = dim
         # add 1 to the row because the headings occupy row 0
         row = dim + 1
+        # rot_axis holds the radiobutton value indicating
+        # whether we're to rotate around the X- or Y-axis
         self.rot_axis = tk.IntVar(value=int(1 ^ dim & 1))
         # label the dimension
         ctl = tk.Label(frame, text=DimControl.labels[dim])
@@ -30,9 +32,9 @@ class DimControl:
         # create a subframe and place it as requested
         rot_frame = tk.Frame(frame)
         rot_frame.grid(row=row, column=1)
-        rb = tk.Button(rot_frame, text='<', command=partial(app.on_rotate, -1, self))
+        rb = tk.Button(rot_frame, text='<', command=partial(app.on_rotate, '-', self))
         rb.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        rb = tk.Button(rot_frame, text='>', command=partial(app.on_rotate, 1, self))
+        rb = tk.Button(rot_frame, text='>', command=partial(app.on_rotate, '+', self))
         rb.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert rotation axis
@@ -137,12 +139,11 @@ class App(tk.Frame):
         self.viewer.run()
 
     def on_rotate(self, direction, dim_control):
-        """Move the selected user up or down one place in the list."""
+        """Rotate the wireframe."""
         print('on_rotate', direction)
-        dim = dim_control.dim
-        dim1 = 0 if dim else 0
-        rot = '+' if dim_control.rot_axis.get() > 0 else '-'
-        key = f'R{dim1}{dim}{rot}'
+        dim1 = dim_control.rot_axis.get()
+        dim2 = dim_control.dim
+        key = f'R{dim1}{dim2}{direction}'
         print(f'{key = }')
         self.viewer.take_action(key)
 

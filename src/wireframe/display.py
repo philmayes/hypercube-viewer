@@ -425,22 +425,6 @@ class Viewer:
         for _ in range(count):
             self.display()
 
-    def rotate_all(self, dim1, dim2, theta, count=10):
-        """Rotate all wireframes about their center, around a plane by a given angle."""
-
-        delta = theta / count
-        for _ in range(count):
-            wireframe = self.wireframe
-            if dim1 < wireframe.dims and dim2 < wireframe.dims:
-                matrix = wireframe.get_rotate_matrix(dim1, dim2, delta)
-                # move, rotate, move back
-                wireframe.transform(self.norm_matrix)
-                wireframe.transform(matrix)
-                wireframe.transform(self.denorm_matrix)
-            else:
-                print('too big', dim1, dim2, wireframe.dims)
-            self.display()
-
     def rotate_all(self, dim1, dim2, theta, count=16, dim3=-1):
         """Rotate all wireframes about their center, around one or two planes
             by a given angle."""
@@ -522,10 +506,9 @@ class Viewer:
             image = ImageTk.PhotoImage(image)
             self.widget.configure(image=image)
             self.widget.image = image
+            self.widget.update()
         else:
             cv2.imshow("Wireframe Display", self.img)
-        cv2.waitKey(1)
-        print('waited')
 
     def take_action(self, key):
         if isinstance(key, str) and len(key) == 4:
@@ -533,9 +516,7 @@ class Viewer:
             if cmd == 'R':
                 dim1 = int(key[1])
                 dim2 = int(key[2])
-                rotation = ROTATION
-                if key[3] == '-':
-                    rotation *= -1
+                rotation = ROTATION if key[3] == '+' else -ROTATION
                 self.rotate_all(dim1, dim2, rotation)
                 self.draw()
                 self.show()
