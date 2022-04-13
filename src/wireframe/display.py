@@ -194,7 +194,7 @@ class Viewer:
                                          (width,height))
         else:
             self.video = None
-        self.init()
+        # self.init()
 
     def convert_video(self):
         """Convert the video format to .mp4.
@@ -271,6 +271,7 @@ class Viewer:
 
     def draw_text(self, text, x=DIMS, y=30):
         font = cv2.FONT_HERSHEY_SIMPLEX
+        x = self.ndims
         lines = text.split('\n')
         for line in lines:
             cv2.putText(self.img, line, (x, y), font, 1, COLOR_TEXT, 2, cv2.LINE_AA)
@@ -279,8 +280,10 @@ class Viewer:
     def help(self):
         self.show_help ^= False
 
-    def init(self):
-        ndims = DIMS
+    def init(self, ndims: int):
+        # ndims = DIMS
+        assert ndims <= DIMS
+        self.ndims = ndims
         # calculate size and location
         sizey = SIZE
         sizex = SIZE * 16 // 9

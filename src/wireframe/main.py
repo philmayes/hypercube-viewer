@@ -4,6 +4,8 @@
 import argparse
 from functools import partial
 import tkinter as tk
+from tkinter import ttk
+from xmlrpc.client import Boolean
 
 import cv2
 
@@ -17,7 +19,6 @@ class DimControl:
     labels = ('X', 'Y', 'Z', '4', '5', '6', '7', '8', '9', '10')
 
     def __init__(self, frame, dim, app):
-##        self.frame = frame
         self.dim = dim
         # add 1 to the row because the headings occupy row 0
         row = dim + 1
@@ -32,10 +33,10 @@ class DimControl:
         # create a subframe and place it as requested
         rot_frame = tk.Frame(frame)
         rot_frame.grid(row=row, column=1)
-        rb = tk.Button(rot_frame, text='<', command=partial(app.on_rotate, '-', self))
-        rb.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        rb = tk.Button(rot_frame, text='>', command=partial(app.on_rotate, '+', self))
-        rb.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
+        self.rotate1 = tk.Button(rot_frame, text='<', command=partial(app.on_rotate, '-', self))
+        self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
+        self.rotate2 = tk.Button(rot_frame, text='>', command=partial(app.on_rotate, '+', self))
+        self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert rotation axis
         # see explanation in display.key_to_function
@@ -58,6 +59,10 @@ class DimControl:
                               foreground=color)
         ctl.grid(row=row, column=3, sticky=tk.EW, padx=2, pady=2)
 
+    def enable(self, dim_size: int):
+        state = tk.ACTIVE if self.dim < dim_size else tk.DISABLED
+        self.rotate1.configure(state=state)
+        self.rotate2.configure(state=state)
 
 class App(tk.Frame):
     def __init__(self, master=None):
@@ -73,15 +78,29 @@ class App(tk.Frame):
         self.left_frame = tk.Frame(self)
         self.left_frame.grid(row=0, column=0, rowspan=1, sticky=tk.NW)
 
+        # create tkinter controls:
+        self.add_user_controls(self.left_frame, 0, 0)
+
         # create a frame for display
         self.right_frame = tk.Frame(self)
         self.right_frame.grid(row=0, column=1, rowspan=1, sticky=tk.NE)
         self.widget = tk.Label(self.right_frame)
         self.widget.grid(row=0, column=0, sticky=tk.N)
 
-        # create tkinter controls:
-        self.add_user_controls(self.left_frame, 0, 0)
         self.viewer = display.Viewer(1920, 1080, self.widget)
+        self.viewer.init(6)
+        self.viewer.display()
+
+    def on_dim(self, param):
+        """User has selected the number of dimensions via the combo box."""
+        dim = int(param.widget.get())
+        self.set_dim(dim)
+
+    def set_dim(self, dim):
+        """Set the number of dimensions to use."""
+        for control in self.dim_controls:
+            control.enable(dim)
+        self.viewer.init(dim)
         self.viewer.display()
 
     def add_user_controls(self, parent_frame, row, col):
@@ -90,6 +109,15 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col)
         row = 0
+        cb = ttk.Combobox(frame,
+                          state='readonly',
+                          values=['3','4','5','6','7','8','9','10'],
+                          )
+        cb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        cb.set('5')
+        cb.bind('<<ComboboxSelected>>', self.on_dim)
+        row += 1
+
         rb = tk.Button(frame, text='Load', command=self.on_load)
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
@@ -99,7 +127,7 @@ class App(tk.Frame):
                               command=self.on_ghost)
         self.ghost.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
-        rb = tk.Button(frame, text='Dn', command=partial(self.move_user, 1))
+        rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
         self.add_dim_controls(frame, row, 0)
