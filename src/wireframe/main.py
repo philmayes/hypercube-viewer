@@ -13,20 +13,26 @@ import colors
 import display
 import wireframe as wf
 
+MAX_DIM = 10
+planes = [
+    (0, 1),
+    (0, 2),
+    (1, 2),
+]
+for dim in range(3, MAX_DIM):
+    planes.append((0, dim))
+    planes.append((1, dim))
+labels = ('X', 'Y', 'Z', '4', '5', '6', '7', '8', '9', '10')
+# dim_choices = ['3','4','5','6','7','8','9','10']
+
 class DimControl:
-    """A class to manage tkinter controls for a single dimension."""
+    """A class to manage tkinter controls for a single plane."""
 
-    labels = ('X', 'Y', 'Z', '4', '5', '6', '7', '8', '9', '10')
-
-    def __init__(self, frame, dim, app):
-        self.dim = dim
-        # add 1 to the row because the headings occupy row 0
-        row = dim + 1
-        # rot_axis holds the radiobutton value indicating
-        # whether we're to rotate around the X- or Y-axis
-        self.rot_axis = tk.IntVar(value=int(1 ^ dim & 1))
-        # label the dimension
-        ctl = tk.Label(frame, text=DimControl.labels[dim])
+    def __init__(self, frame, row, dim1, dim2, app):
+        self.dim1 = dim1
+        self.dim2 = dim2
+        text = f'{labels[dim1]}-{labels[dim2]}'
+        ctl = tk.Label(frame, text=text)
         ctl.grid(row=row, column=0, sticky=tk.EW, padx=2, pady=2)
 
         # insert rotation controls
@@ -38,47 +44,39 @@ class DimControl:
         self.rotate2 = tk.Button(rot_frame, text='>', command=partial(app.on_rotate, '+', self))
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
-        # insert rotation axis
-        # see explanation in display.key_to_function
-        axis_frame = tk.Frame(frame)
-        axis_frame.grid(row=row, column=2, padx=4)
-        rb1 = tk.Radiobutton(axis_frame, text='X', indicatoron=0, value=0, variable=self.rot_axis)
-        rb1.grid(row=0, column=0, sticky=tk.W, padx=0, pady=2)
-        rb2 = tk.Radiobutton(axis_frame, text='Y', indicatoron=0, value=1, variable=self.rot_axis)
-        rb2.grid(row=0, column=1, sticky=tk.W, padx=0, pady=2)
-        # special cases:
-        if dim == 0:
-            rb1.configure(state = tk.DISABLED)
-        elif dim == 1:
-            rb2.configure(state = tk.DISABLED)
-
-        # insert information about color of dimension
-        color = colors.html[dim]
-        ctl = tk.Label(frame, text='color',
-                              background='black',
-                              foreground=color)
-        ctl.grid(row=row, column=3, sticky=tk.EW, padx=2, pady=2)
+        # insert information about colors of dimensions
+        color = colors.html[dim1]
+        self.color1 = tk.Label(frame, text='color', bg='black', fg=color)
+        self.color1.grid(row=row, column=2, sticky=tk.EW)
+        color = colors.html[dim2]
+        self.color2 = tk.Label(frame, text='color', bg='black', fg=color)
+        self.color2.grid(row=row, column=3, sticky=tk.EW)
 
     def enable(self, dim_size: int):
-        state = tk.ACTIVE if self.dim < dim_size else tk.DISABLED
+        applicable = self.dim1 < dim_size and self.dim2 < dim_size
+        state = tk.ACTIVE if applicable else tk.DISABLED
         self.rotate1.configure(state=state)
         self.rotate2.configure(state=state)
+        if applicable:
+            self.color1.grid()
+            self.color2.grid()
+        else:
+            self.color1.grid_remove()
+            self.color2.grid_remove()
 
 class App(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
         self.max_dim = 6
-        self.dim_controls = [None] * self.max_dim
+        self.dim_controls = []
         self.grid(sticky=tk.NSEW)
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.winfo_toplevel().title('Wireframe')
 
-        # create a frame for controls
+        # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
         self.left_frame.grid(row=0, column=0, rowspan=1, sticky=tk.NW)
-
-        # create tkinter controls:
         self.add_user_controls(self.left_frame, 0, 0)
 
         # create a frame for display
@@ -91,27 +89,41 @@ class App(tk.Frame):
         self.viewer.init(6)
         self.viewer.display()
 
-    def on_dim(self, param):
-        """User has selected the number of dimensions via the combo box."""
-        dim = int(param.widget.get())
-        self.set_dim(dim)
+    def add_dim_controls(self, parent_frame, row, col):
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col)
+        labels = (
+            'Plane of\nRotation',
+            'Direction of\nRotation',
+            'Color of 1st\nDimension',
+            'Color of 2nd\nDimension',
+            )
+        row = 0
+        for col, label in enumerate(labels):
+            ctl = tk.Label(frame, text=label)
+            ctl.grid(row=row, column=col, sticky=tk.W, padx=2, pady=2)
+        row += 1
 
-    def set_dim(self, dim):
-        """Set the number of dimensions to use."""
-        for control in self.dim_controls:
-            control.enable(dim)
-        self.viewer.init(dim)
-        self.viewer.display()
+        for row, plane in enumerate(planes):
+            # add 1 to the row because the headings occupy row 0
+            self.dim_controls.append(DimControl(frame, row+1, plane[0], plane[1], self))
 
     def add_user_controls(self, parent_frame, row, col):
         """Add user control buttons to the window."""
+        font = ('calibri', 16, 'bold')
         # create a subframe and place it as requested
         frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col)
+        frame.grid(row=row, column=col, padx=2)
         row = 0
+        # add heading
+        ctl = tk.Label(frame, text='SET UP', font=font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
+
+        # add choice of number of dimensions
         cb = ttk.Combobox(frame,
                           state='readonly',
-                          values=['3','4','5','6','7','8','9','10'],
+                          values=[str(n+1) for n in range(2, MAX_DIM)],
                           )
         cb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         cb.set('5')
@@ -130,34 +142,26 @@ class App(tk.Frame):
         rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
+
+        # add heading
+        ctl = tk.Label(frame, text='CONTROLS', font=font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
         self.add_dim_controls(frame, row, 0)
         row += 1
-        font = ('calibri', 16, 'bold')
+
         rb = tk.Button(frame, text='Start', font=font, command=self.on_run)
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
 
-    def add_dim_controls(self, parent_frame, row, col):
-        frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col)
-        labels = (
-            'Dimension',
-            'Direction of\nrotation',
-            'Rotate\naround',
-            'Color of\nDimension',
-            )
-        row = 0
-        for col, label in enumerate(labels):
-            ctl = tk.Label(frame, text=label)
-            ctl.grid(row=row, column=col, sticky=tk.W, padx=2, pady=2)
-        row += 1
-
-        for dim in range(self.max_dim):
-            self.dim_controls[dim] = DimControl(frame, dim, self)
-
     def move_user(self, direction):
         """Move the selected user up or down one place in the list."""
         pass
+
+    def on_dim(self, param):
+        """User has selected the number of dimensions via the combo box."""
+        dim = int(param.widget.get())
+        self.set_dim(dim)
 
     def on_ghost(self, value):
 ##        value = self.ghost.get()
@@ -168,25 +172,29 @@ class App(tk.Frame):
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
-        print('on_rotate', direction)
-        dim1 = dim_control.rot_axis.get()
-        dim2 = dim_control.dim
-        key = f'R{dim1}{dim2}{direction}'
-        print(f'{key = }')
-        self.viewer.take_action(key)
+        # print('on_rotate', direction)
+        # dim1 = dim_control.rot_axis.get()
+        # dim2 = dim_control.dim
+        action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
+        print(f'{action = }')
+        self.viewer.take_action(action)
 
     def on_run(self):
         """The Start/Pause/Continue button has been clicked."""
         pass
+
+    def set_dim(self, dim):
+        """Set the number of dimensions to use."""
+        for control in self.dim_controls:
+            control.enable(dim)
+        self.viewer.init(dim)
+        self.viewer.display()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Multi-dimensional cube')
     parser.add_argument("-t", "--test", action="store_true", help="run in test mode")
     args = parser.parse_args()
-##    if testing or args.test:
-##        set_test()
-##        print('testing')
     app = App()
     app.mainloop()
 
