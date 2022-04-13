@@ -39,9 +39,9 @@ class DimControl:
         # create a subframe and place it as requested
         rot_frame = tk.Frame(frame)
         rot_frame.grid(row=row, column=1)
-        self.rotate1 = tk.Button(rot_frame, text='<', command=partial(app.on_rotate, '-', self))
+        self.rotate1 = tk.Button(rot_frame, text=' < ', command=partial(app.on_rotate, '-', self))
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate2 = tk.Button(rot_frame, text='>', command=partial(app.on_rotate, '+', self))
+        self.rotate2 = tk.Button(rot_frame, text=' > ', command=partial(app.on_rotate, '+', self))
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert information about colors of dimensions
@@ -73,6 +73,7 @@ class App(tk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.winfo_toplevel().title('Wireframe')
+        self.big_font = ('calibri', 16, 'bold')
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
@@ -86,48 +87,49 @@ class App(tk.Frame):
         self.widget.grid(row=0, column=0, sticky=tk.N)
 
         self.viewer = display.Viewer(1920, 1080, self.widget)
-        self.viewer.init(6)
-        self.viewer.display()
+        self.set_dim(6)
 
     def add_dim_controls(self, parent_frame, row, col):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col)
+        row = 0
+        # add heading
+        ctl = tk.Label(frame, text='CONTROLS', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
         labels = (
             'Plane of\nRotation',
             'Direction of\nRotation',
             'Color of 1st\nDimension',
             'Color of 2nd\nDimension',
             )
-        row = 0
         for col, label in enumerate(labels):
             ctl = tk.Label(frame, text=label)
             ctl.grid(row=row, column=col, sticky=tk.W, padx=2, pady=2)
         row += 1
 
-        for row, plane in enumerate(planes):
-            # add 1 to the row because the headings occupy row 0
-            self.dim_controls.append(DimControl(frame, row+1, plane[0], plane[1], self))
+        for plane in planes:
+            self.dim_controls.append(DimControl(frame, row, plane[0], plane[1], self))
+            row += 1
 
     def add_user_controls(self, parent_frame, row, col):
         """Add user control buttons to the window."""
-        font = ('calibri', 16, 'bold')
         # create a subframe and place it as requested
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, padx=2)
         row = 0
         # add heading
-        ctl = tk.Label(frame, text='SET UP', font=font)
+        ctl = tk.Label(frame, text='SET UP', font=self.big_font)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
 
         # add choice of number of dimensions
-        cb = ttk.Combobox(frame,
+        self.dim_choice = ttk.Combobox(frame,
                           state='readonly',
                           values=[str(n+1) for n in range(2, MAX_DIM)],
                           )
-        cb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        cb.set('5')
-        cb.bind('<<ComboboxSelected>>', self.on_dim)
+        self.dim_choice.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
         row += 1
 
         rb = tk.Button(frame, text='Load', command=self.on_load)
@@ -143,14 +145,11 @@ class App(tk.Frame):
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
 
-        # add heading
-        ctl = tk.Label(frame, text='CONTROLS', font=font)
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
+        # add rotation controls
         self.add_dim_controls(frame, row, 0)
         row += 1
 
-        rb = tk.Button(frame, text='Start', font=font, command=self.on_run)
+        rb = tk.Button(frame, text='Start', font=self.big_font, command=self.on_run)
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
 
@@ -185,6 +184,7 @@ class App(tk.Frame):
 
     def set_dim(self, dim):
         """Set the number of dimensions to use."""
+        self.dim_choice.set(str(dim))
         for control in self.dim_controls:
             control.enable(dim)
         self.viewer.init(dim)
