@@ -14,16 +14,15 @@ import display
 import wireframe as wf
 
 MAX_DIM = 10
-planes = [
-    (0, 1),
-    (0, 2),
-    (1, 2),
-]
+# construct all the planes where rotation is visible
+planes = [(0, 1), (0, 2), (1, 2)]
 for dim in range(3, MAX_DIM):
     planes.append((0, dim))
     planes.append((1, dim))
-labels = ('X', 'Y', 'Z', '4', '5', '6', '7', '8', '9', '10')
-# dim_choices = ['3','4','5','6','7','8','9','10']
+# construct labels for all dimensions
+labels = ['X', 'Y', 'Z']
+for dim in range(3, MAX_DIM):
+    labels.append(str(dim + 1))
 
 class DimControl:
     """A class to manage tkinter controls for a single plane."""
@@ -89,34 +88,9 @@ class App(tk.Frame):
         self.viewer = display.Viewer(1920, 1080, self.widget)
         self.set_dim(6)
 
-    def add_dim_controls(self, parent_frame, row, col):
+    def add_setup_controls(self, parent_frame, row, col):
         frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col)
-        row = 0
-        # add heading
-        ctl = tk.Label(frame, text='CONTROLS', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-        labels = (
-            'Plane of\nRotation',
-            'Direction of\nRotation',
-            'Color of 1st\nDimension',
-            'Color of 2nd\nDimension',
-            )
-        for col, label in enumerate(labels):
-            ctl = tk.Label(frame, text=label)
-            ctl.grid(row=row, column=col, sticky=tk.W, padx=2, pady=2)
-        row += 1
-
-        for plane in planes:
-            self.dim_controls.append(DimControl(frame, row, plane[0], plane[1], self))
-            row += 1
-
-    def add_user_controls(self, parent_frame, row, col):
-        """Add user control buttons to the window."""
-        # create a subframe and place it as requested
-        frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col, padx=2)
+        frame.grid(row=row, column=col, sticky=tk.W)
         row = 0
         # add heading
         ctl = tk.Label(frame, text='SET UP', font=self.big_font)
@@ -143,6 +117,41 @@ class App(tk.Frame):
         row += 1
         rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
+
+    def add_dim_controls(self, parent_frame, row, col):
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col)
+        row = 0
+        # add heading
+        ctl = tk.Label(frame, text='CONTROLS', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
+        # add column headings
+        labels = (
+            'Plane of\nRotation',
+            'Direction of\nRotation',
+            'Color of 1st\nDimension',
+            'Color of 2nd\nDimension',
+            )
+        for col, label in enumerate(labels):
+            ctl = tk.Label(frame, text=label)
+            ctl.grid(row=row, column=col, sticky=tk.W, padx=2, pady=2)
+        row += 1
+
+        for plane in planes:
+            self.dim_controls.append(DimControl(frame, row, plane[0], plane[1], self))
+            row += 1
+
+    def add_user_controls(self, parent_frame, row, col):
+        """Add user control buttons to the window."""
+        # create a subframe and place it as requested
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, padx=2)
+        row = 0
+
+        # add setup controls
+        self.add_setup_controls(frame, row, 0)
         row += 1
 
         # add rotation controls
