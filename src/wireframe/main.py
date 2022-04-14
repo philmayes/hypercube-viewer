@@ -8,6 +8,7 @@ from tkinter import ttk
 from xmlrpc.client import Boolean
 
 import cv2
+from numpy import pi as PI
 
 import colors
 import display
@@ -30,7 +31,9 @@ class DimControl:
     def __init__(self, frame, row, dim1, dim2, app):
         self.dim1 = dim1
         self.dim2 = dim2
-        text = f'{labels[dim1]}-{labels[dim2]}'
+        dim1str = labels[dim1]
+        dim2str = labels[dim2]
+        text = f'{dim1str}-{dim2str}'
         ctl = tk.Label(frame, text=text)
         ctl.grid(row=row, column=0, sticky=tk.EW, padx=2, pady=2)
 
@@ -45,11 +48,12 @@ class DimControl:
 
         # insert information about colors of dimensions
         color = colors.html[dim1]
-        self.color1 = tk.Label(frame, text='color', bg='black', fg=color)
-        self.color1.grid(row=row, column=2, sticky=tk.EW)
+        self.color1 = tk.Label(frame, text=f'{dim1str}: ████', bg='black', fg=color)
+        self.color1.grid(row=row, column=2, sticky=tk.NSEW)
         color = colors.html[dim2]
-        self.color2 = tk.Label(frame, text='color', bg='black', fg=color)
-        self.color2.grid(row=row, column=3, sticky=tk.EW)
+        self.color2 = tk.Label(frame, text=f'{dim2str}: ████', bg='black', fg=color)
+        self.color2.grid(row=row, column=3, sticky=tk.NSEW)
+        tk.NS
 
     def enable(self, dim_size: int):
         applicable = self.dim1 < dim_size and self.dim2 < dim_size
@@ -86,40 +90,10 @@ class App(tk.Frame):
         self.widget.grid(row=0, column=0, sticky=tk.N)
 
         self.viewer = display.Viewer(1920, 1080, self.widget)
-        self.set_dim(6)
+        self.load_settings()
 
-    def add_setup_controls(self, parent_frame, row, col):
-        frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col, sticky=tk.W)
-        row = 0
-        # add heading
-        ctl = tk.Label(frame, text='SET UP', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-
-        # add choice of number of dimensions
-        self.dim_choice = ttk.Combobox(frame,
-                          state='readonly',
-                          values=[str(n+1) for n in range(2, MAX_DIM)],
-                          )
-        self.dim_choice.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
-        row += 1
-
-        rb = tk.Button(frame, text='Load', command=self.on_load)
-        rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-        self.ghost = tk.Scale(frame, to=1.0,
-                              resolution=0.05,
-                              orient=tk.HORIZONTAL,
-                              command=self.on_ghost)
-        self.ghost.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-        rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
-        rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-
-    def add_dim_controls(self, parent_frame, row, col):
+    def add_movement_controls(self, parent_frame, row, col):
+        """Add movement controls to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col)
         row = 0
@@ -143,6 +117,59 @@ class App(tk.Frame):
             self.dim_controls.append(DimControl(frame, row, plane[0], plane[1], self))
             row += 1
 
+    def add_setup_controls(self, parent_frame, row, col):
+        """Add setup controls to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
+        row = 0
+        # add heading
+        ctl = tk.Label(frame, text='SET UP', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+
+        # add choice of number of dimensions
+        ctl = tk.Label(frame, text='Number of dimensions:')
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+        self.dim_choice = ttk.Combobox(frame,
+                          state='readonly',
+                          width=3,
+                          values=[str(n+1) for n in range(2, MAX_DIM)],
+                          )
+        self.dim_choice.grid(row=row, column=0, sticky=tk.W, pady=2)
+        self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
+        row += 1
+
+        rb = tk.Button(frame, text='Load', command=self.on_load)
+        rb.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+
+        # add a slider to control amount of ghosting
+        ctl = tk.Label(frame, text='Amount of ghosting:')
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+        self.ghost = tk.Scale(frame, to=1.0,
+                              resolution=0.05,
+                              orient=tk.HORIZONTAL,
+                              command=self.on_ghost)
+        self.ghost.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+
+        # add a slider to control amount of ghosting
+        ctl = tk.Label(frame, text='Rotation per click:')
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+        self.angle = tk.Scale(frame, from_=1, to=20,
+                              resolution=1,
+                              orient=tk.HORIZONTAL,
+                              command=self.on_angle)
+        self.angle.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+
+        rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
+        rb.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+
     def add_user_controls(self, parent_frame, row, col):
         """Add user control buttons to the window."""
         # create a subframe and place it as requested
@@ -155,16 +182,25 @@ class App(tk.Frame):
         row += 1
 
         # add rotation controls
-        self.add_dim_controls(frame, row, 0)
+        self.add_movement_controls(frame, row, 0)
         row += 1
 
         rb = tk.Button(frame, text='Start', font=self.big_font, command=self.on_run)
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
 
+    def load_settings(self):
+        """Load initial settings. These will come from a file."""
+        self.set_dim(6)
+        self.ghost.set(0.9)
+        self.angle.set(5)
+
     def move_user(self, direction):
         """Move the selected user up or down one place in the list."""
         pass
+
+    def on_angle(self, value):
+        display.ROTATION = float(value) * PI / 180
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
@@ -172,8 +208,7 @@ class App(tk.Frame):
         self.set_dim(dim)
 
     def on_ghost(self, value):
-##        value = self.ghost.get()
-        display.GHOST = value
+        display.GHOST = float(value)
 
     def on_load(self):
         self.viewer.run()

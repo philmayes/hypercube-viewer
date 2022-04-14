@@ -8,9 +8,10 @@ node_color = (255,255,255)
 center_color = (255,255,255)
 ascii = (
     'ff0000',     # red
-    'ff8000',     # orange
-    'ffff00',     # yellow
+    '00ffff',     # aqua
     '00ff00',     # green
+    'ffff00',     # yellow
+    'ff8000',     # orange
     '00a8ec',     # blue
     'ff00ff',     # fuschia
     '800080',     # purple
@@ -18,7 +19,6 @@ ascii = (
     'f1a629',     # lt.orange
     'fff99d',     # lemon yellow
     '8dcb41',     # lt. green
-    '00ffff',     # aqua
     'bfb2d3',     # lilac
     '826b89',     # purple
     'c0c0c0',     # silver
