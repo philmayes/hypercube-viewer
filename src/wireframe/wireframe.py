@@ -24,7 +24,7 @@ class Wireframe:
 
     def __init__(self, dims):
         self.dims = dims
-        # This creates a NumPy array with 0 rows, 1 col per dim, 1 for scale
+        # create a NumPy array with 0 rows, 1 col per dim, 1 for scale
         self.nodes = np.zeros((0, dims + 1))
         self.edges = []
 

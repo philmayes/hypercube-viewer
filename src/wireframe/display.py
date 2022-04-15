@@ -12,10 +12,8 @@ There are four primitive actions:
 
 import copy
 import math
-import os
 import random
 import re
-import shutil
 import subprocess
 import time
 
@@ -27,7 +25,6 @@ from PIL import ImageTk
 import colors
 import wireframe as wf
 
-DIMS = 10               # number of dimensions of the object
 SIZE = 800
 ROTATION = np.pi / 24
 ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
@@ -39,10 +36,6 @@ GHOST = 0.95            # 0 < GHOST < 1 leaves a ghost trail; 0 doesn't
 VIDEO_TMP = 'cv2.avi'
 VIDEO_OUT = 'out.mp4'
 ##VIDEO = ''
-# opencv colors are BGR
-COLOR_BLACK = (0, 0, 0)
-COLOR_WHITE = (255, 255, 255)
-COLOR_BG = (0, 0, 0)    # must be zeros so we can fade to black in .draw()
 COLOR_TEXT = (200, 200, 250)
 HELP_TEXT = """\
 Save to video: {self.save_to_video}
@@ -245,7 +238,7 @@ class Viewer:
             np.multiply(self.img, GHOST, out=self.img, casting='unsafe')
         else:
             # clear the previous frame
-            cv2.rectangle(self.img, (0, 0), (self.width, self.height), COLOR_BG, -1)
+            cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
         if self.show_help:
             self.draw_text(HELP_TEXT.format(self=self))
 
@@ -275,7 +268,7 @@ class Viewer:
                         colors.node,
                            -1)
 
-    def draw_text(self, text, x=DIMS, y=30):
+    def draw_text(self, text, y=30):
         font = cv2.FONT_HERSHEY_SIMPLEX
         x = self.ndims
         lines = text.split('\n')
@@ -287,8 +280,6 @@ class Viewer:
         self.show_help ^= False
 
     def init(self, ndims: int):
-        # ndims = DIMS
-        assert ndims <= DIMS
         self.ndims = ndims
         # calculate size and location
         sizey = SIZE
@@ -304,7 +295,7 @@ class Viewer:
         self.recording = False
         self.playing_back = False
         # remove any previous drawing
-        cv2.rectangle(self.img, (0, 0), (self.width, self.height), COLOR_BG, -1)
+        cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
         # request redraw (for when called via keystroke)
         return True
 

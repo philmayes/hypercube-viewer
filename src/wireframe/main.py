@@ -5,11 +5,9 @@ import argparse
 from functools import partial
 import tkinter as tk
 from tkinter import ttk
-from xmlrpc.client import Boolean
 
 import colors
 import display
-import wireframe as wf
 
 MAX_DIM = 10
 # construct all the planes where rotation is visible
@@ -22,7 +20,7 @@ labels = ['X', 'Y', 'Z']
 for dim in range(3, MAX_DIM):
     labels.append(str(dim + 1))
 
-class DimControl:
+class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
 
     def __init__(self, frame, row, dim1, dim2, app):
@@ -111,7 +109,7 @@ class App(tk.Frame):
         row += 1
 
         for plane in planes:
-            self.dim_controls.append(DimControl(frame, row, plane[0], plane[1], self))
+            self.dim_controls.append(PlaneControl(frame, row, plane[0], plane[1], self))
             row += 1
 
     def add_setup_controls(self, parent_frame, row, col):
