@@ -239,7 +239,7 @@ class App(tk.Frame):
         self.viewer.display()
 
     def on_ghost(self, value):
-        display.GHOST = float(value)
+        self.viewer.ghost = float(value)
 
     def on_load(self):
         self.viewer.run()

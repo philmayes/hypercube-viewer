@@ -31,7 +31,6 @@ ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
 SCALE = 1.25
 TRANSLATE = 10
 FRAME_RATE = 30
-GHOST = 0.95            # 0 < GHOST < 1 leaves a ghost trail; 0 doesn't
 ##FRAME_RATE = 1
 VIDEO_TMP = 'cv2.avi'
 VIDEO_OUT = 'out.mp4'
@@ -182,6 +181,7 @@ class Viewer:
         self.plot_nodes = False
         self.plot_edges = True
         self.plot_center = False
+        self.ghost = 0.0    # 0 < value < 1 leaves a ghost trail; 0 doesn't
         self.show_help = False
         self.save_to_video = False
         self.node_radius = 4
@@ -235,9 +235,9 @@ class Viewer:
     def draw(self):
         """Draw the wireframe onto the video surface."""
 
-        if GHOST:
+        if self.ghost:
             # leave a shadow of the previous frame
-            np.multiply(self.img, GHOST, out=self.img, casting='unsafe')
+            np.multiply(self.img, self.ghost, out=self.img, casting='unsafe')
         else:
             # clear the previous frame
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
