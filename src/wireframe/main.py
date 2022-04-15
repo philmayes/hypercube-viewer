@@ -127,45 +127,56 @@ class App(tk.Frame):
         # add choice of number of dimensions
         ctl = tk.Label(frame, text='Number of dimensions:')
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
-        row += 1
         self.dim_choice = ttk.Combobox(frame,
                           state='readonly',
                           width=3,
                           values=[str(n+1) for n in range(2, MAX_DIM)],
                           )
-        self.dim_choice.grid(row=row, column=0, sticky=tk.W, pady=2)
+        self.dim_choice.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
         row += 1
 
-        rb = tk.Button(frame, text='Load', command=self.on_load)
-        rb.grid(row=row, column=0, sticky=tk.W, pady=2)
+        # add choices of what to display
+        self.plot_nodes = tk.IntVar()
+        ctl = ttk.Checkbutton(frame, text='Show nodes', variable=self.plot_nodes, command=self.on_nodes)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=0)
         row += 1
+        self.plot_edges = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show edges', variable=self.plot_edges, command=self.on_edges)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=0)
+        row += 1
+        self.plot_center = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show center', variable=self.plot_center, command=self.on_center)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=0)
+        row += 1
+
+        # rb = tk.Button(frame, text='Load', command=self.on_load)
+        # rb.grid(row=row, column=0, sticky=tk.W, pady=2)
+        # row += 1
 
         # add a slider to control amount of ghosting
         ctl = tk.Label(frame, text='Amount of ghosting:')
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
-        row += 1
+        ctl.grid(row=row, column=0, sticky=tk.SW)
         self.ghost = tk.Scale(frame, to=1.0,
                               resolution=0.05,
                               orient=tk.HORIZONTAL,
                               command=self.on_ghost)
-        self.ghost.grid(row=row, column=0, sticky=tk.W, pady=2)
+        self.ghost.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
-        # add a slider to control amount of ghosting
+        # add a slider to control amount of rotation
         ctl = tk.Label(frame, text='Rotation per click in degrees:')
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
-        row += 1
+        ctl.grid(row=row, column=0, sticky=tk.SW)
         self.angle = tk.Scale(frame, from_=1, to=20,
                               resolution=1,
                               orient=tk.HORIZONTAL,
                               command=self.on_angle)
-        self.angle.grid(row=row, column=0, sticky=tk.W, pady=2)
+        self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
-        rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
-        rb.grid(row=row, column=0, sticky=tk.W, pady=2)
-        row += 1
+        # rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
+        # rb.grid(row=row, column=0, sticky=tk.W, pady=2)
+        # row += 1
 
     def add_user_controls(self, parent_frame, row, col):
         """Add user control buttons to the window."""
@@ -191,26 +202,43 @@ class App(tk.Frame):
         self.set_dim(6)
         self.ghost.set(0.9)
         self.angle.set(5)
+        self.plot_nodes.set(False)
+        self.plot_edges.set(True)
+        self.plot_center.set(True)
 
-    def move_user(self, direction):
-        """Move the selected user up or down one place in the list."""
-        pass
+    # def move_user(self, direction):
+    #     """Move the selected user up or down one place in the list."""
+    #     pass
 
     def on_angle(self, value):
-        # display.ROTATION = float(value) * PI / 180
-        # self.viewer.set_rotation(float(value) * PI / 180)
+        """The angle of rotation slider has been changed."""
         self.viewer.set_rotation(int(value))
+
+    def on_center(self):
+        """The "show center" checkbox has been clicked."""
+        self.viewer.plot_center = bool(self.plot_center.get())
+        self.viewer.display()
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
         dim = int(param.widget.get())
         self.set_dim(dim)
 
+    def on_edges(self):
+        """The "show edges" checkbox has been clicked."""
+        self.viewer.plot_edges = bool(self.plot_edges.get())
+        self.viewer.display()
+
     def on_ghost(self, value):
         display.GHOST = float(value)
 
     def on_load(self):
         self.viewer.run()
+
+    def on_nodes(self):
+        """The "show nodes" checkbox has been clicked."""
+        self.viewer.plot_nodes = bool(self.plot_nodes.get())
+        self.viewer.display()
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""

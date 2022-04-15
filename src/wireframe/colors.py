@@ -4,8 +4,8 @@ def hex_to_rgb(s):
 def hex_to_bgr(s):
     return int(s[4:6], 16), int(s[2:4], 16), int(s[0:2], 16)
 
-node_color = (255,255,255)
-center_color = (255,255,255)
+node = (255,255,255)
+center = (255,255,255)
 ascii = (
     'ff0000',     # red
     '00ffff',     # aqua

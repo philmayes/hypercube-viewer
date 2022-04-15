@@ -24,6 +24,7 @@ import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
+import colors
 import wireframe as wf
 
 DIMS = 10               # number of dimensions of the object
@@ -253,7 +254,7 @@ class Viewer:
             cv2.circle(self.img,
                        (wireframe.center[0], wireframe.center[1]),
                        self.center_radius,
-                       wf.Wireframe.center_color,
+                       colors.center,
                        -1)
 
         if self.plot_edges:
@@ -271,7 +272,7 @@ class Viewer:
                 cv2.circle(self.img,
                            (int(round(node[0])), int(round(node[1]))),
                            self.node_radius,
-                           wf.Wireframe.node_color,
+                        colors.node,
                            -1)
 
     def draw_text(self, text, x=DIMS, y=30):
