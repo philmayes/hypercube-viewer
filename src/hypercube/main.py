@@ -231,7 +231,8 @@ class App(tk.Frame):
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
         dim = int(param.widget.get())
-        self.set_dim(dim)
+        aspects = self.aspect.get('1.0', '1.99')
+        self.set_dim(dim, aspects)
 
     def on_edges(self):
         """The "show edges" checkbox has been clicked."""
