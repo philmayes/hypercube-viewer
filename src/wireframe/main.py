@@ -137,17 +137,19 @@ class App(tk.Frame):
         row += 1
 
         # add choices of what to display
+        ctl = tk.Label(frame, text='Visibility:')
+        ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)
         self.plot_nodes = tk.IntVar()
         ctl = ttk.Checkbutton(frame, text='Show nodes', variable=self.plot_nodes, command=self.on_nodes)
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=0)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
         self.plot_edges = tk.IntVar(value=1)
         ctl = ttk.Checkbutton(frame, text='Show edges', variable=self.plot_edges, command=self.on_edges)
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=0)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
         self.plot_center = tk.IntVar(value=1)
         ctl = ttk.Checkbutton(frame, text='Show center', variable=self.plot_center, command=self.on_center)
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=0)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
         # rb = tk.Button(frame, text='Load', command=self.on_load)
