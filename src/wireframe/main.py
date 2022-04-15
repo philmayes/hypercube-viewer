@@ -199,7 +199,7 @@ class App(tk.Frame):
     def on_angle(self, value):
         # display.ROTATION = float(value) * PI / 180
         # self.viewer.set_rotation(float(value) * PI / 180)
-        self.viewer.set_rotation(value)
+        self.viewer.set_rotation(int(value))
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""

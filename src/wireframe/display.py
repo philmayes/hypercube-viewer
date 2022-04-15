@@ -178,7 +178,9 @@ class Viewer:
         self.img = np.zeros((height, width, 3), np.uint8)
 
         # transform settings
-        self.rotation = np.pi / 24
+        self.rotation = 0.0
+        self.rotation_count = 1
+        self.set_rotation(5)
 
         # visibility settings...
         self.plot_nodes = False
@@ -431,12 +433,13 @@ class Viewer:
         for _ in range(count):
             self.display()
 
-    def rotate_all(self, dim1, dim2, theta, count=16, dim3=-1):
+    def rotate_all(self, dim1, dim2, theta, dim3=-1):
         """Rotate all wireframes about their center, around one or two planes
             by a given angle."""
 ##        theta *= 5
 ##        print('rotate_all', dim1, dim2, theta, count)
 
+        count = self.rotation_count
         delta = theta / count
         if dim3 < 0:
             # we're rotating about a single plane so move in regular steps
@@ -506,6 +509,7 @@ class Viewer:
 
     def set_rotation(self, angle):
         self.rotation = float(angle) * np.pi / 180
+        self.rotation_count = angle * 2
 
     def show(self):
         """Display image on screen."""
