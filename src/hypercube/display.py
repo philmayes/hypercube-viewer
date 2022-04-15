@@ -23,7 +23,7 @@ from PIL import Image
 from PIL import ImageTk
 
 import colors
-import hypercube as wf
+import wireframe as wf
 
 SIZE = 800
 ROTATION = np.pi / 24

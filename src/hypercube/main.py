@@ -134,6 +134,14 @@ class App(tk.Frame):
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
         row += 1
 
+        # add control of aspect ratios
+        ctl = tk.Label(frame, text='Aspect ratios:')
+        ctl.grid(row=row, column=0, sticky=tk.SW)
+        self.aspect = tk.Text(frame, height=1, width=15)
+        self.aspect.grid(row=row, column=1, sticky=tk.W, pady=0)
+        self.aspect.insert('1.0', '16:9')
+        row += 1
+
         # add choices of what to display
         ctl = tk.Label(frame, text='Visibility:')
         ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)

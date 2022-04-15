@@ -59,7 +59,7 @@ class Wireframe:
         orgs[1] = orgy
         # make sure there is a size for each dimension
         while len(sizes) < self.dims:
-            sizes.append(sizes[0])
+            sizes.append(sizes[-1])
         center = [0] * self.dims
         # calculate the center along each dimension
         for d in range(self.dims):
