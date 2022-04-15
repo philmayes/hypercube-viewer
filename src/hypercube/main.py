@@ -70,7 +70,7 @@ class App(tk.Frame):
         self.grid(sticky=tk.NSEW)
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
-        self.winfo_toplevel().title('Wireframe')
+        self.winfo_toplevel().title('Hypercube')
         self.big_font = ('calibri', 16, 'bold')
 
         # create a frame for controls and add them
@@ -139,7 +139,6 @@ class App(tk.Frame):
         ctl.grid(row=row, column=0, sticky=tk.SW)
         self.aspect = tk.Text(frame, height=1, width=15)
         self.aspect.grid(row=row, column=1, sticky=tk.W, pady=0)
-        self.aspect.insert('1.0', '16:9')
         row += 1
 
         # add choices of what to display
@@ -207,9 +206,11 @@ class App(tk.Frame):
 
     def load_settings(self):
         """Load initial settings. These will come from a file."""
-        self.set_dim(6)
-        self.ghost.set(0.9)
-        self.angle.set(5)
+        aspects = '16:9:12:4'
+        self.aspect.insert('1.0', aspects)
+        self.set_dim(6, aspects)
+        self.ghost.set(0.0)
+        self.angle.set(15)
         self.plot_nodes.set(False)
         self.plot_edges.set(True)
         self.plot_center.set(True)
@@ -261,17 +262,18 @@ class App(tk.Frame):
         """The Start/Pause/Continue button has been clicked."""
         pass
 
-    def set_dim(self, dim):
+    def set_dim(self, dim, aspects):
         """Set the number of dimensions to use."""
         self.dim_choice.set(str(dim))
         for control in self.dim_controls:
             control.enable(dim)
-        self.viewer.init(dim)
+        #...this is where add_shape_sizes is called
+        self.viewer.init(dim, aspects)
         self.viewer.display()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Multi-dimensional cube')
+    parser = argparse.ArgumentParser(description='Hypercube')
     parser.add_argument("-t", "--test", action="store_true", help="run in test mode")
     args = parser.parse_args()
     app = App()

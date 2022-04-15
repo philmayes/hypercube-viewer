@@ -168,6 +168,8 @@ class Viewer:
     def __init__(self, width, height, widget=None):
         self.width = width
         self.height = height
+        # fraction of screen that the wireframe should occupy
+        self.screen_fraction = 0.7
         self.widget = widget
         self.img = np.zeros((height, width, 3), np.uint8)
 
@@ -279,21 +281,31 @@ class Viewer:
     def help(self):
         self.show_help ^= False
 
-    def init(self, ndims: int):
+    def init(self, ndims: int, aspects: str):
         self.ndims = ndims
-        # calculate size and location
-        sizey = SIZE
-        sizex = SIZE * 16 // 9
-        orgx = (self.width - sizex) // 2
-        orgy = (self.height - sizey) // 2
+        # calculate the pixel sizes for all dimensions:
+        # get the aspect ratios for all dimensions and the largest ratio
+        ratios = [int(r) for r in aspects.split(':')]
+        max_r = max(ratios)
+        # calculate the size of the largest dimension in pixels
+        screen_size = min(self.width, self.height) * self.screen_fraction
+        # scale all dimensions to that one
+        sizes = [screen_size * r / max_r for r in ratios]
+
+        # calculate top left position
+        orgx = (self.width - sizes[0]) / 2
+        orgy = (self.height - sizes[1]) / 2
+
         # construct a wireframe object
         self.wireframe = wf.Wireframe(ndims)
-        self.wireframe.add_shape_sizes(orgx, orgy, [sizex, sizey])
+        self.wireframe.add_shape_sizes(orgx, orgy, sizes)
         self.make_normalize_translations()
+
         # initialize recording settings
         self.frames = []
         self.recording = False
         self.playing_back = False
+
         # remove any previous drawing
         cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
         # request redraw (for when called via keystroke)
