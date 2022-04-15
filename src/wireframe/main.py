@@ -7,9 +7,6 @@ import tkinter as tk
 from tkinter import ttk
 from xmlrpc.client import Boolean
 
-import cv2
-from numpy import pi as PI
-
 import colors
 import display
 import wireframe as wf
@@ -156,7 +153,7 @@ class App(tk.Frame):
         row += 1
 
         # add a slider to control amount of ghosting
-        ctl = tk.Label(frame, text='Rotation per click:')
+        ctl = tk.Label(frame, text='Rotation per click in degrees:')
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
         row += 1
         self.angle = tk.Scale(frame, from_=1, to=20,
@@ -200,7 +197,9 @@ class App(tk.Frame):
         pass
 
     def on_angle(self, value):
-        display.ROTATION = float(value) * PI / 180
+        # display.ROTATION = float(value) * PI / 180
+        # self.viewer.set_rotation(float(value) * PI / 180)
+        self.viewer.set_rotation(value)
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""

@@ -177,6 +177,9 @@ class Viewer:
         self.widget = widget
         self.img = np.zeros((height, width, 3), np.uint8)
 
+        # transform settings
+        self.rotation = np.pi / 24
+
         # visibility settings...
         self.plot_nodes = False
         self.plot_edges = True
@@ -501,6 +504,9 @@ class Viewer:
             wireframe.transform(self.denorm_matrix)
             self.display()
 
+    def set_rotation(self, angle):
+        self.rotation = float(angle) * np.pi / 180
+
     def show(self):
         """Display image on screen."""
         if self.widget:
@@ -519,7 +525,7 @@ class Viewer:
             if cmd == 'R':
                 dim1 = int(key[1])
                 dim2 = int(key[2])
-                rotation = ROTATION if key[3] == '+' else -ROTATION
+                rotation = self.rotation if key[3] == '+' else -self.rotation
                 self.rotate_all(dim1, dim2, rotation)
                 self.draw()
                 self.show()
