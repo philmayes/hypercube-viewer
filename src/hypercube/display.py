@@ -527,24 +527,30 @@ class Viewer:
         else:
             cv2.imshow("Wireframe Display", self.img)
 
-    def take_action(self, key):
-        if isinstance(key, str) and len(key) == 4:
-            cmd = key[0]
-            if cmd == 'R':
-                dim1 = int(key[1])
-                dim2 = int(key[2])
-                rotation = self.rotation if key[3] == '+' else -self.rotation
+    def take_action(self, cmd):
+        if cmd in key_to_function:
+            key_to_function[cmd](self)
+            self.draw()
+            self.show()
+            return True
+        if isinstance(cmd, str) and len(cmd) > 0:
+            cmd = cmd[0]
+            if cmd == 'R' and len(cmd) == 4:
+                dim1 = int(cmd[1])
+                dim2 = int(cmd[2])
+                rotation = self.rotation if cmd[3] == '+' else -self.rotation
                 self.rotate_all(dim1, dim2, rotation)
                 self.draw()
                 self.show()
                 return True
+            elif cmd == 'Z' and len(cmd) == 2:
+                direction = cmd[1]
+                if direction == '+':
+                    self.scale_all(SCALE)
+                else:
+                    self.scale_all(1 / SCALE)
             else:
                 return
-        if key in key_to_function:
-            key_to_function[key](self)
-            self.draw()
-            self.show()
-            return True
 
     def translate_all(self, dim, amount):
         """Translate all wireframes along a given axis by d units."""

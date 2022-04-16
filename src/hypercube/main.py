@@ -20,6 +20,11 @@ labels = ['X', 'Y', 'Z']
 for dim in range(3, MAX_DIM):
     labels.append(str(dim + 1))
 
+STR_UP = '▲'
+STR_DN = '▼'
+STR_LEFT = '◄'
+STR_RIGHT = '►'
+
 class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
 
@@ -72,6 +77,7 @@ class App(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.winfo_toplevel().title('Hypercube')
         self.big_font = ('calibri', 16, 'bold')
+        self.bind_all('<Key>', self.on_key)
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
@@ -86,6 +92,19 @@ class App(tk.Frame):
 
         self.viewer = display.Viewer(1920, 1080, self.widget)
         self.load_settings()
+
+    def add_arrow_controls(self, parent_frame, row, col):
+        """Add up/down/left/right controls to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col)
+        ctl = tk.Button(frame, text=STR_UP, command=partial(self.action, display.UP))
+        ctl.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text=STR_LEFT, command=partial(self.action, display.LEFT))
+        ctl.grid(row=1, column=0, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text=STR_DN, command=partial(self.action, display.DOWN))
+        ctl.grid(row=1, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text=STR_RIGHT, command=partial(self.action, display.RIGHT))
+        ctl.grid(row=1, column=2, sticky=tk.W, padx=2, pady=2)
 
     def add_movement_controls(self, parent_frame, row, col):
         """Add movement controls to the window."""
@@ -111,6 +130,18 @@ class App(tk.Frame):
         for plane in planes:
             self.dim_controls.append(PlaneControl(frame, row, plane[0], plane[1], self))
             row += 1
+
+        ctl = tk.Button(frame, text='zoom out', command=partial(self.action, ord('-')))
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text='zoom in', command=partial(self.action, ord('=')))
+        ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        row += 1
+        self.add_arrow_controls(frame, row, 0)
+
+    # def on_zoom(self, direction, dim_control):
+    #     """zoom the wireframe."""
+    #     # self.viewer.take_action('Z' + direction)
+    #     self.viewer.take_action(ord('='))
 
     def add_setup_controls(self, parent_frame, row, col):
         """Add setup controls to the window."""
@@ -204,6 +235,10 @@ class App(tk.Frame):
         rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
 
+    def action(self, value):
+        """Pass the action through to the viewer."""
+        self.viewer.take_action(value)
+
     def load_settings(self):
         """Load initial settings. These will come from a file."""
         aspects = '16:9:12:4'
@@ -241,6 +276,9 @@ class App(tk.Frame):
 
     def on_ghost(self, value):
         self.viewer.ghost = float(value)
+
+    def on_key(self, event):
+        print('on key', event)
 
     def on_load(self):
         self.viewer.run()
