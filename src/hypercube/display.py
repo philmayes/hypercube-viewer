@@ -29,7 +29,13 @@ SIZE = 800
 ROTATION = np.pi / 24
 ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
 SCALE = 1.25
-TRANSLATE = 10
+TRANSLATE = 40
+cmd_to_values = {
+    'l': (0, -TRANSLATE),
+    'r': (0, TRANSLATE),
+    'u': (1, -TRANSLATE),
+    'd': (1, TRANSLATE),
+    }
 FRAME_RATE = 30
 ##FRAME_RATE = 1
 VIDEO_TMP = 'cv2.avi'
@@ -528,29 +534,28 @@ class Viewer:
             cv2.imshow("Wireframe Display", self.img)
 
     def take_action(self, cmd):
-        if cmd in key_to_function:
+        re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
+        re_zoom = re.compile(r'Z(\+|-)')
+        re_move = re.compile(r'M([udlr])')
+        acted = True
+        if match := re_rotate.match(cmd):
+            rotation = self.rotation if match.group(3) == '+' else -self.rotation
+            self.rotate_all(int(match.group(1)), int(match.group(2)), rotation)
+        elif match := re_zoom.match(cmd):
+            if match.group(1) == '+':
+                self.scale_all(SCALE)
+            else:
+                self.scale_all(1 / SCALE)
+        elif match := re_move.match(cmd):
+            dim, amount = cmd_to_values[match.group(1)]
+            self.translate_all(dim, amount)
+        elif cmd in key_to_function:
             key_to_function[cmd](self)
+        else:
+            acted = False
+        if acted:
             self.draw()
             self.show()
-            return True
-        if isinstance(cmd, str) and len(cmd) > 0:
-            cmd = cmd[0]
-            if cmd == 'R' and len(cmd) == 4:
-                dim1 = int(cmd[1])
-                dim2 = int(cmd[2])
-                rotation = self.rotation if cmd[3] == '+' else -self.rotation
-                self.rotate_all(dim1, dim2, rotation)
-                self.draw()
-                self.show()
-                return True
-            elif cmd == 'Z' and len(cmd) == 2:
-                direction = cmd[1]
-                if direction == '+':
-                    self.scale_all(SCALE)
-                else:
-                    self.scale_all(1 / SCALE)
-            else:
-                return
 
     def translate_all(self, dim, amount):
         """Translate all wireframes along a given axis by d units."""

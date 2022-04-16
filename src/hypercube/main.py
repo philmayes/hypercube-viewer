@@ -22,8 +22,13 @@ for dim in range(3, MAX_DIM):
 
 STR_UP = '▲'
 STR_DN = '▼'
-STR_LEFT = '◄'
-STR_RIGHT = '►'
+STR_LEFT = '<'
+STR_RIGHT = '→'
+STR_UP = '↑'
+STR_DN = '↓'
+STR_LEFT = '←'
+STR_RIGHT = '→'
+s = '←↑→↓'
 
 class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
@@ -93,21 +98,27 @@ class App(tk.Frame):
         self.viewer = display.Viewer(1920, 1080, self.widget)
         self.load_settings()
 
-    def add_arrow_controls(self, parent_frame, row, col):
+    def add_movement_controls(self, parent_frame, row, col):
         """Add up/down/left/right controls to the window."""
         frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col)
-        ctl = tk.Button(frame, text=STR_UP, command=partial(self.action, display.UP))
-        ctl.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_LEFT, command=partial(self.action, display.LEFT))
-        ctl.grid(row=1, column=0, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_DN, command=partial(self.action, display.DOWN))
-        ctl.grid(row=1, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_RIGHT, command=partial(self.action, display.RIGHT))
-        ctl.grid(row=1, column=2, sticky=tk.W, padx=2, pady=2)
+        frame.grid(row=row, column=col, sticky=tk.W)
+        row = 0
+        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.action, 'Z-'))
+        ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
+        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.action, 'Mu'))
+        ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.action, 'Z+'))
+        ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        row += 1
+        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.action, 'Ml'))
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.action, 'Md'))
+        ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.action, 'Mr'))
+        ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
 
-    def add_movement_controls(self, parent_frame, row, col):
-        """Add movement controls to the window."""
+    def add_rotation_controls(self, parent_frame, row, col):
+        """Add rotation controls to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col)
         row = 0
@@ -131,12 +142,6 @@ class App(tk.Frame):
             self.dim_controls.append(PlaneControl(frame, row, plane[0], plane[1], self))
             row += 1
 
-        ctl = tk.Button(frame, text='zoom out', command=partial(self.action, ord('-')))
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text='zoom in', command=partial(self.action, ord('=')))
-        ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        row += 1
-        self.add_arrow_controls(frame, row, 0)
 
     # def on_zoom(self, direction, dim_control):
     #     """zoom the wireframe."""
@@ -228,6 +233,8 @@ class App(tk.Frame):
         row += 1
 
         # add rotation controls
+        self.add_rotation_controls(frame, row, 0)
+        row += 1
         self.add_movement_controls(frame, row, 0)
         row += 1
 
