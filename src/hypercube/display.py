@@ -182,7 +182,6 @@ class Viewer:
         # transform settings
         self.rotation = 0.0
         self.rotation_count = 1
-        self.set_rotation(5)
 
         # visibility settings...
         self.show_help = False
@@ -294,6 +293,7 @@ class Viewer:
         screen_size = min(self.width, self.height) * self.screen_fraction
         # scale all dimensions to that one
         sizes = [screen_size * r / max_r for r in ratios]
+        self.set_rotation()
 
         # calculate top left position
         orgx = (self.width - sizes[0]) / 2
@@ -514,9 +514,9 @@ class Viewer:
             wireframe.transform(self.denorm_matrix)
             self.display()
 
-    def set_rotation(self, angle):
-        self.rotation = float(angle) * np.pi / 180
-        self.rotation_count = angle * 2
+    def set_rotation(self):
+        self.rotation = float(self.data.angle) * np.pi / 180
+        self.rotation_count = self.data.angle * 2
 
     def show(self):
         """Display image on screen."""

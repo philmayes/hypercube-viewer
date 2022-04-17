@@ -197,10 +197,6 @@ class App(tk.Frame):
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
-        # rb = tk.Button(frame, text='Load', command=self.on_load)
-        # rb.grid(row=row, column=0, sticky=tk.W, pady=2)
-        # row += 1
-
         # add a slider to control amount of ghosting
         ctl = tk.Label(frame, text='Amount of ghosting:')
         ctl.grid(row=row, column=0, sticky=tk.SW)
@@ -238,10 +234,6 @@ class App(tk.Frame):
         self.add_movement_controls(frame, row, 0)
         row += 1
 
-        rb = tk.Button(frame, text='Start', font=self.big_font, command=self.on_run)
-        rb.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-
     def action(self, value):
         """Pass the action through to the viewer.
         
@@ -260,16 +252,17 @@ class App(tk.Frame):
         self.plot_center.set(self.data.plot_center)
         self.set_dim()
 
-    # def move_user(self, direction):
-    #     """Move the selected user up or down one place in the list."""
-    #     pass
-
     def on_angle(self, value):
         """The angle of rotation slider has been changed."""
-        self.viewer.set_rotation(int(value))
+        self.data.angle = int(value)
+        self.viewer.set_rotation()
 
     def on_aspect(self):
-        """The aspect ratios have been changed."""
+        """The aspect ratios have been changed.
+        
+        If they're valid, save them and rebuild the viewer,
+        else highlight the edit control in yellow
+        """
         aspects = self.aspect.get('1.0', '1.99')
         if self.data.validate_aspects(aspects):
             self.data.aspects = aspects
@@ -318,16 +311,9 @@ class App(tk.Frame):
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
-        # print('on_rotate', direction)
-        # dim1 = dim_control.rot_axis.get()
-        # dim2 = dim_control.dim
         action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
         print(f'{action = }')
         self.viewer.take_action(action)
-
-    def on_run(self):
-        """The Start/Pause/Continue button has been clicked."""
-        pass
 
     def set_dim(self):
         """Set the number of dimensions to use."""
