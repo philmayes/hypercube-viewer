@@ -178,6 +178,7 @@ class App(tk.Frame):
         ctl.grid(row=row, column=0, sticky=tk.SW)
         self.aspect = tk.Text(frame, height=1, width=15)
         self.aspect.grid(row=row, column=1, sticky=tk.W, pady=0)
+        self.aspect.bind("<KeyRelease>", lambda x: self.on_aspect())
         row += 1
 
         # add choices of what to display
@@ -252,12 +253,12 @@ class App(tk.Frame):
         """Load initial settings."""
         self.data.load(self.data_file)
         self.aspect.insert('1.0', self.data.aspects)
-        self.set_dim()
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
         self.plot_nodes.set(self.data.plot_nodes)
         self.plot_edges.set(self.data.plot_edges)
         self.plot_center.set(self.data.plot_center)
+        self.set_dim()
 
     # def move_user(self, direction):
     #     """Move the selected user up or down one place in the list."""
@@ -266,6 +267,17 @@ class App(tk.Frame):
     def on_angle(self, value):
         """The angle of rotation slider has been changed."""
         self.viewer.set_rotation(int(value))
+
+    def on_aspect(self):
+        """The aspect ratios have been changed."""
+        aspects = self.aspect.get('1.0', '1.99')
+        if self.data.validate_aspects(aspects):
+            self.data.aspects = aspects
+            self.aspect.configure(bg='white')
+            self.viewer.init()
+            self.viewer.display()
+        else:
+            self.aspect.configure(bg='yellow')
 
     def on_center(self):
         """The "show center" checkbox has been clicked."""
@@ -276,7 +288,6 @@ class App(tk.Frame):
         """App is closing."""
         data = self.data
         data.dims = int(self.dim_choice.get())
-        data.aspects = self.aspect.get('1.0', '1.99')
         data.angle = self.angle.get()
         data.save(self.data_file)
         self.root.destroy()
@@ -284,7 +295,6 @@ class App(tk.Frame):
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
         self.data.dims = int(param.widget.get())
-        self.data.aspects = self.aspect.get('1.0', '1.99')
         self.set_dim()
 
     def on_edges(self):

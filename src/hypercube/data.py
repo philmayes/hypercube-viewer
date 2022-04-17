@@ -15,7 +15,7 @@ class Data:
     If new values are needed, just add them as class attributes.
     """
     MISSING = 'attribute is missing'
-    re_aspects = re.compile(r'\d\d?(:\d\d?)*$')
+    re_aspects = re.compile(r'\d\d?(:\d\d?)+$')
 
     def __init__(self):
         self.dims = 4
@@ -25,6 +25,10 @@ class Data:
         self.plot_nodes = False
         self.plot_edges = True
         self.plot_center = False
+
+    def validate_aspects(self, aspects):
+        """Test whether supplied string is valid for self.aspects."""
+        return bool(Data.re_aspects.match(aspects))
 
     def load(self, fname):
         try:
@@ -45,7 +49,7 @@ class Data:
                         print('Bad json 2:', key, value)
                         continue
                     # perform additional validation(s) on the value
-                    if key == 'aspects' and Data.re_aspects.match(value) is None:
+                    if key == 'aspects' and not self.validate_aspects(value):
                         print('Bad json 3:', key, value)
                         continue
                     # everything looks good; use the json value
