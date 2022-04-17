@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 
 def get_location():
@@ -13,6 +14,9 @@ class Data:
     """A class to hold persistent data.
     If new values are needed, just add them as class attributes.
     """
+    MISSING = 'attribute is missing'
+    re_aspects = re.compile(r'\d\d?(:\d\d?)*$')
+
     def __init__(self):
         self.dims = 4
         self.aspects = '1:1'
@@ -27,6 +31,24 @@ class Data:
             with open(fname, "r") as read_file:
                 data = json.load(read_file)
                 for key, value in data.items():
+                    # does this attribute already exist in this instance?
+                    existing = getattr(self, key, Data.MISSING)
+                    if existing is Data.MISSING:
+                        # if it doesn't, it's an attribute we no longer use
+                        # OR the json has been hacked, so ignore it
+                        print('Bad json 1:', key, value)
+                        continue
+                    # if it does exist, check that the type is correct;
+                    # if it doesn't, we've changed the type of the attribute
+                    # OR the json has been hacked, so ignore it
+                    if type(value) is not type(existing):
+                        print('Bad json 2:', key, value)
+                        continue
+                    # perform additional validation(s) on the value
+                    if key == 'aspects' and Data.re_aspects.match(value) is None:
+                        print('Bad json 3:', key, value)
+                        continue
+                    # everything looks good; use the json value
                     setattr(self, key, value)
         except:
             pass
