@@ -3,8 +3,6 @@
 
 import argparse
 from functools import partial
-import os
-import sys
 import tkinter as tk
 from tkinter import ttk
 
@@ -82,10 +80,7 @@ class App(tk.Frame):
         self.data = data.Data()
         # get the filename of the json file that holds data
         # (.load_settings() and .save_settings() perform the transfer)
-        rel_dir = os.path.dirname(sys.argv[0])
-        abs_dir = os.path.abspath(rel_dir)
-        json_file = os.path.join(abs_dir, '../../settings/values.json')
-        self.data_file = os.path.normpath(json_file)
+        self.data_file = data.get_location()
 
         self.max_dim = 6
         self.dim_controls = []
