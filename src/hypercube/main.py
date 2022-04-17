@@ -3,10 +3,13 @@
 
 import argparse
 from functools import partial
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk
 
 import colors
+import data
 import display
 
 MAX_DIM = 10
@@ -20,15 +23,10 @@ labels = ['X', 'Y', 'Z']
 for dim in range(3, MAX_DIM):
     labels.append(str(dim + 1))
 
-STR_UP = '▲'
-STR_DN = '▼'
-STR_LEFT = '<'
-STR_RIGHT = '→'
 STR_UP = '↑'
 STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
-s = '←↑→↓'
 
 class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
@@ -75,6 +73,13 @@ class PlaneControl:
 class App(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
+        self.data = data.Data()
+        loc = sys.argv[0]
+        rel_dir = os.path.dirname(sys.argv[0])
+        abs_dir = os.path.abspath(rel_dir)
+        json_file = os.path.join(abs_dir, '../../settings/values.json')
+        self.data_file = os.path.normpath(json_file)
+
         self.max_dim = 6
         self.dim_controls = []
         self.grid(sticky=tk.NSEW)
@@ -82,7 +87,7 @@ class App(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.winfo_toplevel().title('Hypercube')
         self.big_font = ('calibri', 16, 'bold')
-        self.bind_all('<Key>', self.on_key)
+        # self.bind_all('<Key>', self.on_key)
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
@@ -141,12 +146,6 @@ class App(tk.Frame):
         for plane in planes:
             self.dim_controls.append(PlaneControl(frame, row, plane[0], plane[1], self))
             row += 1
-
-
-    # def on_zoom(self, direction, dim_control):
-    #     """zoom the wireframe."""
-    #     # self.viewer.take_action('Z' + direction)
-    #     self.viewer.take_action(ord('='))
 
     def add_setup_controls(self, parent_frame, row, col):
         """Add setup controls to the window."""
@@ -217,10 +216,6 @@ class App(tk.Frame):
         self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
-        # rb = ttk.Button(frame, text='Dn', command=partial(self.move_user, 1))
-        # rb.grid(row=row, column=0, sticky=tk.W, pady=2)
-        # row += 1
-
     def add_user_controls(self, parent_frame, row, col):
         """Add user control buttons to the window."""
         # create a subframe and place it as requested
@@ -243,19 +238,24 @@ class App(tk.Frame):
         row += 1
 
     def action(self, value):
-        """Pass the action through to the viewer."""
+        """Pass the action through to the viewer.
+        
+        This exists because tkinter controls are created before the viewer.
+        """
         self.viewer.take_action(value)
 
     def load_settings(self):
-        """Load initial settings. These will come from a file."""
-        aspects = '16:9:12:4'
+        """Load initial settings."""
+        self.data.load(self.data_file)
+        aspects = self.data.aspects
+        dim = self.data.dims
         self.aspect.insert('1.0', aspects)
-        self.set_dim(6, aspects)
-        self.ghost.set(0.0)
-        self.angle.set(15)
-        self.plot_nodes.set(False)
-        self.plot_edges.set(True)
-        self.plot_center.set(True)
+        self.set_dim(dim, aspects)
+        self.ghost.set(self.data.ghost)
+        self.angle.set(self.data.angle)
+        self.plot_nodes.set(self.data.plot_nodes)
+        self.plot_edges.set(self.data.plot_edges)
+        self.plot_center.set(self.data.plot_center)
 
     # def move_user(self, direction):
     #     """Move the selected user up or down one place in the list."""
@@ -269,6 +269,11 @@ class App(tk.Frame):
         """The "show center" checkbox has been clicked."""
         self.viewer.plot_center = bool(self.plot_center.get())
         self.viewer.display()
+
+    def on_close(self):
+        """App is closing."""
+        print('CLOSING')
+        self.data.save(self.data_file)
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
