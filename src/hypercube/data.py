@@ -17,14 +17,13 @@ class Data:
         try:
             with open(fname, "r") as read_file:
                 data = json.load(read_file)
-            for key, value in data.items():
-                setattr(self, key, value)
+                for key, value in data.items():
+                    setattr(self, key, value)
         except:
             pass
 
     def save(self, fname):
         data = self.__dict__
-        print(data)
         with open(fname, "w") as write_file:
             json.dump(data, write_file)
 

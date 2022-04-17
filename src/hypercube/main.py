@@ -71,10 +71,17 @@ class PlaneControl:
             self.color2.grid_remove()
 
 class App(tk.Frame):
-    def __init__(self, master=None):
-        tk.Frame.__init__(self, master)
+    def __init__(self, root=None):
+        tk.Frame.__init__(self, root)
+        # set up hooks for program close
+        self.root = root
+        root.protocol("WM_DELETE_WINDOW", self.on_close)
+        root.bind('<Escape>', lambda e: self.on_close())
+
+        # set up instance for loading and saving data
         self.data = data.Data()
-        loc = sys.argv[0]
+        # get the filename of the json file that holds data
+        # (.load_settings() and .save_settings() perform the transfer)
         rel_dir = os.path.dirname(sys.argv[0])
         abs_dir = os.path.abspath(rel_dir)
         json_file = os.path.join(abs_dir, '../../settings/values.json')
@@ -272,8 +279,16 @@ class App(tk.Frame):
 
     def on_close(self):
         """App is closing."""
-        print('CLOSING')
-        self.data.save(self.data_file)
+        data = self.data
+        data.dims = int(self.dim_choice.get())
+        data.aspects = self.aspect.get('1.0', '1.99')
+        data.ghost = self.viewer.ghost
+        data.angle = self.angle.get()
+        data.plot_nodes = self.viewer.plot_nodes
+        data.plot_edges = self.viewer.plot_edges
+        data.plot_center = self.viewer.plot_center
+        data.save(self.data_file)
+        self.root.destroy()
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
@@ -327,7 +342,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Hypercube')
     parser.add_argument("-t", "--test", action="store_true", help="run in test mode")
     args = parser.parse_args()
-    app = App()
-    app.mainloop()
-
-
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
