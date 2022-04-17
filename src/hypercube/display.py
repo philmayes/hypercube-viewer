@@ -170,9 +170,10 @@ class Times(object):
 class Viewer:
     """Display 3D objects on a screen."""
 
-    def __init__(self, width, height, widget=None):
+    def __init__(self, width, height, data, widget=None):
         self.width = width
         self.height = height
+        self.data = data
         # fraction of screen that the wireframe should occupy
         self.screen_fraction = 0.7
         self.widget = widget
@@ -184,10 +185,6 @@ class Viewer:
         self.set_rotation(5)
 
         # visibility settings...
-        self.plot_nodes = False
-        self.plot_edges = True
-        self.plot_center = False
-        self.ghost = 0.0    # 0 < value < 1 leaves a ghost trail; 0 doesn't
         self.show_help = False
         self.save_to_video = False
         self.node_radius = 4
@@ -241,9 +238,9 @@ class Viewer:
     def draw(self):
         """Draw the wireframe onto the video surface."""
 
-        if self.ghost:
+        if self.data.ghost:
             # leave a shadow of the previous frame
-            np.multiply(self.img, self.ghost, out=self.img, casting='unsafe')
+            np.multiply(self.img, self.data.ghost, out=self.img, casting='unsafe')
         else:
             # clear the previous frame
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
@@ -251,14 +248,14 @@ class Viewer:
             self.draw_text(HELP_TEXT.format(self=self))
 
         wireframe = self.wireframe
-        if self.plot_center:
+        if self.data.plot_center:
             cv2.circle(self.img,
                        (wireframe.center[0], wireframe.center[1]),
                        self.center_radius,
                        colors.center,
                        -1)
 
-        if self.plot_edges:
+        if self.data.plot_edges:
             for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
@@ -268,7 +265,7 @@ class Viewer:
                         color,
                         3)
 
-        if self.plot_nodes:
+        if self.data.plot_nodes:
             for node in wireframe.nodes:
                 cv2.circle(self.img,
                            (int(round(node[0])), int(round(node[1]))),
@@ -278,7 +275,7 @@ class Viewer:
 
     def draw_text(self, text, y=30):
         font = cv2.FONT_HERSHEY_SIMPLEX
-        x = self.ndims
+        x = self.data.dims
         lines = text.split('\n')
         for line in lines:
             cv2.putText(self.img, line, (x, y), font, 1, COLOR_TEXT, 2, cv2.LINE_AA)
@@ -287,11 +284,11 @@ class Viewer:
     def help(self):
         self.show_help ^= False
 
-    def init(self, ndims: int, aspects: str):
-        self.ndims = ndims
+    def init(self):
+        # self.ndims = ndims
         # calculate the pixel sizes for all dimensions:
         # get the aspect ratios for all dimensions and the largest ratio
-        ratios = [int(r) for r in aspects.split(':')]
+        ratios = [int(r) for r in self.data.aspects.split(':')]
         max_r = max(ratios)
         # calculate the size of the largest dimension in pixels
         screen_size = min(self.width, self.height) * self.screen_fraction
@@ -303,7 +300,7 @@ class Viewer:
         orgy = (self.height - sizes[1]) / 2
 
         # construct a wireframe object
-        self.wireframe = wf.Wireframe(ndims)
+        self.wireframe = wf.Wireframe(self.data.dims)
         self.wireframe.add_shape_sizes(orgx, orgy, sizes)
         self.make_normalize_translations()
 

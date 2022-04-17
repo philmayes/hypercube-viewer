@@ -76,10 +76,12 @@ class App(tk.Frame):
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind('<Escape>', lambda e: self.on_close())
 
-        # set up instance for loading and saving data
+        # create an instance for loading and saving data and get the filename
+        # of the json file that holds data (.load_settings() and
+        # .save_settings() will perform the actual transfers)
+        # This is the canonical version of the persistent data. It is passed
+        # into display.Viewer so that App and Viewer share the data.
         self.data = data.Data()
-        # get the filename of the json file that holds data
-        # (.load_settings() and .save_settings() perform the transfer)
         self.data_file = data.get_location()
 
         self.max_dim = 6
@@ -102,7 +104,7 @@ class App(tk.Frame):
         self.widget = tk.Label(self.right_frame)
         self.widget.grid(row=0, column=0, sticky=tk.N)
 
-        self.viewer = display.Viewer(1920, 1080, self.widget)
+        self.viewer = display.Viewer(1920, 1080, self.data, self.widget)
         self.load_settings()
 
     def add_movement_controls(self, parent_frame, row, col):
@@ -249,10 +251,8 @@ class App(tk.Frame):
     def load_settings(self):
         """Load initial settings."""
         self.data.load(self.data_file)
-        aspects = self.data.aspects
-        dim = self.data.dims
-        self.aspect.insert('1.0', aspects)
-        self.set_dim(dim, aspects)
+        self.aspect.insert('1.0', self.data.aspects)
+        self.set_dim()
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
         self.plot_nodes.set(self.data.plot_nodes)
@@ -269,7 +269,7 @@ class App(tk.Frame):
 
     def on_center(self):
         """The "show center" checkbox has been clicked."""
-        self.viewer.plot_center = bool(self.plot_center.get())
+        self.data.plot_center = bool(self.plot_center.get())
         self.viewer.display()
 
     def on_close(self):
@@ -277,27 +277,23 @@ class App(tk.Frame):
         data = self.data
         data.dims = int(self.dim_choice.get())
         data.aspects = self.aspect.get('1.0', '1.99')
-        data.ghost = self.viewer.ghost
         data.angle = self.angle.get()
-        data.plot_nodes = self.viewer.plot_nodes
-        data.plot_edges = self.viewer.plot_edges
-        data.plot_center = self.viewer.plot_center
         data.save(self.data_file)
         self.root.destroy()
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
-        dim = int(param.widget.get())
-        aspects = self.aspect.get('1.0', '1.99')
-        self.set_dim(dim, aspects)
+        self.data.dims = int(param.widget.get())
+        self.data.aspects = self.aspect.get('1.0', '1.99')
+        self.set_dim()
 
     def on_edges(self):
         """The "show edges" checkbox has been clicked."""
-        self.viewer.plot_edges = bool(self.plot_edges.get())
+        self.data.plot_edges = bool(self.plot_edges.get())
         self.viewer.display()
 
     def on_ghost(self, value):
-        self.viewer.ghost = float(value)
+        self.data.ghost = float(value)
 
     def on_key(self, event):
         print('on key', event)
@@ -307,7 +303,7 @@ class App(tk.Frame):
 
     def on_nodes(self):
         """The "show nodes" checkbox has been clicked."""
-        self.viewer.plot_nodes = bool(self.plot_nodes.get())
+        self.data.plot_nodes = bool(self.plot_nodes.get())
         self.viewer.display()
 
     def on_rotate(self, direction, dim_control):
@@ -323,13 +319,13 @@ class App(tk.Frame):
         """The Start/Pause/Continue button has been clicked."""
         pass
 
-    def set_dim(self, dim, aspects):
+    def set_dim(self):
         """Set the number of dimensions to use."""
+        dim = self.data.dims
         self.dim_choice.set(str(dim))
         for control in self.dim_controls:
             control.enable(dim)
-        #...this is where add_shape_sizes is called
-        self.viewer.init(dim, aspects)
+        self.viewer.init()
         self.viewer.display()
 
 
