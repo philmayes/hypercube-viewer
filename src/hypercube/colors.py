@@ -8,15 +8,16 @@ def hex_to_bgr(s):
 
 node = (255,255,255)
 center = (255,255,255)
+text = (200, 200, 250)
 bg = (0, 0, 0)      # must be zeros so we can fade to black in .draw()
 ascii = (
     'ff0000',       # red
     '00ffff',       # aqua
-    '00ff00',       # green
     'ffff00',       # yellow
+    '00ff00',       # green
+    'ff00ff',       # fuschia
     'ff8000',       # orange
     '00a8ec',       # blue
-    'ff00ff',       # fuschia
     '800080',       # purple
     'e62b86',       # pink
     'f1a629',       # lt.orange

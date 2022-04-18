@@ -190,16 +190,24 @@ class App(tk.Frame):
         # add choices of what to display
         ctl = tk.Label(frame, text='Visibility:')
         ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)
-        self.plot_nodes = tk.IntVar()
-        ctl = ttk.Checkbutton(frame, text='Show nodes', variable=self.plot_nodes, command=self.on_nodes)
+        self.show_edges = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show edges', variable=self.show_edges, command=self.on_edges)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
-        self.plot_edges = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show edges', variable=self.plot_edges, command=self.on_edges)
+        self.show_nodes = tk.IntVar()
+        ctl = ttk.Checkbutton(frame, text='Show corners', variable=self.show_nodes, command=self.on_nodes)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
-        self.plot_center = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show center', variable=self.plot_center, command=self.on_center)
+        self.show_coords = tk.IntVar()
+        ctl = ttk.Checkbutton(frame, text='Show coords', variable=self.show_coords, command=self.on_coords)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
+        self.show_center = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show center', variable=self.show_center, command=self.on_center)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
+        self.perspective = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Perspective view', variable=self.perspective, command=self.on_perspective)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
@@ -253,9 +261,10 @@ class App(tk.Frame):
         self.aspect.insert('1.0', self.data.aspects)
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
-        self.plot_nodes.set(self.data.plot_nodes)
-        self.plot_edges.set(self.data.plot_edges)
-        self.plot_center.set(self.data.plot_center)
+        self.show_coords.set(self.data.show_coords)
+        self.show_edges.set(self.data.show_edges)
+        self.show_center.set(self.data.show_center)
+        self.show_nodes.set(self.data.show_nodes)
         self.set_dim()
 
     def on_angle(self, value):
@@ -280,7 +289,7 @@ class App(tk.Frame):
 
     def on_center(self):
         """The "show center" checkbox has been clicked."""
-        self.data.plot_center = bool(self.plot_center.get())
+        self.data.show_center = bool(self.show_center.get())
         self.viewer.display()
 
     def on_close(self):
@@ -291,6 +300,11 @@ class App(tk.Frame):
         data.save(self.data_file)
         self.root.destroy()
 
+    def on_coords(self):
+        """The "show coords" checkbox has been clicked."""
+        self.data.show_coords = bool(self.show_coords.get())
+        self.viewer.display()
+
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
         self.data.dims = int(param.widget.get())
@@ -298,7 +312,7 @@ class App(tk.Frame):
 
     def on_edges(self):
         """The "show edges" checkbox has been clicked."""
-        self.data.plot_edges = bool(self.plot_edges.get())
+        self.data.show_edges = bool(self.show_edges.get())
         self.viewer.display()
 
     def on_ghost(self, value):
@@ -312,7 +326,12 @@ class App(tk.Frame):
 
     def on_nodes(self):
         """The "show nodes" checkbox has been clicked."""
-        self.data.plot_nodes = bool(self.plot_nodes.get())
+        self.data.show_nodes = bool(self.show_nodes.get())
+        self.viewer.display()
+
+    def on_perspective(self):
+        """The "show center" checkbox has been clicked."""
+        self.data.perspective = bool(self.perspective.get())
         self.viewer.display()
 
     def on_rotate(self, direction, dim_control):

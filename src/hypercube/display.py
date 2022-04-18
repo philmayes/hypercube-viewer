@@ -62,6 +62,7 @@ class Viewer:
         self.center_radius = 1
         self.frame_time = 1 / FRAME_RATE
         self.frame_count = 0
+        self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
         if VIDEO_TMP:
             self.video = cv2.VideoWriter(VIDEO_TMP,
                                          cv2.VideoWriter_fourcc(*'XVID'),
@@ -116,38 +117,78 @@ class Viewer:
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
 
         wireframe = self.wireframe
-        if self.data.plot_center:
+        if self.data.show_center:
             cv2.circle(self.img,
                        (wireframe.center[0], wireframe.center[1]),
                        self.center_radius,
                        colors.center,
                        -1)
 
-        if self.data.plot_edges:
+        if self.data.show_edges:
             for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
                 cv2.line(self.img,
-                        (int(round(node1[0])), int(round(node1[1]))),
-                        (int(round(node2[0])), int(round(node2[1]))),
+                        self.get_xy(node1),
+                        self.get_xy(node2),
                         color,
                         3)
 
-        if self.data.plot_nodes:
+        if self.data.show_nodes or self.data.show_coords:
             for node in wireframe.nodes:
-                cv2.circle(self.img,
-                           (int(round(node[0])), int(round(node[1]))),
-                           self.node_radius,
-                        colors.node,
-                           -1)
+                xy = self.get_xy(node)
+                if self.data.show_nodes:
+                    cv2.circle(self.img,
+                            xy,
+                            self.node_radius,
+                            colors.node,
+                            -1)
+                if self.data.show_coords:
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    values = [int(round(v)) for v in node[:-1]]
+                    text = str(values)
+                    cv2.putText(self.img, text, (xy[0] + 4, xy[1]), font, 0.5, colors.text)
 
     def draw_text(self, text, y=30):
         font = cv2.FONT_HERSHEY_SIMPLEX
         x = self.data.dims
         lines = text.split('\n')
         for line in lines:
-            cv2.putText(self.img, line, (x, y), font, 1, COLOR_TEXT, 2, cv2.LINE_AA)
+            cv2.putText(self.img, line, (x, y), font, 1, colors.text, 1, cv2.LINE_AA)
             y += 30
+
+    def get_xy(self, node):
+        """Given a node, return orthogonal or perspective x,y
+
+                    orthogonal projection on screen
+                    |      perspective projection on screen
+                    |      |
+        window------O------P--------V---------------------> x- or y-axis
+        |           |\     |        |
+        |           | \    |        |
+        |           |  \   |        |
+        |           |   \  |        |
+        |           |    \ |        |
+        |           |     \|        |
+        |     node: N      '        |
+        |                   \       |
+        |                    \      |
+        |                     \     |
+        |                      \    |
+        |                       \   |
+        |                        \  |
+        V                         \ |
+        z-axis                     \|
+                                    .vanishing point
+        """
+        x = node[0]
+        y = node[1]
+        if self.data.perspective:
+            vp = self.vanishing_point
+            f = node[2] / vp[2]
+            x += (vp[0] - node[0]) * f
+            y += (vp[1] - node[1]) * f
+        return (int(round(x)), int(round(y)))
 
     def help(self):
         self.show_help ^= False
@@ -398,7 +439,7 @@ class Viewer:
         else:
             cv2.imshow("Wireframe Display", self.img)
 
-    re_dim = re.compile(r'D([3-9]))')
+    re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
@@ -442,11 +483,3 @@ class Viewer:
             if self.video:
                 self.video.write(self.img)
                 self.frame_count += 1
-
-    def xor_boolean(self, attrib, changes_screen=True):
-        """Toggle the value of a boolean."""
-
-        b = getattr(self, attrib) ^ True
-        setattr(self, attrib, b)
-        print('Changed', attrib, 'to', b)
-        return changes_screen

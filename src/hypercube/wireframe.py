@@ -141,8 +141,11 @@ class Wireframe:
     
     def output_nodes(self):
         print("\n --- Nodes --- ")
-        for i, (x, y, z, _) in enumerate(self.nodes):
-            print("%2d: (%3d, %3d, %3d)" % (i, x, y, z))
+        for i, node in enumerate(self.nodes):
+            print(f'{i:3}: ', end='')
+            for j in node[:-1]:
+                print(f'{j:>-7}, ', end='')
+            print()
 
     def output_edges(self):
         print("\n --- Edges --- ")

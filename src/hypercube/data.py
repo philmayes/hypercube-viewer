@@ -22,9 +22,11 @@ class Data:
         self.aspects = '1:1'
         self.ghost = 0.0
         self.angle = 15
-        self.plot_nodes = False
-        self.plot_edges = True
-        self.plot_center = False
+        self.perspective = False
+        self.show_nodes = False
+        self.show_edges = True
+        self.show_center = False
+        self.show_coords = False
 
     def validate_aspects(self, aspects):
         """Test whether supplied string is valid for self.aspects."""
