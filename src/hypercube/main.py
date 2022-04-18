@@ -35,8 +35,8 @@ class PlaneControl:
         dim1str = labels[dim1]
         dim2str = labels[dim2]
         text = f'{dim1str}-{dim2str}'
-        ctl = tk.Label(frame, text=text)
-        ctl.grid(row=row, column=0, sticky=tk.EW, padx=2, pady=2)
+        self.planes = tk.Label(frame, text=text)
+        self.planes.grid(row=row, column=0, sticky=tk.EW, padx=2, pady=2)
 
         # insert rotation controls
         # create a subframe and place it as requested
@@ -62,9 +62,15 @@ class PlaneControl:
         self.rotate1.configure(state=state)
         self.rotate2.configure(state=state)
         if applicable:
+            self.planes.grid()
+            self.rotate1.grid()
+            self.rotate2.grid()
             self.color1.grid()
             self.color2.grid()
         else:
+            self.planes.grid_remove()
+            self.rotate1.grid_remove()
+            self.rotate2.grid_remove()
             self.color1.grid_remove()
             self.color2.grid_remove()
 
@@ -319,6 +325,7 @@ class App(tk.Frame):
         """Set the number of dimensions to use."""
         dim = self.data.dims
         self.dim_choice.set(str(dim))
+        # hide/show the dimension controls as appropriate
         for control in self.dim_controls:
             control.enable(dim)
         self.viewer.init()
