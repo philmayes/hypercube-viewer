@@ -25,11 +25,10 @@ from PIL import ImageTk
 import colors
 import wireframe as wf
 
-SIZE = 800
 ROTATION = np.pi / 24
 ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
 SCALE = 1.25
-TRANSLATE = 40
+TRANSLATE = 10
 cmd_to_values = {
     'l': (0, -TRANSLATE),
     'r': (0, TRANSLATE),
@@ -37,135 +36,8 @@ cmd_to_values = {
     'd': (1, TRANSLATE),
     }
 FRAME_RATE = 30
-##FRAME_RATE = 1
 VIDEO_TMP = 'cv2.avi'
 VIDEO_OUT = 'out.mp4'
-##VIDEO = ''
-COLOR_TEXT = (200, 200, 250)
-HELP_TEXT = """\
-Save to video: {self.save_to_video}
-frame count:   {self.frame_count}
-recording:     {self.recording}
-"""
-ESC = 27
-PGUP = 0x210000
-PGDN = 0x220000
-END = 0x230000
-HOME = 0x240000
-LEFT = 0x250000
-UP = 0x260000
-RIGHT = 0x270000
-DOWN = 0x280000
-INS = 0x2d0000
-DEL = 0x2e0000
-F1 = 0x700000
-F2 = 0x710000
-F3 = 0x720000
-F4 = 0x730000
-F5 = 0x740000
-F6 = 0x750000
-F7 = 0x760000
-F8 = 0x770000
-F9 = 0x780000
-F10 = 0x790000
-F11 = 0x7a0000
-F12 = 0x7b0000
-
-key_to_function = {
-    LEFT:       (lambda x: x.translate_all(0, -TRANSLATE)),
-    RIGHT:      (lambda x: x.translate_all(0,  TRANSLATE)),
-    DOWN:       (lambda x: x.translate_all(1,  TRANSLATE)),
-    UP:         (lambda x: x.translate_all(1, -TRANSLATE)),
-    ord('='):   (lambda x: x.scale_all(SCALE)),
-    ord('-'):   (lambda x: x.scale_all(1 / SCALE)),
-    # rotations are performed about the plane given by two dimensions where the
-    # dimensions are X=0, Y=1, Z=2, etc.
-    # There is no point in performing any rotations that do not include X or Y
-    # as they will not be visible in the 2D projection
-    ord('q'):   (lambda x: x.rotate_all(1, 2,  ROTATION)),
-    ord('w'):   (lambda x: x.rotate_all(1, 2, -ROTATION)),
-    ord('a'):   (lambda x: x.rotate_all(0, 2,  ROTATION)),
-    ord('s'):   (lambda x: x.rotate_all(0, 2, -ROTATION)),
-    ord('z'):   (lambda x: x.rotate_all(0, 1,  ROTATION)),
-    ord('x'):   (lambda x: x.rotate_all(0, 1, -ROTATION)),
-
-    ord('d'):   (lambda x: x.rotate_all(1, 3,  ROTATION)),
-    ord('f'):   (lambda x: x.rotate_all(1, 3, -ROTATION)),
-    ord('c'):   (lambda x: x.rotate_all(0, 3,  ROTATION)),
-    ord('v'):   (lambda x: x.rotate_all(0, 3, -ROTATION)),
-
-    ord('g'):   (lambda x: x.rotate_all(1, 4,  ROTATION)),
-    ord('h'):   (lambda x: x.rotate_all(1, 4, -ROTATION)),
-    ord('b'):   (lambda x: x.rotate_all(0, 4,  ROTATION)),
-    ord('n'):   (lambda x: x.rotate_all(0, 4, -ROTATION)),
-
-    ord('j'):   (lambda x: x.rotate_all(1, 5,  ROTATION)),
-    ord('k'):   (lambda x: x.rotate_all(1, 5, -ROTATION)),
-    ord('m'):   (lambda x: x.rotate_all(0, 5,  ROTATION)),
-    ord(','):   (lambda x: x.rotate_all(0, 5, -ROTATION)),
-
-    ord(' '):   (lambda x: x.repeat_frame(30)),
-
-    ord('['):   (lambda x: x.record()),
-    ord(']'):   (lambda x: x.play_back()),
-    ord('\\'):  (lambda x: x.play_back(True)),
-
-    F1:         (lambda x: x.xor_boolean('show_help')),
-    F4:         (lambda x: x.init()),
-
-    F5:         (lambda x: x.make_video1()),
-    F6:         (lambda x: x.make_video2()),
-    F7:         (lambda x: x.make_video3()),
-    F8:         (lambda x: x.make_video4()),
-
-    F9:         (lambda x: x.xor_boolean('plot_nodes')),
-    F10:        (lambda x: x.xor_boolean('plot_edges')),
-    F11:        (lambda x: x.xor_boolean('plot_center')),
-    F12:        (lambda x: x.xor_boolean('save_to_video')),
-    }
-
-def parse_commands(commands):
-    """Convert a string of commands into ordinals.
-    fn or fnn is converted to the function key ordinal.
-    """
-    def func(f):
-        return chr(int(f.group()[1:]))
-    # first replace function key strings by ^A = F1 etc.
-    subst = re.sub(r'f\d{1,2}', func, commands)
-    def to_ordinal(c):
-        number = ord(c)
-        if number < 32:
-            # convert control key to F-key equivalent
-            number += 0x6F
-            number <<= 16
-        return number
-    # convert control chars to Fn keys, others to their ordinal
-    return [to_ordinal(c) for c in subst]
-    
-def time_function(func):
-    """Decorator to time a function."""
-    def wrapper(*args, **kwargs):
-        t1 = time.process_time()
-        res = func(*args, **kwargs)
-        t2 = time.process_time()
-        print('%s took %0.3f ms' % (func.__name__, (t2-t1)*1000.0))
-        return res
-    return wrapper
-
-class Times(object):
-    """class to record elapsed times and print out on request."""
-    def __init__(self, desc=''):
-        self.times = [time.process_time(),]
-
-    def event(self, desc=''):
-        """Record the time and description of an event."""
-        self.times.append(desc)
-        self.times.append(time.process_time())
-
-    def print(self):
-        """Print the duration and description of all events."""
-        for n in range(1, len(self.times), 2):
-            print('%.6f  %s'%(self.times[n+1]-self.times[n-1], self.times[n],))
 
 class Viewer:
     """Display 3D objects on a screen."""
@@ -233,7 +105,6 @@ class Viewer:
         if pause > 0.0:
             time.sleep(pause)
 
-##    @time_function
     def draw(self):
         """Draw the wireframe onto the video surface."""
 
@@ -243,8 +114,6 @@ class Viewer:
         else:
             # clear the previous frame
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
-        if self.show_help:
-            self.draw_text(HELP_TEXT.format(self=self))
 
         wireframe = self.wireframe
         if self.data.plot_center:
@@ -405,9 +274,9 @@ class Viewer:
                         self.rotate_all(dim1, dim2, step)
                         self.display()
 
-    def make_video4(self):
-        for key in parse_commands('[ xxxwwwssssjjbb[f12\\'):
-            self.take_action(key)
+    # def make_video4(self):
+    #     for key in parse_commands('[ xxxwwwssssjjbb[f12\\'):
+    #         self.take_action(key)
 
     def play_back(self, reversed=False):
         if not self.playing_back:
@@ -546,8 +415,6 @@ class Viewer:
         elif match := re_move.match(cmd):
             dim, amount = cmd_to_values[match.group(1)]
             self.translate_all(dim, amount)
-        elif cmd in key_to_function:
-            key_to_function[cmd](self)
         else:
             acted = False
         if acted:
@@ -580,9 +447,3 @@ class Viewer:
         setattr(self, attrib, b)
         print('Changed', attrib, 'to', b)
         return changes_screen
-
-
-if __name__ == '__main__':
-##    print(parse_commands(' xxsjbf1f11g'))
-    pv = Viewer(1920, 1080)
-    pv.run()
