@@ -27,7 +27,7 @@ import wireframe as wf
 
 ROTATION = np.pi / 24
 ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
-SCALE = 1.25
+SCALE = 1.25                # fraction by which to zoom in/out
 TRANSLATE = 10
 cmd_to_values = {
     'l': (0, -TRANSLATE),
@@ -153,7 +153,6 @@ class Viewer:
         self.show_help ^= False
 
     def init(self):
-        # self.ndims = ndims
         # calculate the pixel sizes for all dimensions:
         # get the aspect ratios for all dimensions and the largest ratio
         ratios = [int(r) for r in self.data.aspects.split(':')]
@@ -399,22 +398,26 @@ class Viewer:
         else:
             cv2.imshow("Wireframe Display", self.img)
 
+    re_dim = re.compile(r'D([3-9]))')
+    re_move = re.compile(r'M([udlr])')
+    re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
+    re_zoom = re.compile(r'Z(\+|-)')
     def take_action(self, cmd):
-        re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
-        re_zoom = re.compile(r'Z(\+|-)')
-        re_move = re.compile(r'M([udlr])')
         acted = True
-        if match := re_rotate.match(cmd):
+        if match := Viewer.re_rotate.match(cmd):
             rotation = self.rotation if match.group(3) == '+' else -self.rotation
             self.rotate_all(int(match.group(1)), int(match.group(2)), rotation)
-        elif match := re_zoom.match(cmd):
+        elif match := Viewer.re_zoom.match(cmd):
             if match.group(1) == '+':
                 self.scale_all(SCALE)
             else:
                 self.scale_all(1 / SCALE)
-        elif match := re_move.match(cmd):
+        elif match := Viewer.re_move.match(cmd):
             dim, amount = cmd_to_values[match.group(1)]
             self.translate_all(dim, amount)
+        elif match := Viewer.re_dim.match(cmd):
+            self.data.dims = match.group(1)
+            self.init()
         else:
             acted = False
         if acted:
