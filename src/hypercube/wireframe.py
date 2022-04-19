@@ -39,18 +39,6 @@ class Wireframe:
     def add_center(self, center):
         self.center = center
 
-    def add_shape(self, orgx=50, orgy=50, minsize=200, maxsize = 0):
-        """ Create a shape and set up its nodes and edges."""
-
-        sizes = [0] * self.dims
-        for d in range(self.dims):
-            if maxsize:
-                sz = random.randrange(minsize, maxsize)
-            else:
-                sz = minsize
-            sizes[d] = sz
-        self.add_shape_sizes(orgx, orgy, sizes)
-
     def add_shape_sizes(self, orgx=50, orgy=50, sizes=[200]):
         """ Create a shape and set up its nodes and edges."""
 
@@ -171,10 +159,3 @@ class Wireframe:
         """ Apply a transformation defined by a given matrix. """
     
         self.nodes = np.dot(self.nodes, matrix)
-
-if __name__ == "__main__":
-    cube = Wireframe(3)
-    cube.add_shape()
-    # print the nodes and edges
-    cube.output_nodes()
-    cube.output_edges()
