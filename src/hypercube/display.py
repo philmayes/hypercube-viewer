@@ -125,7 +125,9 @@ class Viewer:
                        -1)
 
         if self.data.show_edges:
-            for n1, n2, color in wireframe.edges:
+            # Use reversed so that edges are drawn from the back and appear to
+            # overlap correctly. Especially important for perspective view.
+            for n1, n2, color in reversed(wireframe.edges):
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
                 cv2.line(self.img,
@@ -147,7 +149,7 @@ class Viewer:
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     values = [int(round(v)) for v in node[:-1]]
                     text = str(values)
-                    cv2.putText(self.img, text, (xy[0] + 4, xy[1]), font, 0.5, colors.text)
+                    cv2.putText(self.img, text, (xy[0] + 5, xy[1] + 3), font, 0.5, colors.text)
 
     def draw_text(self, text, y=30):
         font = cv2.FONT_HERSHEY_SIMPLEX
