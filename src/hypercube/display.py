@@ -127,7 +127,14 @@ class Viewer:
         if self.data.show_edges:
             # Use reversed so that edges are drawn from the back and appear to
             # overlap correctly. Especially important for perspective view.
-            for n1, n2, color in reversed(wireframe.edges):
+            # This doesn't help when the user rotates the wireframe 180 degrees
+            # around the x- or y-axis. For that, I think sorting the edges is
+            # needed; I haven't investigated the performance cost.
+            # for n1, n2, color in reversed(wireframe.edges):
+            self.sort_edges = True
+            if self.sort_edges:
+                wireframe.sort_edges()
+            for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
                 cv2.line(self.img,
@@ -354,9 +361,6 @@ class Viewer:
     def rotate_all(self, dim1, dim2, theta, dim3=-1):
         """Rotate all wireframes about their center, around one or two planes
             by a given angle."""
-##        theta *= 5
-##        print('rotate_all', dim1, dim2, theta, count)
-
         count = self.rotation_count
         delta = theta / count
         if dim3 < 0:

@@ -161,6 +161,12 @@ class Wireframe:
 
         return (meanX, meanY, meanZ)
 
+    def sort_edges(self):
+        def get_key(edge):
+            return self.nodes[edge[0]][2] + self.nodes[edge[1]][2]
+
+        self.edges.sort(key=get_key, reverse=True)
+
     def transform(self, matrix):
         """ Apply a transformation defined by a given matrix. """
     
