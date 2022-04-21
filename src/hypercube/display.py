@@ -63,6 +63,10 @@ class Viewer:
         self.center_radius = 1
         self.frame_time = 1 / FRAME_RATE
         self.frame_count = 0
+        # We sort the edges and faces in z-order so they display correctly.
+        # Flag when this is needed
+        self.sort_edges = True
+        self.sort_faces = True
         self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
         if VIDEO_TMP:
             self.video = cv2.VideoWriter(VIDEO_TMP,
@@ -132,9 +136,9 @@ class Viewer:
             # around the x- or y-axis. For that, I think sorting the edges is
             # needed; I haven't investigated the performance cost.
             # for n1, n2, color in reversed(wireframe.edges):
-            self.sort_edges = True
             if self.sort_edges:
                 wireframe.sort_edges()
+                self.sort_edges = False
             for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
@@ -145,9 +149,9 @@ class Viewer:
                         3)
 
         if self.data.show_faces:
-            self.sort_faces = True
             if self.sort_faces:
                 wireframe.sort_faces()
+                self.sort_faces = False
             for n1, n2, n3, n4, color in wireframe.faces:
                 pts = [self.get_xy(wireframe.nodes[n1]),
                        self.get_xy(wireframe.nodes[n2]),
@@ -412,6 +416,8 @@ class Viewer:
             self.display()
             if ROTATION_SCALE != 1.0:
                 self.scale_all(ROTATION_SCALE, 1)
+        self.sort_edges = True
+        self.sort_faces = True
 
     def run(self):
         """Process commands until finished."""
