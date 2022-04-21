@@ -38,6 +38,7 @@ cmd_to_values = {
 FRAME_RATE = 30
 VIDEO_TMP = 'cv2.avi'
 VIDEO_OUT = 'out.mp4'
+ESC = 27
 
 class Viewer:
     """Display 3D objects on a screen."""
@@ -143,6 +144,18 @@ class Viewer:
                         color,
                         3)
 
+        if self.data.show_faces:
+            self.sort_faces = True
+            if self.sort_faces:
+                wireframe.sort_faces()
+            for n1, n2, n3, n4, color in wireframe.faces:
+                pts = [self.get_xy(wireframe.nodes[n1]),
+                       self.get_xy(wireframe.nodes[n2]),
+                       self.get_xy(wireframe.nodes[n3]),
+                       self.get_xy(wireframe.nodes[n4])]
+                shape = np.array(pts)
+                cv2.fillConvexPoly(self.img, shape, color)
+
         if self.data.show_nodes or self.data.show_coords:
             for node in wireframe.nodes:
                 xy = self.get_xy(node)
@@ -192,7 +205,7 @@ class Viewer:
         """
         x = node[0]
         y = node[1]
-        if self.data.perspective:
+        if self.data.show_perspective:
             vp = self.vanishing_point
             f = node[2] / vp[2]
             x += (vp[0] - node[0]) * f

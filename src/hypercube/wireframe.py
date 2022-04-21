@@ -14,11 +14,36 @@ two axes of the plane.
 """
 
 import copy
-import random
 
 import numpy as np
 
 import colors
+
+def add_face_color(face, nodes):
+    """Add a color to a face instance.
+
+    A face is 4 nodes (points) in a plane. We color all faces in the same
+    plane, e.g. the opposite faces of a cube, in the same color. To find what
+    the two dimensions making up that plane are, we compare the node values
+    of every dimension, looking for the two dimensions where the values vary.
+    That pair is mapped to a unique color by colors.face()
+    """
+    node0 = nodes[face[0]]
+    node1 = nodes[face[1]]
+    node2 = nodes[face[2]]
+    node3 = nodes[face[3]]
+    other = [node1, node2, node3]
+    # make a list of every dimension whose values are not all the same
+    changes = []
+    for dim, value in enumerate(node0):
+        mismatch = [node[dim] for node in other if node[dim] != value]
+        if mismatch:
+            changes.append(dim)
+        if len(changes) == 2:
+            # no need to look any further; there are only two dimensions
+            # that differ
+            break
+    face.append(colors.face(changes))
 
 class Wireframe:
 
@@ -27,6 +52,7 @@ class Wireframe:
         # create a NumPy array with 0 rows, 1 col per dim, 1 for scale
         self.nodes = np.zeros((0, dims + 1))
         self.edges = []
+        self.faces = []
 
     def add_nodes(self, node_array):
         ones_column = np.ones((len(node_array), 1))
@@ -55,6 +81,7 @@ class Wireframe:
 
         nodes = []
         edges = []
+        faces = []
         # start with a point
         nodes.append([])
         # extend everything along the axes
@@ -63,27 +90,65 @@ class Wireframe:
             begin = orgs[dim]
             end = begin + sizes[dim]
             node_count = len(nodes)
-            edge_count = len(edges)
+            # When we extend this shape into the next dimension, there will be:
+            # * twice as many nodes as before,
+            # * twice as many edges,
+            # * twice as many faces,
+            # * (and twice as many cubes, tesseracts, etc., but we ignore those)
+            # and their locations will be different,
+            # so copy the existing faces, edges and nodes...
+
+            new_faces = copy.deepcopy(faces)
+            for new_face in new_faces:
+                new_face[0] += node_count
+                new_face[1] += node_count
+                new_face[2] += node_count
+                new_face[3] += node_count
+
             new_edges = copy.deepcopy(edges)
-    ##        print('new edges b4', new_edges)
+            # ...adjust their node indices
+            # ...and create a face for every edge that has been moved
             for new_edge in new_edges:
+                # a face is 4 nodes; the first two are the ends of the edge before moving it;
+                face = [new_edge[0], new_edge[1]]
+                # adjust the location of the new edge
                 new_edge[0] += node_count
                 new_edge[1] += node_count
-    ##        print('new edges af', new_edges)
+                # the second 2 nodes of the face are the ends of the edge after moving it
+                face.append(new_edge[1])
+                face.append(new_edge[0])
+                # add a color for the face and save it
+                # face.append(new_edge[2])
+                # face.append(edge_color)
+                faces.append(face)
+
             new_nodes = []
+            # for every existing node...
             for ndx, node in enumerate(nodes):
+                # create a new node
                 new_node = node.copy()
+                # add the location in this dimension to the existing node
                 node.append(begin)
+                # add the location in this dimension to the new node
                 new_node.append(end)
+                # add the new node to a temporary list
                 new_nodes.append(new_node)
+                # extending this node into the next dimension creates another
+                # edge, identified by the two node indices
                 edges.append([ndx, ndx + node_count, edge_color])
+
+            # add these extended objects to the existing ones
+            faces.extend(new_faces)
             nodes.extend(new_nodes)
             edges.extend(new_edges)
 
-    ##    print('nodes', nodes)
-    ##    print('edges', edges)
+        # color the faces
+        for face in faces:
+            add_face_color(face, nodes)
+                
         self.add_nodes(nodes)
         self.add_edges(edges)
+        self.faces = faces
         self.add_center(center)
 
     def get_rotate_matrix(self, dim1, dim2, radians, a=None):
@@ -150,10 +215,26 @@ class Wireframe:
         return (meanX, meanY, meanZ)
 
     def sort_edges(self):
+        """Sort the edges so that the furthest away is first in the list,
+        and hence gets drawn first and is then overlaid by nearer ones.
+        "Furthest away" means furthest on the z-axis, and we use the
+        midpoint of the edge for this (except there's no need to divide
+        by 2 for each edge)
+        """
         def get_key(edge):
             return self.nodes[edge[0]][2] + self.nodes[edge[1]][2]
 
         self.edges.sort(key=get_key, reverse=True)
+
+    def sort_faces(self):
+        """See explanation for sort_edges()."""
+        def get_key(face):
+            return self.nodes[face[0]][2] +\
+                   self.nodes[face[1]][2] +\
+                   self.nodes[face[2]][2] +\
+                   self.nodes[face[3]][2]
+
+        self.faces.sort(key=get_key, reverse=True)
 
     def transform(self, matrix):
         """ Apply a transformation defined by a given matrix. """

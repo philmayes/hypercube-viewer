@@ -190,6 +190,10 @@ class App(tk.Frame):
         # add choices of what to display
         ctl = tk.Label(frame, text='Visibility:')
         ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)
+        self.show_faces = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show faces', variable=self.show_faces, command=self.on_faces)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
         self.show_edges = tk.IntVar(value=1)
         ctl = ttk.Checkbutton(frame, text='Show edges', variable=self.show_edges, command=self.on_edges)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
@@ -206,8 +210,8 @@ class App(tk.Frame):
         ctl = ttk.Checkbutton(frame, text='Show center', variable=self.show_center, command=self.on_center)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
-        self.perspective = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Perspective view', variable=self.perspective, command=self.on_perspective)
+        self.show_perspective = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Perspective view', variable=self.show_perspective, command=self.on_perspective)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
@@ -261,10 +265,12 @@ class App(tk.Frame):
         self.aspect.insert('1.0', self.data.aspects)
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
-        self.show_coords.set(self.data.show_coords)
+        self.show_faces.set(self.data.show_faces)
         self.show_edges.set(self.data.show_edges)
-        self.show_center.set(self.data.show_center)
         self.show_nodes.set(self.data.show_nodes)
+        self.show_coords.set(self.data.show_coords)
+        self.show_center.set(self.data.show_center)
+        self.show_perspective.set(self.data.show_perspective)
         self.set_dim()
 
     def on_angle(self, value):
@@ -315,6 +321,11 @@ class App(tk.Frame):
         self.data.show_edges = bool(self.show_edges.get())
         self.viewer.display()
 
+    def on_faces(self):
+        """The "show faces" checkbox has been clicked."""
+        self.data.show_faces = bool(self.show_faces.get())
+        self.viewer.display()
+
     def on_ghost(self, value):
         self.data.ghost = float(value)
 
@@ -331,13 +342,12 @@ class App(tk.Frame):
 
     def on_perspective(self):
         """The "show center" checkbox has been clicked."""
-        self.data.perspective = bool(self.perspective.get())
+        self.data.show_perspective = bool(self.show_perspective.get())
         self.viewer.display()
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
         action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
-        print(f'{action = }')
         self.viewer.take_action(action)
 
     def set_dim(self):
