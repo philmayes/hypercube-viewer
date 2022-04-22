@@ -17,13 +17,17 @@ class Data:
     """
 
     MISSING = 'attribute is missing'
+    MIN_SIZE = 100
+    MAX_SIZE = 4096
     re_aspects = re.compile(r'\d\d?(:\d\d?)+$')
+    re_view = re.compile(r'\s*(\d+)\s*[xX:]\s*(\d+)\s*$')
 
     def __init__(self):
         """Factory settings."""
         # settings for how the wireframe is constructed
         self.dims = 4
         self.aspects = '1:1'
+        self.viewer_size = '800x600'
 
         # settings for how the wireframe is displayed
         self.show_faces = False
@@ -37,9 +41,25 @@ class Data:
         self.ghost = 0.0
         self.angle = 15
 
+    def get_viewer_size(self):
+        """Test whether supplied string is valid for self.viewer_size."""
+        match = Data.re_view.match(self.viewer_size)
+        assert match is not None
+        return int(match.group(1)), int(match.group(2))
+
     def validate_aspects(self, aspects):
         """Test whether supplied string is valid for self.aspects."""
         return bool(Data.re_aspects.match(aspects))
+
+    def validate_viewer_size(self, viewer_size):
+        """Test whether supplied string is valid for self.viewer_size."""
+        match = Data.re_view.match(viewer_size)
+        if match:
+            x = int(match.group(1))
+            y = int(match.group(2))
+            if  Data.MIN_SIZE <= x <= Data.MAX_SIZE\
+            and Data.MIN_SIZE <= y <= Data.MAX_SIZE:
+                return x, y
 
     def load(self, fname):
         """Load and validate settings from a json file."""
@@ -60,8 +80,11 @@ class Data:
                     if type(value) is not type(existing):
                         print('Bad json: type is wrong:', key, value)
                         continue
-                    # perform additional validation(s) on the value
+                    # perform additional validation on certain values
                     if key == 'aspects' and not self.validate_aspects(value):
+                        print('Bad json: format is wrong:', key, value)
+                        continue
+                    if key == 'viewer_size' and not self.validate_viewer_size(value):
                         print('Bad json: format is wrong:', key, value)
                         continue
                     # everything looks good; use the json value

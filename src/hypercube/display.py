@@ -41,16 +41,13 @@ VIDEO_OUT = 'out.mp4'
 ESC = 27
 
 class Viewer:
-    """Display 3D objects on a screen."""
+    """Display 3D objects on a tkinter canvas."""
 
-    def __init__(self, width, height, data, widget=None):
-        self.width = width
-        self.height = height
+    def __init__(self, data, canvas=None):
         self.data = data
         # fraction of screen that the wireframe should occupy
         self.screen_fraction = 0.7
-        self.widget = widget
-        self.img = np.zeros((height, width, 3), np.uint8)
+        self.canvas = canvas
 
         # transform settings
         self.rotation = 0.0
@@ -67,12 +64,12 @@ class Viewer:
         # Flag when this is needed
         self.sort_edges = True
         self.sort_faces = True
-        self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
         if VIDEO_TMP:
-            self.video = cv2.VideoWriter(VIDEO_TMP,
-                                         cv2.VideoWriter_fourcc(*'XVID'),
-                                         FRAME_RATE,
-                                         (width,height))
+            pass
+            # self.video = cv2.VideoWriter(VIDEO_TMP,
+            #                              cv2.VideoWriter_fourcc(*'XVID'),
+            #                              FRAME_RATE,
+            #                              (width,height))
         else:
             self.video = None
         # self.init()
@@ -220,6 +217,10 @@ class Viewer:
         self.show_help ^= False
 
     def init(self):
+        """Initialize the viewer size and dimension count."""
+        self.width, self.height = self.data.get_viewer_size()
+        self.img = np.zeros((self.height, self.width, 3), np.uint8)
+        self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
         # calculate the pixel sizes for all dimensions:
         # get the aspect ratios for all dimensions and the largest ratio
         ratios = [int(r) for r in self.data.aspects.split(':')]
@@ -454,13 +455,12 @@ class Viewer:
 
     def show(self):
         """Display image on screen."""
-        if self.widget:
+        if self.canvas:
             image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(image)
-            image = ImageTk.PhotoImage(image)
-            self.widget.configure(image=image)
-            self.widget.image = image
-            self.widget.update()
+            self.image = ImageTk.PhotoImage(image)
+            self.canvas.create_image(0, 0, anchor='nw', image=self.image)
+            self.canvas.update()
         else:
             cv2.imshow("Wireframe Display", self.img)
 

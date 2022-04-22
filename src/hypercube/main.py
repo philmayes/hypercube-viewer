@@ -101,17 +101,36 @@ class App(tk.Frame):
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
-        self.left_frame.grid(row=0, column=0, rowspan=1, sticky=tk.NW)
-        self.add_user_controls(self.left_frame, 0, 0)
+        self.left_frame.grid(row=0, column=0, sticky=tk.NW)
+        self.add_controls(self.left_frame, 0, 0)
 
         # create a frame for display
         self.right_frame = tk.Frame(self)
-        self.right_frame.grid(row=0, column=1, rowspan=1, sticky=tk.NE)
-        self.widget = tk.Label(self.right_frame)
-        self.widget.grid(row=0, column=0, sticky=tk.N)
+        self.right_frame.grid(row=0, column=1, sticky=tk.NE)
+        self.canvas = tk.Canvas(self.right_frame, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
 
-        self.viewer = display.Viewer(1920, 1080, self.data, self.widget)
+        self.viewer = display.Viewer(self.data, self.canvas)
+
         self.load_settings()
+        self.set_view_size()
+
+    def add_controls(self, parent_frame, row, col):
+        """Add user control buttons to the window."""
+        # create a subframe and place it as requested
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, padx=2)
+        row = 0
+
+        # add setup controls
+        self.add_setup_controls(frame, row, 0)
+        row += 1
+
+        # add rotation controls
+        self.add_rotation_controls(frame, row, 0)
+        row += 1
+        self.add_movement_controls(frame, row, 0)
+        row += 1
 
     def add_movement_controls(self, parent_frame, row, col):
         """Add up/down/left/right controls to the window."""
@@ -182,9 +201,15 @@ class App(tk.Frame):
         # add control of aspect ratios
         ctl = tk.Label(frame, text='Aspect ratios:')
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.aspect = tk.Text(frame, height=1, width=15)
+        self.aspect = tk.Text(frame, height=1, width=10)
         self.aspect.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.aspect.bind("<KeyRelease>", lambda x: self.on_aspect())
+        row += 1
+
+        # add control of viewer size
+        ctl = tk.Label(frame, text='Viewing size:')
+        ctl.grid(row=row, column=0, sticky=tk.SW)
+        self.add_viewer_size_control(frame, row, 1)
         row += 1
 
         # add choices of what to display
@@ -235,22 +260,14 @@ class App(tk.Frame):
         self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
-    def add_user_controls(self, parent_frame, row, col):
-        """Add user control buttons to the window."""
-        # create a subframe and place it as requested
+    def add_viewer_size_control(self, parent_frame, row, col):
+        """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col, padx=2)
-        row = 0
-
-        # add setup controls
-        self.add_setup_controls(frame, row, 0)
-        row += 1
-
-        # add rotation controls
-        self.add_rotation_controls(frame, row, 0)
-        row += 1
-        self.add_movement_controls(frame, row, 0)
-        row += 1
+        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
+        self.viewer_size = tk.Text(frame, height=1, width=10)
+        self.viewer_size.grid(row=0, column=0, sticky=tk.W, pady=0)
+        ctl = tk.Button(frame, text="Apply", command=self.on_viewer_size)
+        ctl.grid(row=0, column=1, sticky=tk.E, padx=2)
 
     def action(self, value):
         """Pass the action through to the viewer.
@@ -263,6 +280,7 @@ class App(tk.Frame):
         """Load initial settings."""
         self.data.load(self.data_file)
         self.aspect.insert('1.0', self.data.aspects)
+        self.viewer_size.insert('1.0', self.data.viewer_size)
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
         self.show_faces.set(self.data.show_faces)
@@ -292,6 +310,20 @@ class App(tk.Frame):
             self.viewer.display()
         else:
             self.aspect.configure(bg='yellow')
+
+    def on_viewer_size(self):
+        """The viewer_size ratios have been changed.
+        
+        If they're valid, save them and rebuild the viewer,
+        else highlight the edit control in yellow
+        """
+        viewer_size = self.viewer_size.get('1.0', '1.99')
+        if self.data.validate_viewer_size(viewer_size):
+            self.data.viewer_size = viewer_size
+            self.viewer_size.configure(bg='white')
+            self.set_view_size()
+        else:
+            self.viewer_size.configure(bg='yellow')
 
     def on_center(self):
         """The "show center" checkbox has been clicked."""
@@ -357,6 +389,13 @@ class App(tk.Frame):
         # hide/show the dimension controls as appropriate
         for control in self.dim_controls:
             control.enable(dim)
+        self.viewer.init()
+        self.viewer.display()
+
+    def set_view_size(self):
+        """Set the viewing size from the values in data."""
+        x, y = self.data.get_viewer_size()
+        self.canvas.config(width=x, height=y)
         self.viewer.init()
         self.viewer.display()
 
