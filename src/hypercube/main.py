@@ -126,11 +126,24 @@ class App(tk.Frame):
         self.add_setup_controls(frame, row, 0)
         row += 1
 
+        # add setup controls
+        self.add_visibility_controls(frame, row, 0)
+        row += 1
+
         # add rotation controls
         self.add_rotation_controls(frame, row, 0)
         row += 1
         self.add_movement_controls(frame, row, 0)
         row += 1
+
+    def add_aspect_control(self, parent_frame, row, col):
+        """Add view size control to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
+        self.aspect = tk.Text(frame, height=1, width=15)
+        self.aspect.grid(row=0, column=0, sticky=tk.W)
+        ctl = tk.Button(frame, text="Apply", command=self.on_aspect)
+        ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
 
     def add_movement_controls(self, parent_frame, row, col):
         """Add up/down/left/right controls to the window."""
@@ -201,9 +214,7 @@ class App(tk.Frame):
         # add control of aspect ratios
         ctl = tk.Label(frame, text='Aspect ratios:')
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.aspect = tk.Text(frame, height=1, width=10)
-        self.aspect.grid(row=row, column=1, sticky=tk.W, pady=0)
-        self.aspect.bind("<KeyRelease>", lambda x: self.on_aspect())
+        self.add_aspect_control(frame, row, 1)
         row += 1
 
         # add control of viewer size
@@ -212,9 +223,28 @@ class App(tk.Frame):
         self.add_viewer_size_control(frame, row, 1)
         row += 1
 
+    def add_viewer_size_control(self, parent_frame, row, col):
+        """Add view size control to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
+        self.viewer_size = tk.Text(frame, height=1, width=15)
+        self.viewer_size.grid(row=0, column=0, sticky=tk.W)
+        ctl = tk.Button(frame, text="Apply", command=self.on_viewer_size)
+        ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
+
+    def add_visibility_controls(self, parent_frame, row, col):
+        """Add setup controls to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
+        row = 0
+        # add heading
+        ctl = tk.Label(frame, text='VISIBILITY', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
+
         # add choices of what to display
-        ctl = tk.Label(frame, text='Visibility:')
-        ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)
+        # ctl = tk.Label(frame, text='Visibility:')
+        # ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)
         self.show_faces = tk.IntVar(value=1)
         ctl = ttk.Checkbutton(frame, text='Show faces', variable=self.show_faces, command=self.on_faces)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
@@ -260,15 +290,6 @@ class App(tk.Frame):
         self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
-    def add_viewer_size_control(self, parent_frame, row, col):
-        """Add view size control to the window."""
-        frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        self.viewer_size = tk.Text(frame, height=1, width=10)
-        self.viewer_size.grid(row=0, column=0, sticky=tk.W, pady=0)
-        ctl = tk.Button(frame, text="Apply", command=self.on_viewer_size)
-        ctl.grid(row=0, column=1, sticky=tk.E, padx=2)
-
     def action(self, value):
         """Pass the action through to the viewer.
         
@@ -310,20 +331,6 @@ class App(tk.Frame):
             self.viewer.display()
         else:
             self.aspect.configure(bg='yellow')
-
-    def on_viewer_size(self):
-        """The viewer_size ratios have been changed.
-        
-        If they're valid, save them and rebuild the viewer,
-        else highlight the edit control in yellow
-        """
-        viewer_size = self.viewer_size.get('1.0', '1.99')
-        if self.data.validate_viewer_size(viewer_size):
-            self.data.viewer_size = viewer_size
-            self.viewer_size.configure(bg='white')
-            self.set_view_size()
-        else:
-            self.viewer_size.configure(bg='yellow')
 
     def on_center(self):
         """The "show center" checkbox has been clicked."""
@@ -381,6 +388,20 @@ class App(tk.Frame):
         """Rotate the wireframe."""
         action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
         self.viewer.take_action(action)
+
+    def on_viewer_size(self):
+        """The viewer_size ratios have been changed.
+        
+        If they're valid, save them and rebuild the viewer,
+        else highlight the edit control in yellow
+        """
+        viewer_size = self.viewer_size.get('1.0', '1.99')
+        if self.data.validate_viewer_size(viewer_size):
+            self.data.viewer_size = viewer_size
+            self.viewer_size.configure(bg='white')
+            self.set_view_size()
+        else:
+            self.viewer_size.configure(bg='yellow')
 
     def set_dim(self):
         """Set the number of dimensions to use."""
