@@ -34,6 +34,7 @@ class Data:
         self.show_edges = True
         self.show_nodes = False
         self.show_coords = False
+        self.show_steps = True
         self.show_center = False
         self.show_perspective = False
 

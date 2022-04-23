@@ -136,6 +136,9 @@ class App(tk.Frame):
         self.add_movement_controls(frame, row, 0)
         row += 1
 
+        self.add_recording_controls(frame, row, 0)
+        row += 1
+
     def add_aspect_control(self, parent_frame, row, col):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
@@ -163,6 +166,26 @@ class App(tk.Frame):
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
         ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.action, 'Mr'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+
+    def add_recording_controls(self, parent_frame, row, col):
+        """Add recording controls to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, sticky=tk.W)
+        row = 0
+        # add heading
+        ctl = tk.Label(frame, text='RECORDING', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
+        ctl = tk.Button(frame, text='Rewind', command=partial(self.record, 'V0'))
+        ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
+        ctl = tk.Button(frame, text='Record', command=partial(self.record, 'Vr'))
+        ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl = tk.Button(frame, text='Play', command=partial(self.record, 'Vp'))
+        ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        row += 1
+
+    def record(self, cmd):
+        self.viewer.take_action(cmd)
 
     def add_rotation_controls(self, parent_frame, row, col):
         """Add rotation controls to the window."""
@@ -261,6 +284,10 @@ class App(tk.Frame):
         ctl = ttk.Checkbutton(frame, text='Show coords', variable=self.show_coords, command=self.on_coords)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
+        self.show_steps = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show intermediate steps', variable=self.show_steps, command=self.on_steps)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
         self.show_center = tk.IntVar(value=1)
         ctl = ttk.Checkbutton(frame, text='Show center', variable=self.show_center, command=self.on_center)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
@@ -310,6 +337,7 @@ class App(tk.Frame):
         self.show_coords.set(self.data.show_coords)
         self.show_center.set(self.data.show_center)
         self.show_perspective.set(self.data.show_perspective)
+        self.show_steps.set(self.data.show_steps)
         self.set_dim()
 
     def on_angle(self, value):
@@ -388,6 +416,11 @@ class App(tk.Frame):
         """Rotate the wireframe."""
         action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
         self.viewer.take_action(action)
+
+    def on_steps(self):
+        """The "show intermediate steps" checkbox has been clicked."""
+        self.data.show_steps = bool(self.show_steps.get())
+        self.viewer.display()
 
     def on_viewer_size(self):
         """The viewer_size ratios have been changed.

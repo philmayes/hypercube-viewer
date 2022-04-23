@@ -364,7 +364,7 @@ class Viewer:
     def rotate_all(self, dim1, dim2, theta, dim3=-1):
         """Rotate all wireframes about their center, around one or two planes
             by a given angle."""
-        count = self.rotation_count
+        count = self.rotation_count if self.data.show_steps else 1
         delta = theta / count
         if dim3 < 0:
             # we're rotating about a single plane so move in regular steps
@@ -452,6 +452,7 @@ class Viewer:
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
+    re_video = re.compile(r'V([0rp])')
     re_zoom = re.compile(r'Z(\+|-)')
     def take_action(self, cmd):
         acted = True
@@ -469,6 +470,9 @@ class Viewer:
         elif match := Viewer.re_dim.match(cmd):
             self.data.dims = match.group(1)
             self.init()
+        elif match := Viewer.re_video.match(cmd):
+            self.video(match.group(1))
+            acted = False
         else:
             acted = False
         if acted:
@@ -486,6 +490,12 @@ class Viewer:
         wireframe.center[dim] += amount
         self.make_normalize_translations()
         self.display()
+
+    def video(self, cmd):
+        if cmd == 'r':
+            self.record()
+        elif cmd == 'p':
+            self.play_back()
 
     def write(self):
         """Takes about 80ms."""
