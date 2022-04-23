@@ -49,21 +49,12 @@ class Viewer:
         self.screen_fraction = 0.7
         self.canvas = canvas
 
-        # transform settings
-        self.rotation = 0.0
-        self.rotation_count = 1
-
         # visibility settings...
-        self.show_help = False
         self.save_to_video = False
         self.node_radius = 4
         self.center_radius = 1
         self.frame_time = 1 / FRAME_RATE
         self.frame_count = 0
-        # We sort the edges and faces in z-order so they display correctly.
-        # Flag when this is needed
-        self.sort_edges = True
-        self.sort_faces = True
         if VIDEO_TMP:
             pass
             # self.video = cv2.VideoWriter(VIDEO_TMP,
@@ -172,14 +163,6 @@ class Viewer:
                     text = str(values)
                     cv2.putText(self.img, text, (xy[0] + 5, xy[1] + 3), font, 0.5, colors.text)
 
-    def draw_text(self, text, y=30):
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        x = self.data.dims
-        lines = text.split('\n')
-        for line in lines:
-            cv2.putText(self.img, line, (x, y), font, 1, colors.text, 1, cv2.LINE_AA)
-            y += 30
-
     def get_xy(self, node):
         """Given a node, return orthogonal or perspective x,y
 
@@ -213,9 +196,6 @@ class Viewer:
             y += (vp[1] - node[1]) * f
         return (int(round(x)), int(round(y)))
 
-    def help(self):
-        self.show_help ^= False
-
     def init(self):
         """Initialize the viewer size and dimension count."""
         self.width, self.height = self.data.get_viewer_size()
@@ -239,6 +219,11 @@ class Viewer:
         self.wireframe = wf.Wireframe(self.data.dims)
         self.wireframe.add_shape_sizes(orgx, orgy, sizes)
         self.make_normalize_translations()
+
+        # We sort the edges and faces in z-order so they display correctly.
+        # These flags are set when this is needed.
+        self.sort_edges = True
+        self.sort_faces = True
 
         # initialize recording settings
         self.frames = []
