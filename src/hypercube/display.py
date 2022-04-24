@@ -37,7 +37,6 @@ cmd_to_values = {
     'd': (1, TRANSLATE),
     }
 FRAME_RATE = 30
-ESC = 27
 
 class Viewer:
     """Display hypercube objects on a tkinter canvas."""
@@ -48,13 +47,13 @@ class Viewer:
         # fraction of screen that the wireframe should occupy
         self.screen_fraction = 0.7
         self.canvas = canvas
+        self.actions = []
 
         # visibility settings...
         self.save_to_video = False
         self.node_radius = 4
         self.center_radius = 1
         self.frame_time = 1 / FRAME_RATE
-        self.frame_count = 0
 
     def display(self):
         t1 = time.process_time()
@@ -167,7 +166,7 @@ class Viewer:
             y += (vp[1] - node[1]) * f
         return (int(round(x)), int(round(y)))
 
-    def init(self):
+    def init(self, keep_history=False):
         """Initialize the viewer size and dimension count."""
         self.width, self.height = self.data.get_viewer_size()
         self.img = np.zeros((self.height, self.width, 3), np.uint8)
@@ -197,7 +196,8 @@ class Viewer:
         self.sort_faces = True
 
         # initialize recording settings
-        self.actions = []
+        if not keep_history:
+            self.actions = []
         self.recording = False
         self.playing_back = False
         self.video = None
@@ -310,23 +310,23 @@ class Viewer:
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
-    def take_action(self, cmd):
+    def take_action(self, action, keep_history=True):
         acted = True
-        if match := Viewer.re_rotate.match(cmd):
+        if match := Viewer.re_rotate.match(action):
             rotation = self.rotation if match.group(3) == '+' else -self.rotation
             self.rotate_all(int(match.group(1)), int(match.group(2)), rotation)
-        elif match := Viewer.re_zoom.match(cmd):
+        elif match := Viewer.re_zoom.match(action):
             if match.group(1) == '+':
                 self.scale_all(SCALE)
             else:
                 self.scale_all(1 / SCALE)
-        elif match := Viewer.re_move.match(cmd):
+        elif match := Viewer.re_move.match(action):
             dim, amount = cmd_to_values[match.group(1)]
             self.translate_all(dim, amount)
-        elif match := Viewer.re_dim.match(cmd):
+        elif match := Viewer.re_dim.match(action):
             self.data.dims = match.group(1)
             self.init()
-        elif match := Viewer.re_video.match(cmd):
+        elif match := Viewer.re_video.match(action):
             self.video(match.group(1))
             acted = False
         else:
@@ -338,6 +338,9 @@ class Viewer:
             self.show()
             # write to video if needed
             self.write()
+            # save the action for possible playback
+            if keep_history:
+                self.actions.append(action)
 
     def translate_all(self, dim, amount):
         """Translate all wireframes along a given axis by d units."""
@@ -355,4 +358,3 @@ class Viewer:
         """Takes about 80ms."""
         if self.video:
             self.video.write(self.img)
-            self.frame_count += 1

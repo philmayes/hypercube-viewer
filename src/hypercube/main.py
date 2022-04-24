@@ -189,7 +189,7 @@ class App(tk.Frame):
         ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
         ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
         row += 1
-        self.play_buttons = utils.ButtonPair(frame, ['Start replay', 'Stop replay'], None, row=row)
+        self.replay_buttons = utils.ButtonPair(frame, ['Start replay', 'Stop replay'], self.replay, row=row)
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
@@ -436,14 +436,28 @@ class App(tk.Frame):
         else:
             self.viewer_size.configure(bg='yellow')
 
-    def reset(self):
+    def replay(self, active):
+        """Replay the previous actions."""
+        if not active:
+            # replay has been stopped
+            return
+        keep_history=True
+        self.reset(keep_history)
+        for action in self.viewer.actions:
+            if not self.replay_buttons.active:
+                break
+            self.viewer.take_action(action, keep_history=False)
+        self.replay_buttons.stop()
+
+    def reset(self, keep_history=True):
         """The dimensions,aspect or view size has changed.
 
         Cancel possible recording and reinitialize the display instance.
         """
         self.rec_buttons.stop()
-        self.play_buttons.stop()
-        self.viewer.init()
+        if not keep_history:
+            self.replay_buttons.stop()
+        self.viewer.init(keep_history)
         self.viewer.display()
 
     def set_dim(self):
