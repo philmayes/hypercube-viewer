@@ -235,11 +235,13 @@ class Viewer:
 
     def record(self, state):
         if state:
+            types = (('mp4', 'mp4v'), ('avi', 'XVID'))
+            ext, codec = types[0]
             assert not self.video
-            fname = utils.make_filename('video', 'avi')
+            fname = utils.make_filename('video', ext)
             output = os.path.join(self.output_dir, fname)
             self.video = cv2.VideoWriter(output,
-                                         cv2.VideoWriter_fourcc(*'XVID'),
+                                         cv2.VideoWriter_fourcc(*codec),
                                          FRAME_RATE,
                                          (self.width, self.height))
         else:
