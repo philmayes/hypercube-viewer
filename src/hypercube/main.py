@@ -161,18 +161,18 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W)
         row = 0
-        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.action, 'Z-'))
+        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.viewer.take_action, 'Z-'))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.action, 'Mu'))
+        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.viewer.take_action, 'Mu'))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.action, 'Z+'))
+        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.viewer.take_action, 'Z+'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
         row += 1
-        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.action, 'Ml'))
+        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.viewer.take_action, 'Ml'))
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.action, 'Md'))
+        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.viewer.take_action, 'Md'))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.action, 'Mr'))
+        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.viewer.take_action, 'Mr'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
 
     def add_recording_controls(self, parent_frame, row, col):
@@ -321,13 +321,6 @@ class App(tk.Frame):
                               command=self.on_angle)
         self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
-
-    def action(self, value):
-        """Pass the action through to the viewer.
-        
-        This exists because tkinter controls are created before the viewer.
-        """
-        self.viewer.take_action(value)
 
     def load_settings(self):
         """Load initial settings."""
