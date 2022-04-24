@@ -353,8 +353,7 @@ class App(tk.Frame):
         if self.data.validate_aspects(aspects):
             self.data.aspects = aspects
             self.aspect.configure(bg='white')
-            self.viewer.init()
-            self.viewer.display()
+            self.reset()
         else:
             self.aspect.configure(bg='yellow')
 
@@ -437,6 +436,14 @@ class App(tk.Frame):
         else:
             self.viewer_size.configure(bg='yellow')
 
+    def reset(self):
+        """The dimensions,aspect or view size has changed.
+
+        Cancel possible recording and reinitialize the display instance.
+        """
+        self.viewer.init()
+        self.viewer.display()
+
     def set_dim(self):
         """Set the number of dimensions to use."""
         dim = self.data.dims
@@ -444,15 +451,13 @@ class App(tk.Frame):
         # hide/show the dimension controls as appropriate
         for control in self.dim_controls:
             control.enable(dim)
-        self.viewer.init()
-        self.viewer.display()
+        self.reset()
 
     def set_view_size(self):
         """Set the viewing size from the values in data."""
         x, y = self.data.get_viewer_size()
         self.canvas.config(width=x, height=y)
-        self.viewer.init()
-        self.viewer.display()
+        self.reset()
 
 
 if __name__ == '__main__':
