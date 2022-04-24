@@ -12,7 +12,7 @@ There are four primitive actions:
 
 import copy
 import math
-import random
+import os
 import re
 import subprocess
 import time
@@ -23,6 +23,7 @@ from PIL import Image
 from PIL import ImageTk
 
 import colors
+import utils
 import wireframe as wf
 
 ROTATION = np.pi / 24
@@ -36,15 +37,14 @@ cmd_to_values = {
     'd': (1, TRANSLATE),
     }
 FRAME_RATE = 30
-VIDEO_TMP = 'cv2.avi'
-VIDEO_OUT = 'out.mp4'
 ESC = 27
 
 class Viewer:
-    """Display 3D objects on a tkinter canvas."""
+    """Display hypercube objects on a tkinter canvas."""
 
-    def __init__(self, data, canvas=None):
+    def __init__(self, data, output_dir, canvas=None):
         self.data = data
+        self.output_dir = output_dir
         # fraction of screen that the wireframe should occupy
         self.screen_fraction = 0.7
         self.canvas = canvas
@@ -55,33 +55,6 @@ class Viewer:
         self.center_radius = 1
         self.frame_time = 1 / FRAME_RATE
         self.frame_count = 0
-        if VIDEO_TMP:
-            pass
-            # self.video = cv2.VideoWriter(VIDEO_TMP,
-            #                              cv2.VideoWriter_fourcc(*'XVID'),
-            #                              FRAME_RATE,
-            #                              (width,height))
-        else:
-            self.video = None
-        # self.init()
-
-    def convert_video(self):
-        """Convert the video format to .mp4.
-
-        Because the opencv .avi file is not readable by PowerDirector.
-        """
-
-        if self.frame_count > 0:
-            # usage: ffmpeg [options] [[infile options] -i infile]... {[outfile options] outfile}...
-            # -i f    input files
-            # -y        overwrite output files
-            # -r 30     frame rate
-            # -an       disable audio
-            exe = r'E:\devtools\ffmpeg\bin\ffmpeg.exe'
-            cmd = r'{0} -y -i {1} -y -r 30 -an {2}'.format(exe, VIDEO_TMP, VIDEO_OUT)
-            retcode = subprocess.call(cmd)
-            if retcode:
-                print('ffmpeg failure:', retcode)
 
     def display(self):
         t1 = time.process_time()
@@ -229,6 +202,7 @@ class Viewer:
         self.frames = []
         self.recording = False
         self.playing_back = False
+        self.video = None
 
         # remove any previous drawing
         cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
@@ -241,94 +215,6 @@ class Viewer:
         normalize = [-x for x in wireframe.center]
         self.norm_matrix = wireframe.get_translation_matrix(normalize)
         self.denorm_matrix = wireframe.get_translation_matrix(wireframe.center)
-
-    def make_video1(self):
-        dims = self.wireframe.dims
-        step = np.pi/400
-    ##        steps = [step] * 15
-        steps = [step * n for n in range(1,5)]
-        steps = [step * 4] * 5
-        steps.extend(reversed(steps))
-        self.display()
-        for dim1, dim2, count in (
-            (0, 1, 10),
-            (0, 2, 10),
-            (1, 2, 10),
-            (1, 3, 10),
-            (0, 3, 10),
-            (1, 4, 10),
-            (0, 4, 10),
-            (1, 5, 10),
-            (0, 5, 10),
-            ):
-            for rotation in steps[:count]:
-                self.rotate_all(dim1, dim2, rotation)
-                self.display()
-
-    def make_video2(self):
-        dims = self.wireframe.dims
-        step = np.pi/400
-##        steps = [step] * 15
-        steps = [step * n for n in range(1,5)]
-        steps = [step * 4] * 5
-        steps.extend(reversed(steps))
-        self.display()
-
-        for maxdim in range(3, dims):
-            for n in range(10):
-                # choose two dimensions at random
-                dim1 = random.randrange(2)
-                dim2 = random.randrange(2, maxdim)
-
-                # ignore it when both dimensions are the same
-                if dim1 != dim2:
-                    # normalize the dimensions
-                    if dim1 > dim2:
-                        dim1, dim2 = dim2, dim1
-                    #
-                    print(dim1, dim2)
-                    for rotation in steps:
-                        self.rotate_all(dim1, dim2, step)
-                        self.display()
-                        if dim1 != 0 and dim2 != 2:    # ie DRY
-                            self.rotate_all(0, 2, step * 4)
-                            self.display()
-
-    def make_video3(self):
-        dims = self.wireframe.dims
-        step = np.pi/40
-##        steps = [step] * 15
-        steps = [step * n for n in range(1,5)]
-        steps = [step * 4] * 5
-        steps.extend(reversed(steps))
-        self.display()
-
-        # run 3D for a bit, then 4D,...
-        for maxdim in range(3, dims + 1):
-            for n in range(10):
-                # choose two dimensions at random
-                # The 1st dimension is always 0/1, aka X or Y, as rotations in
-                # the other dimensions have no effect on the 2D projection
-                dim1 = random.randrange(2)
-                dim2 = random.randrange(2, maxdim)
-                # skip when both dimensions are the same
-                if dim1 != dim2:
-                    # normalize the dimensions
-                    if dim1 > dim2:
-                        dim1, dim2 = dim2, dim1
-                    print(dim1, dim2)
-                    # rotate XZ and YZ regularly
-                    rotate_dim1 = 1 if n & 8 else 0
-##                    rotate_dim1 = 1
-                    self.rotate_all(rotate_dim1, 2, step)
-                    self.display()
-                    if dim1 != 0 and dim2 != 2:    # ie DRY
-                        self.rotate_all(dim1, dim2, step)
-                        self.display()
-
-    # def make_video4(self):
-    #     for key in parse_commands('[ xxxwwwssssjjbb[f12\\'):
-    #         self.take_action(key)
 
     def play_back(self, reversed=False):
         if not self.playing_back:
@@ -347,14 +233,18 @@ class Viewer:
                 self.display()
             self.playing_back = False
 
-    def record(self):
-        assert not self.playing_back
-        if self.recording:
-            self.recording = False
+    def record(self, state):
+        if state:
+            assert not self.video
+            fname = utils.make_filename('video', 'avi')
+            output = os.path.join(self.output_dir, fname)
+            self.video = cv2.VideoWriter(output,
+                                         cv2.VideoWriter_fourcc(*'XVID'),
+                                         FRAME_RATE,
+                                         (self.width, self.height))
         else:
-            self.frames = []
-            self.save_frame()
-            self.recording = True
+            assert self.video
+            self.video = None
 
     def repeat_frame(self, count):
         """Wait for <count> frames."""
@@ -405,18 +295,6 @@ class Viewer:
         self.sort_edges = True
         self.sort_faces = True
 
-    def run(self):
-        """Process commands until finished."""
-        self.display()
-        while 1:
-            key = cv2.waitKeyEx(0)
-            print('Key:', chr(key) if 32 < key < 128 else hex(key))
-            if key == ESC or key < 0:
-                break
-            self.take_action(key)
-        self.convert_video()
-        cv2.destroyAllWindows()
-
     def save_frame(self):
         """Save wireframe without drawing or showing it."""
         self.frames.append(copy.copy(self.wireframe))
@@ -452,7 +330,6 @@ class Viewer:
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
-    re_video = re.compile(r'V([0rp])')
     re_zoom = re.compile(r'Z(\+|-)')
     def take_action(self, cmd):
         acted = True
@@ -476,8 +353,12 @@ class Viewer:
         else:
             acted = False
         if acted:
+            # Draw the wireframe onto the video surface
             self.draw()
+            # Show the video surface on the tkinter canvas
             self.show()
+            # write to video if needed
+            self.write()
 
     def translate_all(self, dim, amount):
         """Translate all wireframes along a given axis by d units."""
@@ -491,15 +372,8 @@ class Viewer:
         self.make_normalize_translations()
         self.display()
 
-    def video(self, cmd):
-        if cmd == 'r':
-            self.record()
-        elif cmd == 'p':
-            self.play_back()
-
     def write(self):
         """Takes about 80ms."""
-        if self.save_to_video:
-            if self.video:
-                self.video.write(self.img)
-                self.frame_count += 1
+        if self.video:
+            self.video.write(self.img)
+            self.frame_count += 1

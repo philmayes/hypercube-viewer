@@ -3,12 +3,15 @@
 
 import argparse
 from functools import partial
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk
 
 import colors
 import data
 import display
+import utils
 
 MAX_DIM = 10
 # construct all the planes where rotation is visible
@@ -74,6 +77,7 @@ class PlaneControl:
             self.color1.grid_remove()
             self.color2.grid_remove()
 
+
 class App(tk.Frame):
     def __init__(self, root=None):
         tk.Frame.__init__(self, root)
@@ -99,18 +103,22 @@ class App(tk.Frame):
         self.big_font = ('calibri', 16, 'bold')
         # self.bind_all('<Key>', self.on_key)
 
-        # create a frame for controls and add them
-        self.left_frame = tk.Frame(self)
-        self.left_frame.grid(row=0, column=0, sticky=tk.NW)
-        self.add_controls(self.left_frame, 0, 0)
-
         # create a frame for display
         self.right_frame = tk.Frame(self)
         self.right_frame.grid(row=0, column=1, sticky=tk.NE)
         self.canvas = tk.Canvas(self.right_frame, highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
 
-        self.viewer = display.Viewer(self.data, self.canvas)
+        # calculate the directory for output data
+        working = os.path.dirname(sys.argv[0])
+        joined = os.path.join(working, r'..\..\output')
+        output = os.path.normpath(joined)
+        self.viewer = display.Viewer(self.data, output, self.canvas)
+
+        # create a frame for controls and add them
+        self.left_frame = tk.Frame(self)
+        self.left_frame.grid(row=0, column=0, sticky=tk.NW)
+        self.add_controls(self.left_frame, 0, 0)
 
         self.load_settings()
         self.set_view_size()
@@ -172,20 +180,17 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W)
         row = 0
+        col = 0
         # add heading
         ctl = tk.Label(frame, text='RECORDING', font=self.big_font)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
-        ctl = tk.Button(frame, text='Rewind', command=partial(self.record, 'V0'))
-        ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
-        ctl = tk.Button(frame, text='Record', command=partial(self.record, 'Vr'))
-        ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text='Play', command=partial(self.record, 'Vp'))
-        ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
+        ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
+        ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
         row += 1
-
-    def record(self, cmd):
-        self.viewer.take_action(cmd)
+        utils.ButtonPair(frame, ['Start replay', 'Stop replay'], None, row=row)
+        row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
         """Add rotation controls to the window."""
@@ -421,6 +426,9 @@ class App(tk.Frame):
         """The "show intermediate steps" checkbox has been clicked."""
         self.data.show_steps = bool(self.show_steps.get())
         self.viewer.display()
+
+    def on_view_files(self):
+        os.startfile(self.viewer.output_dir)
 
     def on_viewer_size(self):
         """The viewer_size ratios have been changed.
