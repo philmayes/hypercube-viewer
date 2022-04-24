@@ -2,19 +2,17 @@
 """
 There are four primitive actions:
     plot    calculate new positions of nodes etc.
-    draw    project nodes onto a surface
-    show    show the surface on a window
-    write   write the surface to video
+    draw    project nodes onto an xy plane
+    show    show the xy plane on a window
+    write   write the xy plane to video
 
     display()   executes draw, show, write
 
 """
 
-import copy
 import math
 import os
 import re
-import subprocess
 import time
 
 import cv2
@@ -41,7 +39,7 @@ FRAME_RATE = 30
 class Viewer:
     """Display hypercube objects on a tkinter canvas."""
 
-    def __init__(self, data, output_dir, canvas=None):
+    def __init__(self, data, output_dir, canvas):
         self.data = data
         self.output_dir = output_dir
         # fraction of screen that the wireframe should occupy
@@ -70,7 +68,7 @@ class Viewer:
             time.sleep(pause)
 
     def draw(self):
-        """Draw the wireframe onto the video surface."""
+        """Draw the wireframe onto the xy plane."""
 
         if self.data.ghost:
             # leave a shadow of the previous frame
@@ -296,15 +294,12 @@ class Viewer:
         self.rotation_count = self.data.angle * 2
 
     def show(self):
-        """Display image on screen."""
-        if self.canvas:
-            image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(image)
-            self.image = ImageTk.PhotoImage(image)
-            self.canvas.create_image(0, 0, anchor='nw', image=self.image)
-            self.canvas.update()
-        else:
-            cv2.imshow("Wireframe Display", self.img)
+        """Display the xy plane on the tkinter canvas."""
+        image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+        image = Image.fromarray(image)
+        self.image = ImageTk.PhotoImage(image)
+        self.canvas.create_image(0, 0, anchor='nw', image=self.image)
+        self.canvas.update()
 
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
@@ -332,9 +327,9 @@ class Viewer:
         else:
             acted = False
         if acted:
-            # Draw the wireframe onto the video surface
+            # Draw the wireframe onto the xy plane
             self.draw()
-            # Show the video surface on the tkinter canvas
+            # Show the xy plane on the tkinter canvas
             self.show()
             # write to video if needed
             self.write()
