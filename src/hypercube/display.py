@@ -58,8 +58,6 @@ class Viewer:
 
     def display(self):
         t1 = time.process_time()
-        if self.recording:
-            self.save_frame()
         self.draw()
         self.show()
         self.write()
@@ -199,7 +197,7 @@ class Viewer:
         self.sort_faces = True
 
         # initialize recording settings
-        self.frames = []
+        self.actions = []
         self.recording = False
         self.playing_back = False
         self.video = None
@@ -215,23 +213,6 @@ class Viewer:
         normalize = [-x for x in wireframe.center]
         self.norm_matrix = wireframe.get_translation_matrix(normalize)
         self.denorm_matrix = wireframe.get_translation_matrix(wireframe.center)
-
-    def play_back(self, reversed=False):
-        if not self.playing_back:
-            self.playing_back = True
-            self.recording = False
-            if reversed:
-                start = len(self.frames) - 1
-                stop = -1
-                step = -1
-            else:
-                start = 0
-                stop = len(self.frames)
-                step = 1
-            for index in range(start, stop, step):
-                self.wireframe = self.frames[index]
-                self.display()
-            self.playing_back = False
 
     def record(self, state):
         if state:
@@ -296,10 +277,6 @@ class Viewer:
                 self.scale_all(ROTATION_SCALE, 1)
         self.sort_edges = True
         self.sort_faces = True
-
-    def save_frame(self):
-        """Save wireframe without drawing or showing it."""
-        self.frames.append(copy.copy(self.wireframe))
 
     def scale_all(self, scale, count=10):
         """Scale all wireframes by a given scale, centered on the center of the wireframe."""
