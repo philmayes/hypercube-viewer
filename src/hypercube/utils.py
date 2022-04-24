@@ -6,7 +6,7 @@ class ButtonPair:
 
     states = (tk.NORMAL, tk.DISABLED)
 
-    def __init__(self, frame, text: [], callback, row=0, col=0):
+    def __init__(self, frame, text: list[str], callback, row=0, col=0):
         self.buttons = []
         self.callback = callback
         self.active = 0
@@ -23,6 +23,10 @@ class ButtonPair:
             btn["state"] = ButtonPair.states[n ^ self.active]
         self.callback(self.active)
 
+    def stop(self):
+        """If the control is active, cancel it."""
+        if self.active:
+            self.passthrough()
 
 def make_filename(prefix: str, ext: str):
     """Create a filename that includes date and time."""

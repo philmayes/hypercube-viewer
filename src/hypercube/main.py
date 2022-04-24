@@ -185,11 +185,11 @@ class App(tk.Frame):
         ctl = tk.Label(frame, text='RECORDING', font=self.big_font)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
-        utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
+        self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
         ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
         ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
         row += 1
-        utils.ButtonPair(frame, ['Start replay', 'Stop replay'], None, row=row)
+        self.play_buttons = utils.ButtonPair(frame, ['Start replay', 'Stop replay'], None, row=row)
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
@@ -441,6 +441,8 @@ class App(tk.Frame):
 
         Cancel possible recording and reinitialize the display instance.
         """
+        self.rec_buttons.stop()
+        self.play_buttons.stop()
         self.viewer.init()
         self.viewer.display()
 
