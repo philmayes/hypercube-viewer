@@ -130,7 +130,7 @@ class Viewer:
 
         if self.data.show_center:
             cv2.circle(self.img,
-                       (wireframe.center[0], wireframe.center[1]),
+                       (self.get_xy(wireframe.center)),
                        self.center_radius,
                        colors.center,
                        -1)
