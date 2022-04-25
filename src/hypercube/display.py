@@ -53,6 +53,48 @@ class Viewer:
         self.center_radius = 1
         self.frame_time = 1 / FRAME_RATE
 
+    def init(self, playback=False):
+        """Initialize the viewer size and dimension count."""
+        self.width, self.height = self.data.get_viewer_size()
+        self.img = np.zeros((self.height, self.width, 3), np.uint8)
+        self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
+        # calculate the pixel sizes for all dimensions:
+        # get the aspect ratios for all dimensions and the largest ratio
+        ratios = [int(r) for r in self.data.aspects.split(':')]
+        max_r = max(ratios)
+        # calculate the size of the largest dimension in pixels
+        screen_size = min(self.width, self.height) * self.screen_fraction
+        # scale all dimensions to that one
+        sizes = [screen_size * r / max_r for r in ratios]
+        self.set_rotation()
+
+        # calculate top left position
+        orgx = (self.width - sizes[0]) / 2
+        orgy = (self.height - sizes[1]) / 2
+
+        # construct a wireframe object
+        self.wireframe = wf.Wireframe(self.data.dims)
+        self.wireframe.add_shape_sizes(orgx, orgy, sizes)
+        self.make_normalize_translations()
+
+        # We sort the edges and faces in z-order so they display correctly.
+        # These flags are set when this is needed.
+        self.sort_edges = True
+        self.sort_faces = True
+
+        # initialize recording settings
+        # When initializing the viweer for playing back, we:
+        # * skip clearing the list of actions;
+        # * continue to let video recording run;
+        if not playback:
+            self.actions = []
+            self.recording = False
+            self.playing_back = False
+            self.video = None
+
+        # remove any previous drawing
+        cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
+
     def display(self):
         t1 = time.process_time()
         self.draw()
@@ -163,50 +205,6 @@ class Viewer:
             x += (vp[0] - node[0]) * f
             y += (vp[1] - node[1]) * f
         return (int(round(x)), int(round(y)))
-
-    def init(self, playback=False):
-        """Initialize the viewer size and dimension count."""
-        self.width, self.height = self.data.get_viewer_size()
-        self.img = np.zeros((self.height, self.width, 3), np.uint8)
-        self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
-        # calculate the pixel sizes for all dimensions:
-        # get the aspect ratios for all dimensions and the largest ratio
-        ratios = [int(r) for r in self.data.aspects.split(':')]
-        max_r = max(ratios)
-        # calculate the size of the largest dimension in pixels
-        screen_size = min(self.width, self.height) * self.screen_fraction
-        # scale all dimensions to that one
-        sizes = [screen_size * r / max_r for r in ratios]
-        self.set_rotation()
-
-        # calculate top left position
-        orgx = (self.width - sizes[0]) / 2
-        orgy = (self.height - sizes[1]) / 2
-
-        # construct a wireframe object
-        self.wireframe = wf.Wireframe(self.data.dims)
-        self.wireframe.add_shape_sizes(orgx, orgy, sizes)
-        self.make_normalize_translations()
-
-        # We sort the edges and faces in z-order so they display correctly.
-        # These flags are set when this is needed.
-        self.sort_edges = True
-        self.sort_faces = True
-
-        # initialize recording settings
-        # When initializing the viweer for playing back, we:
-        # * skip clearing the list of actions;
-        # * continue to let video recording run;
-        if not playback:
-            self.actions = []
-            self.recording = False
-            self.playing_back = False
-            self.video = None
-
-        # remove any previous drawing
-        cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
-        # request redraw (for when called via keystroke)
-        return True
 
     def make_normalize_translations(self):
         """Make 2 matrices for moving to (0,0,0,...) and back."""
