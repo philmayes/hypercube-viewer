@@ -37,6 +37,7 @@ class Data:
         self.show_steps = True
         self.show_center = False
         self.show_perspective = False
+        self.show_vp = False
 
         # settings for how the wireframe is rotated
         self.ghost = 0.0

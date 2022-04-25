@@ -301,6 +301,10 @@ class App(tk.Frame):
         ctl = ttk.Checkbutton(frame, text='Perspective view', variable=self.show_perspective, command=self.on_perspective)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
+        self.show_vp = tk.IntVar(value=1)
+        ctl = ttk.Checkbutton(frame, text='Show vanishing point', variable=self.show_vp, command=self.on_vp)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
 
         # add a slider to control amount of ghosting
         ctl = tk.Label(frame, text='Amount of ghosting:')
@@ -335,6 +339,7 @@ class App(tk.Frame):
         self.show_coords.set(self.data.show_coords)
         self.show_center.set(self.data.show_center)
         self.show_perspective.set(self.data.show_perspective)
+        self.show_vp.set(self.data.show_vp)
         self.show_steps.set(self.data.show_steps)
         self.set_dim()
 
@@ -436,12 +441,16 @@ class App(tk.Frame):
         else:
             self.viewer_size.configure(bg='yellow')
 
+    def on_vp(self):
+        """The "show vanishing point" checkbox has been clicked."""
+        self.data.show_vp = bool(self.show_vp.get())
+        self.viewer.display()
+
     def replay(self, active):
         """Replay the previous actions."""
         if not active:
             # replay has been stopped
             return
-        # self.reset(playback=True)
         # reinitialize the viewer, but leave the playback and recording states untouched
         self.viewer.init(playback=True)
         self.viewer.display()

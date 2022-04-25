@@ -33,10 +33,12 @@ def hex_to_bgr(s):
     """Convert a string of 6 hex values into a BGR 3-tuple."""
     return int(s[4:6], 16), int(s[2:4], 16), int(s[0:2], 16)
 
+# These colors are in the opencv format of BGR
 node = (255,255,255)
 center = (255,255,255)
+vp = (244,208,140)      # vanishing point: a shade of aqua
 text = (200, 200, 250)
-bg = (0, 0, 0)      # must be zeros so we can fade to black in .draw()
+bg = (0, 0, 0)          # must be zeros so we can fade to black in .draw()
 names = (
     ('ff0000', 'red'),
     ('00ffff', 'aqua'),

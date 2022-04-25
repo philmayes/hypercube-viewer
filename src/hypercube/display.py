@@ -48,16 +48,17 @@ class Viewer:
         self.actions = []
 
         # visibility settings...
-        self.save_to_video = False
         self.node_radius = 4
         self.center_radius = 1
+        self.vp_radius = 2
         self.frame_time = 1 / FRAME_RATE
 
     def init(self, playback=False):
         """Initialize the viewer size and dimension count."""
         self.width, self.height = self.data.get_viewer_size()
         self.img = np.zeros((self.height, self.width, 3), np.uint8)
-        self.vanishing_point = [self.width/2, self.height/2, self.width * 2]
+        # set the vanishing point
+        self.vp = [int(round(self.width/2)), int(round(self.height/2)), self.width * 2]
         # calculate the pixel sizes for all dimensions:
         # get the aspect ratios for all dimensions and the largest ratio
         ratios = [int(r) for r in self.data.aspects.split(':')]
@@ -120,6 +121,13 @@ class Viewer:
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
 
         wireframe = self.wireframe
+        if self.data.show_vp:
+            cv2.circle(self.img,
+                       (self.vp[0], self.vp[1]),
+                       self.vp_radius,
+                       colors.vp,
+                       -1)
+
         if self.data.show_center:
             cv2.circle(self.img,
                        (wireframe.center[0], wireframe.center[1]),
@@ -200,7 +208,7 @@ class Viewer:
         x = node[0]
         y = node[1]
         if self.data.show_perspective:
-            vp = self.vanishing_point
+            vp = self.vp
             f = node[2] / vp[2]
             x += (vp[0] - node[0]) * f
             y += (vp[1] - node[1]) * f
