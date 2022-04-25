@@ -449,7 +449,7 @@ class App(tk.Frame):
             self.viewer.take_action(action, keep_history=False)
         self.replay_buttons.stop()
 
-    def reset(self, keep_history=True):
+    def reset(self, keep_history=False):
         """The dimensions,aspect or view size has changed.
 
         Cancel possible recording and reinitialize the display instance.

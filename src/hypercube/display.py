@@ -326,20 +326,24 @@ class Viewer:
             acted = False
         else:
             acted = False
+
         if acted:
             # Draw the wireframe onto the xy plane
             self.draw()
             # Show the xy plane on the tkinter canvas
             self.show()
-            # write to video if needed
+            # Write to video if needed
             self.write()
-            # save the action for possible playback
+            # Save the action for possible playback
+            # We /don't/ keep history when the history is being played back
             if keep_history:
                 self.actions.append(action)
 
     def translate_all(self, dim, amount):
-        """Translate all wireframes along a given axis by d units."""
+        """Translate (move) the wireframe along a given axis by a certain amount.
 
+        In practise, dim is always 0 or 1.
+        """
         wireframe = self.wireframe
         vector = [0] * wireframe.dims
         vector[dim] = amount

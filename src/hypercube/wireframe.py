@@ -62,9 +62,6 @@ class Wireframe:
     def add_edges(self, edgeList):
         self.edges += edgeList
 
-    def add_center(self, center):
-        self.center = center
-
     def add_shape_sizes(self, orgx=50, orgy=50, sizes=[200]):
         """ Create a shape and set up its nodes and edges."""
 
@@ -149,7 +146,7 @@ class Wireframe:
         self.add_nodes(nodes)
         self.add_edges(edges)
         self.faces = faces
-        self.add_center(center)
+        self.center = center
 
     def get_rotate_matrix(self, dim1, dim2, radians, a=None):
         """ Return matrix for rotating about the x-axis by 'radians' radians """
