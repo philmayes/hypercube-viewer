@@ -441,23 +441,24 @@ class App(tk.Frame):
         if not active:
             # replay has been stopped
             return
-        keep_history=True
-        self.reset(keep_history)
+        # self.reset(playback=True)
+        # reinitialize the viewer, but leave the playback and recording states untouched
+        self.viewer.init(playback=True)
+        self.viewer.display()
         for action in self.viewer.actions:
             if not self.replay_buttons.active:
                 break
-            self.viewer.take_action(action, keep_history=False)
+            self.viewer.take_action(action, playback=False)
         self.replay_buttons.stop()
 
-    def reset(self, keep_history=False):
+    def reset(self):
         """The dimensions,aspect or view size has changed.
 
-        Cancel possible recording and reinitialize the display instance.
+        Reinitialize the viewer with the current values set up in .data.
         """
         self.rec_buttons.stop()
-        if not keep_history:
-            self.replay_buttons.stop()
-        self.viewer.init(keep_history)
+        self.replay_buttons.stop()
+        self.viewer.init()
         self.viewer.display()
 
     def set_dim(self):

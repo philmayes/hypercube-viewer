@@ -164,7 +164,7 @@ class Viewer:
             y += (vp[1] - node[1]) * f
         return (int(round(x)), int(round(y)))
 
-    def init(self, keep_history=False):
+    def init(self, playback=False):
         """Initialize the viewer size and dimension count."""
         self.width, self.height = self.data.get_viewer_size()
         self.img = np.zeros((self.height, self.width, 3), np.uint8)
@@ -194,11 +194,14 @@ class Viewer:
         self.sort_faces = True
 
         # initialize recording settings
-        if not keep_history:
+        # When initializing the viweer for playing back, we:
+        # * skip clearing the list of actions;
+        # * continue to let video recording run;
+        if not playback:
             self.actions = []
-        self.recording = False
-        self.playing_back = False
-        self.video = None
+            self.recording = False
+            self.playing_back = False
+            self.video = None
 
         # remove any previous drawing
         cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
@@ -214,18 +217,12 @@ class Viewer:
 
     def record(self, state):
         if state:
-            types = (('mp4', 'mp4v'), ('avi', 'XVID'))
-            ext, codec = types[0]
             assert not self.video
-            fname = utils.make_filename('video', ext)
-            output = os.path.join(self.output_dir, fname)
-            self.video = cv2.VideoWriter(output,
-                                         cv2.VideoWriter_fourcc(*codec),
-                                         FRAME_RATE,
-                                         (self.width, self.height))
+            assert not self.recording
+            self.recording = True
         else:
-            assert self.video
             self.video = None
+            self.recording = False
 
     def repeat_frame(self, count):
         """Wait for <count> frames."""
@@ -305,7 +302,7 @@ class Viewer:
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
-    def take_action(self, action, keep_history=True):
+    def take_action(self, action, playback=True):
         acted = True
         if match := Viewer.re_rotate.match(action):
             rotation = self.rotation if match.group(3) == '+' else -self.rotation
@@ -336,8 +333,23 @@ class Viewer:
             self.write()
             # Save the action for possible playback
             # We /don't/ keep history when the history is being played back
-            if keep_history:
+            if playback:
                 self.actions.append(action)
+
+    def start_video(self):
+        if not self.video:
+            types = (('mp4', 'mp4v'), ('avi', 'XVID'))
+            ext, codec = types[0]
+            assert not self.video
+            fname = utils.make_filename('video', ext)
+            output = os.path.join(self.output_dir, fname)
+            self.video = cv2.VideoWriter(output,
+                                         cv2.VideoWriter_fourcc(*codec),
+                                         FRAME_RATE,
+                                         (self.width, self.height))
+        else:
+            # I /think/ start_video is only called when there isn't one
+            assert 0
 
     def translate_all(self, dim, amount):
         """Translate (move) the wireframe along a given axis by a certain amount.
@@ -354,6 +366,14 @@ class Viewer:
         self.display()
 
     def write(self):
-        """Takes about 80ms."""
-        if self.video:
+        """Write the current xy plane to a video file.
+
+        Takes about 80ms.
+        """
+        if self.recording:
+            # By deferring file creation until an actual write is issued,
+            # we avoid creating an empty video file when the user starts
+            # and then stops video recording.
+            if not self.video:
+                self.start_video()
             self.video.write(self.img)
