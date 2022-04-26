@@ -393,7 +393,8 @@ class App(tk.Frame):
 
     def on_depth(self, value):
         self.data.depth = float(value)
-        self.viewer.take_action(f'P{self.data.depth}', False)
+        self.viewer.set_depth()
+        self.viewer.display()
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
@@ -462,7 +463,10 @@ class App(tk.Frame):
         self.viewer.display()
 
     def replay(self, active):
-        """Replay the previous actions."""
+        """Callback for button pair.
+        
+        Either replay the previous actions or stop replaying.
+        """
         if not active:
             # replay has been stopped
             return
@@ -470,9 +474,10 @@ class App(tk.Frame):
         self.viewer.init(playback=True)
         self.viewer.display()
         for action in self.viewer.actions:
+            # stop playing back if the user has canceled
             if not self.replay_buttons.active:
                 break
-            self.viewer.take_action(action, playback=False)
+            self.viewer.take_action(action, playback=True)
         self.replay_buttons.stop()
 
     def reset(self):

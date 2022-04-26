@@ -295,6 +295,10 @@ class Viewer:
             wireframe.transform(self.denorm_matrix)
             self.display()
 
+    def set_depth(self):
+        """The perspective depth has changed."""
+        self.vp[2] = int(round(self.width * self.data.depth))
+
     def set_rotation(self):
         self.rotation = float(self.data.angle) * np.pi / 180
         self.rotation_count = self.data.angle * 2
@@ -309,10 +313,9 @@ class Viewer:
 
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
-    re_perspective = re.compile(r'P(\d+\.\d*)')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
-    def take_action(self, action, playback=True):
+    def take_action(self, action, playback=False):
         acted = True
         if match := Viewer.re_rotate.match(action):
             rotation = self.rotation if match.group(3) == '+' else -self.rotation
@@ -328,9 +331,6 @@ class Viewer:
         elif match := Viewer.re_dim.match(action):
             self.data.dims = match.group(1)
             self.init()
-        elif match := Viewer.re_perspective.match(action):
-            self.data.depth = float(match.group(1))
-            self.vp[2] = int(round(self.width * self.data.depth))
         elif match := Viewer.re_video.match(action):
             self.video(match.group(1))
             acted = False
@@ -346,7 +346,7 @@ class Viewer:
             self.write()
             # Save the action for possible playback
             # We /don't/ keep history when the history is being played back
-            if playback:
+            if not playback:
                 self.actions.append(action)
 
     def start_video(self):
