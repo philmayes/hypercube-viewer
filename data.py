@@ -6,9 +6,7 @@ import sys
 def get_location():
     """Get the location of the data file."""
     rel_dir = os.path.dirname(sys.argv[0])
-    abs_dir = os.path.abspath(rel_dir)
-    json_file = os.path.join(abs_dir, '../../settings/values.json')
-    return os.path.normpath(json_file)
+    return os.path.join(rel_dir, r'settings\values.json')
 
 class Data:
     """A class to hold persistent data.

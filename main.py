@@ -111,8 +111,7 @@ class App(tk.Frame):
 
         # calculate the directory for output data
         working = os.path.dirname(sys.argv[0])
-        joined = os.path.join(working, r'..\..\output')
-        output = os.path.normpath(joined)
+        output = os.path.join(working, r'output')
         self.viewer = display.Viewer(self.data, output, self.canvas)
 
         # create a frame for controls and add them
