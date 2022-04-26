@@ -38,9 +38,10 @@ class Data:
         self.show_center = False
         self.show_perspective = False
         self.show_vp = False
+        self.depth = 2.0
+        self.ghost = 0.0
 
         # settings for how the wireframe is rotated
-        self.ghost = 0.0
         self.angle = 15
 
     def get_viewer_size(self):

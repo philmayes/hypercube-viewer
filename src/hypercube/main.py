@@ -306,6 +306,16 @@ class App(tk.Frame):
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
+        # add a slider to control perspective depth
+        ctl = tk.Label(frame, text='Depth of perspective:')
+        ctl.grid(row=row, column=0, sticky=tk.SW)
+        self.depth = tk.Scale(frame, from_=2.0, to=10.0,
+                              resolution=0.5,
+                              orient=tk.HORIZONTAL,
+                              command=self.on_depth)
+        self.depth.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
+
         # add a slider to control amount of ghosting
         ctl = tk.Label(frame, text='Amount of ghosting:')
         ctl.grid(row=row, column=0, sticky=tk.SW)
@@ -331,6 +341,7 @@ class App(tk.Frame):
         self.data.load(self.data_file)
         self.aspect.insert('1.0', self.data.aspects)
         self.viewer_size.insert('1.0', self.data.viewer_size)
+        self.depth.set(self.data.depth)
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
         self.show_faces.set(self.data.show_faces)
@@ -379,6 +390,10 @@ class App(tk.Frame):
         """The "show coords" checkbox has been clicked."""
         self.data.show_coords = bool(self.show_coords.get())
         self.viewer.display()
+
+    def on_depth(self, value):
+        self.data.depth = float(value)
+        self.viewer.take_action(f'P{self.data.depth}', False)
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""

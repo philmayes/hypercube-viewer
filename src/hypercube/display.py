@@ -57,8 +57,11 @@ class Viewer:
         """Initialize the viewer size and dimension count."""
         self.width, self.height = self.data.get_viewer_size()
         self.img = np.zeros((self.height, self.width, 3), np.uint8)
-        # set the vanishing point
-        self.vp = [int(round(self.width/2)), int(round(self.height/2)), self.width * 2]
+        # set the vanishing point in the middle of the screen
+        # and somewhere along the z-axis
+        self.vp = [int(round(self.width/2)),
+                   int(round(self.height/2)),
+                   int(round(self.width * self.data.depth))]
         # calculate the pixel sizes for all dimensions:
         # get the aspect ratios for all dimensions and the largest ratio
         ratios = [int(r) for r in self.data.aspects.split(':')]
@@ -306,6 +309,7 @@ class Viewer:
 
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
+    re_perspective = re.compile(r'P(\d+\.\d*)')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
     def take_action(self, action, playback=True):
@@ -324,6 +328,9 @@ class Viewer:
         elif match := Viewer.re_dim.match(action):
             self.data.dims = match.group(1)
             self.init()
+        elif match := Viewer.re_perspective.match(action):
+            self.data.depth = float(match.group(1))
+            self.vp[2] = int(round(self.width * self.data.depth))
         elif match := Viewer.re_video.match(action):
             self.video(match.group(1))
             acted = False
