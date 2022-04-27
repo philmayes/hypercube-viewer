@@ -37,7 +37,7 @@ class Data:
         self.show_perspective = False
         self.show_vp = False
         self.depth = 2.0
-        self.ghost = 0.0
+        self.ghost = 0
 
         # settings for how the wireframe is rotated
         self.angle = 15

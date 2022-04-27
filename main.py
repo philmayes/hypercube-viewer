@@ -150,7 +150,7 @@ class App(tk.Frame):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        self.aspect = tk.Text(frame, height=1, width=15)
+        self.aspect = tk.Entry(frame, width=15)
         self.aspect.grid(row=0, column=0, sticky=tk.W)
         ctl = tk.Button(frame, text="Apply", command=self.on_aspect)
         ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
@@ -254,7 +254,7 @@ class App(tk.Frame):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        self.viewer_size = tk.Text(frame, height=1, width=15)
+        self.viewer_size = tk.Entry(frame, width=15)
         self.viewer_size.grid(row=0, column=0, sticky=tk.W)
         ctl = tk.Button(frame, text="Apply", command=self.on_viewer_size)
         ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
@@ -318,8 +318,8 @@ class App(tk.Frame):
         # add a slider to control amount of ghosting
         ctl = tk.Label(frame, text='Amount of ghosting:')
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.ghost = tk.Scale(frame, to=1.0,
-                              resolution=0.05,
+        self.ghost = tk.Scale(frame, to=10,
+                              resolution=1,
                               orient=tk.HORIZONTAL,
                               command=self.on_ghost)
         self.ghost.grid(row=row, column=1, sticky=tk.W, pady=0)
@@ -338,8 +338,8 @@ class App(tk.Frame):
     def load_settings(self):
         """Load initial settings."""
         self.data.load(self.data_file)
-        self.aspect.insert('1.0', self.data.aspects)
-        self.viewer_size.insert('1.0', self.data.viewer_size)
+        self.aspect.insert(0, self.data.aspects)
+        self.viewer_size.insert(0, self.data.viewer_size)
         self.depth.set(self.data.depth)
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
@@ -364,7 +364,7 @@ class App(tk.Frame):
         If they're valid, save them and rebuild the viewer,
         else highlight the edit control in yellow
         """
-        aspects = self.aspect.get('1.0', '1.99')
+        aspects = self.aspect.get()
         if self.data.validate_aspects(aspects):
             self.data.aspects = aspects
             self.aspect.configure(bg='white')
@@ -411,7 +411,7 @@ class App(tk.Frame):
         self.viewer.display()
 
     def on_ghost(self, value):
-        self.data.ghost = float(value)
+        self.data.ghost = int(value)
 
     def on_key(self, event):
         print('on key', event)
@@ -448,7 +448,7 @@ class App(tk.Frame):
         If they're valid, save them and rebuild the viewer,
         else highlight the edit control in yellow
         """
-        viewer_size = self.viewer_size.get('1.0', '1.99')
+        viewer_size = self.viewer_size.get()
         if self.data.validate_viewer_size(viewer_size):
             self.data.viewer_size = viewer_size
             self.viewer_size.configure(bg='white')

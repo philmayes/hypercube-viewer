@@ -39,6 +39,20 @@ FRAME_RATE = 30
 class Viewer:
     """Display hypercube objects on a tkinter canvas."""
 
+    ghost_to_factor = {
+        0: 0.0,
+        1: 0.6,
+        2: 0.7,
+        3: 0.75,
+        4: 0.8,
+        5: 0.85,
+        6: 0.9,
+        7: 0.95,
+        8: 0.98,
+        9: 0.99,
+        10: 1.0,
+    }
+
     def __init__(self, data, output_dir, canvas):
         self.data = data
         self.output_dir = output_dir
@@ -118,13 +132,14 @@ class Viewer:
 
         if self.data.ghost:
             # leave a shadow of the previous frame
-            np.multiply(self.img, self.data.ghost, out=self.img, casting='unsafe')
+            factor = Viewer.ghost_to_factor[self.data.ghost]
+            np.multiply(self.img, factor, out=self.img, casting='unsafe')
         else:
             # clear the previous frame
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
 
         wireframe = self.wireframe
-        if self.data.show_vp:
+        if self.data.show_vp and self.data.show_perspective:
             cv2.circle(self.img,
                        (self.vp[0], self.vp[1]),
                        self.vp_radius,
