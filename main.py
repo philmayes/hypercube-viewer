@@ -100,7 +100,7 @@ class App(tk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.winfo_toplevel().title('Hypercube')
-        self.big_font = ('calibri', 16, 'bold')
+        self.big_font = ('calibri', 14, 'bold')
         # self.bind_all('<Key>', self.on_key)
 
         # create a frame for display
@@ -123,26 +123,39 @@ class App(tk.Frame):
         self.set_view_size()
 
     def add_controls(self, parent_frame, row, col):
-        """Add user control buttons to the window."""
+        """Add user controls to the window."""
         # create a subframe and place it as requested
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, padx=2)
         row = 0
 
         # add setup controls
+        ctl = tk.Label(frame, text='SETUP', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
         self.add_setup_controls(frame, row, 0)
         row += 1
 
-        # add setup controls
+        # add visibility controls
+        ctl = tk.Label(frame, text='VISIBILITY', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        row += 1
         self.add_visibility_controls(frame, row, 0)
         row += 1
 
-        # add rotation controls
+        # add movement controls
+        ctl = tk.Label(frame, text='MOVEMENT', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
         self.add_rotation_controls(frame, row, 0)
         row += 1
         self.add_movement_controls(frame, row, 0)
         row += 1
 
+        # add recording controls
+        ctl = tk.Label(frame, text='RECORDING', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
         self.add_recording_controls(frame, row, 0)
         row += 1
 
@@ -158,7 +171,7 @@ class App(tk.Frame):
     def add_movement_controls(self, parent_frame, row, col):
         """Add up/down/left/right controls to the window."""
         frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col, sticky=tk.W)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=4)
         row = 0
         ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.viewer.take_action, 'Z-'))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
@@ -177,13 +190,8 @@ class App(tk.Frame):
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
         frame = tk.Frame(parent_frame)
-        frame.grid(row=row, column=col, sticky=tk.W)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=4)
         row = 0
-        col = 0
-        # add heading
-        ctl = tk.Label(frame, text='RECORDING', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
         self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
         ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
         ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
@@ -196,10 +204,6 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col)
         row = 0
-        # add heading
-        ctl = tk.Label(frame, text='CONTROLS', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
         # add column headings
         labels = (
             'Plane of\nRotation',
@@ -221,11 +225,6 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         row = 0
-        # add heading
-        ctl = tk.Label(frame, text='SET UP', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
-        row += 1
-
         # add choice of number of dimensions
         ctl = tk.Label(frame, text='Number of dimensions:')
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
@@ -260,18 +259,10 @@ class App(tk.Frame):
         ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
 
     def add_visibility_controls(self, parent_frame, row, col):
-        """Add setup controls to the window."""
+        """Add controls for what to display to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         row = 0
-        # add heading
-        ctl = tk.Label(frame, text='VISIBILITY', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
-        row += 1
-
-        # add choices of what to display
-        # ctl = tk.Label(frame, text='Visibility:')
-        # ctl.grid(row=row, column=0, sticky=tk.W, rowspan=3, pady=2)
         self.show_faces = tk.IntVar(value=1)
         ctl = ttk.Checkbutton(frame, text='Show faces', variable=self.show_faces, command=self.on_faces)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
@@ -285,7 +276,7 @@ class App(tk.Frame):
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
         self.show_coords = tk.IntVar()
-        ctl = ttk.Checkbutton(frame, text='Show coords', variable=self.show_coords, command=self.on_coords)
+        ctl = ttk.Checkbutton(frame, text='Show coordinates', variable=self.show_coords, command=self.on_coords)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
         self.show_steps = tk.IntVar(value=1)
