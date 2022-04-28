@@ -154,12 +154,9 @@ class Viewer:
                        -1)
 
         if self.data.show_edges:
-            # Use reversed so that edges are drawn from the back and appear to
-            # overlap correctly. Especially important for perspective view.
-            # This doesn't help when the user rotates the wireframe 180 degrees
-            # around the x- or y-axis. For that, I think sorting the edges is
-            # needed; I haven't investigated the performance cost.
-            # for n1, n2, color in reversed(wireframe.edges):
+            # If needed (because the wireframe has been rotated), the edges
+            # are sorted in reverse z-order so that the edges at the front
+            # overlay those at the back.
             if self.sort_edges:
                 wireframe.sort_edges()
                 self.sort_edges = False
@@ -173,6 +170,7 @@ class Viewer:
                         3)
 
         if self.data.show_faces:
+            # see the sort explanation for edges
             if self.sort_faces:
                 wireframe.sort_faces()
                 self.sort_faces = False
@@ -293,13 +291,14 @@ class Viewer:
                 print('too big', dim1, dim2, wireframe.dims)
             self.display()
             if ROTATION_SCALE != 1.0:
-                self.scale_all(ROTATION_SCALE, 1)
+                self.scale_all(ROTATION_SCALE)
         self.sort_edges = True
         self.sort_faces = True
 
-    def scale_all(self, scale, count=10):
+    def scale_all(self, scale):
         """Scale all wireframes by a given scale, centered on the center of the wireframe."""
 
+        count = 10 if self.data.show_steps else 1
         scale = math.pow(scale, (1 / count))
         wireframe = self.wireframe
         for _ in range(count):
