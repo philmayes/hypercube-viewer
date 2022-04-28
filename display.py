@@ -24,10 +24,9 @@ import colors
 import utils
 import wireframe as wf
 
-ROTATION = np.pi / 24
 ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
-SCALE = 1.25                # fraction by which to zoom in/out
-TRANSLATE = 10
+SCALE = 1.1                 # fraction by which to zoom in/out
+TRANSLATE = 40              # amount in pixels to move up/down/left/right
 cmd_to_values = {
     'l': (0, -TRANSLATE),
     'r': (0, TRANSLATE),
@@ -330,7 +329,8 @@ class Viewer:
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
-    def take_action(self, action, playback=False):
+    def take_action(self, action: str, playback=False):
+        """Perform and display the supplied action."""
         acted = True
         if match := Viewer.re_rotate.match(action):
             rotation = self.rotation if match.group(3) == '+' else -self.rotation
@@ -384,14 +384,17 @@ class Viewer:
 
         In practise, dim is always 0 or 1.
         """
+        count = 10 if self.data.show_steps else 1
+        delta = amount / count
         wireframe = self.wireframe
         vector = [0] * wireframe.dims
-        vector[dim] = amount
+        vector[dim] = delta
         matrix = wireframe.get_translation_matrix(vector)
-        wireframe.transform(matrix)
-        wireframe.center[dim] += amount
-        self.make_normalize_translations()
-        self.display()
+        for n in range(count):
+            wireframe.transform(matrix)
+            wireframe.center[dim] += delta
+            self.make_normalize_translations()
+            self.display()
 
     def write(self):
         """Write the current xy plane to a video file.
