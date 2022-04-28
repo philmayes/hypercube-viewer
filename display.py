@@ -24,14 +24,15 @@ import colors
 import utils
 import wireframe as wf
 
+X, Y, Z = range(3)          # syntactic sugar for the first three dimensions
 ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
 SCALE = 1.1                 # fraction by which to zoom in/out
 TRANSLATE = 40              # amount in pixels to move up/down/left/right
 cmd_to_values = {
-    'l': (0, -TRANSLATE),
-    'r': (0, TRANSLATE),
-    'u': (1, -TRANSLATE),
-    'd': (1, TRANSLATE),
+    'l': (X, -TRANSLATE),
+    'r': (X, TRANSLATE),
+    'u': (Y, -TRANSLATE),
+    'd': (Y, TRANSLATE),
     }
 FRAME_RATE = 30
 
@@ -86,8 +87,8 @@ class Viewer:
         self.set_rotation()
 
         # calculate top left position
-        orgx = (self.width - sizes[0]) / 2
-        orgy = (self.height - sizes[1]) / 2
+        orgx = (self.width - sizes[X]) / 2
+        orgy = (self.height - sizes[Y]) / 2
 
         # construct a wireframe object
         self.wireframe = wf.Wireframe(self.data.dims)
@@ -140,7 +141,7 @@ class Viewer:
         wireframe = self.wireframe
         if self.data.show_vp and self.data.show_perspective:
             cv2.circle(self.img,
-                       (self.vp[0], self.vp[1]),
+                       (self.vp[X], self.vp[Y]),
                        self.vp_radius,
                        colors.vp,
                        -1)
@@ -196,7 +197,7 @@ class Viewer:
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     values = [int(round(v)) for v in node[:-1]]
                     text = str(values)
-                    cv2.putText(self.img, text, (xy[0] + 5, xy[1] + 3), font, 0.5, colors.text)
+                    cv2.putText(self.img, text, (xy[X] + 5, xy[Y] + 3), font, 0.5, colors.text)
 
     def get_xy(self, node):
         """Given a node, return orthogonal or perspective x,y
@@ -222,13 +223,13 @@ class Viewer:
         z-axis                     \|
                                     .vanishing point
         """
-        x = node[0]
-        y = node[1]
+        x = node[X]
+        y = node[Y]
         if self.data.show_perspective:
             vp = self.vp
-            f = node[2] / vp[2]
-            x += (vp[0] - node[0]) * f
-            y += (vp[1] - node[1]) * f
+            f = node[Z] / vp[Z]
+            x += (vp[X] - node[X]) * f
+            y += (vp[Y] - node[Y]) * f
         return (int(round(x)), int(round(y)))
 
     def make_normalize_translations(self):
