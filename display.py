@@ -254,6 +254,8 @@ class Viewer:
     def rotate_all(self, dim1, dim2, theta, dim3=-1):
         """Rotate all wireframes about their center, around one or two planes
             by a given angle."""
+        wireframe = self.wireframe
+        assert dim1 < wireframe.dims and dim2 < wireframe.dims and dim3 < wireframe.dims
         count = self.rotation_count if self.data.show_steps else 1
         delta = theta / count
         if dim3 < 0:
@@ -265,35 +267,36 @@ class Viewer:
             # (Repeating the call with the sign of theta reversed does not
             # quite return to the original position??!)
             angles = [0.0] * count
-            step = delta * 2 / (count - 1)
-            value = 0.0
-            for n in range(count):
-                angles[n] = value
-                value += step
+            if count > 1:
+                step = delta * 2 / (count - 1)
+                value = 0.0
+                for n in range(count):
+                    angles[n] = value
+                    value += step
+                assert math.isclose(sum(angles), theta)
+            else:
+                # gotta avoid a divide by zero!
+                angles[0] = delta / 2
         if theta < 0.0:
             angles.reverse()
-        assert math.isclose(sum(angles), theta)
-        wireframe = self.wireframe
         for n in range(count):
-            if dim1 < wireframe.dims and dim2 < wireframe.dims:
-                # calculate the rotation needed
-                angle = angles[-n - 1]
-                angle2 = angle
-                matrix = wireframe.get_rotate_matrix(dim1, dim2, angle)
-                if dim3 >= 0:
-                    angle = angles[n]
-                    matrix = wireframe.get_rotate_matrix(dim1, dim3, angle, matrix)
-                # move, rotate, move back
-                wireframe.transform(self.norm_matrix)
-                wireframe.transform(matrix)
-                wireframe.transform(self.denorm_matrix)
-            else:
-                print('too big', dim1, dim2, wireframe.dims)
+            # calculate the rotation needed
+            angle = angles[-n - 1]
+            matrix = wireframe.get_rotate_matrix(dim1, dim2, angle)
+            if dim3 >= 0:
+                angle = angles[n]
+                matrix = wireframe.get_rotate_matrix(dim1, dim3, angle, matrix)
+            # move, rotate, move back
+            wireframe.transform(self.norm_matrix)
+            wireframe.transform(matrix)
+            wireframe.transform(self.denorm_matrix)
+            # having rotated the wireframe, the lists of edges and faces may
+            # no longer be in reverse z-order, so mark them for sorting
+            self.sort_edges = True
+            self.sort_faces = True
             self.display()
             if ROTATION_SCALE != 1.0:
                 self.scale_all(ROTATION_SCALE)
-        self.sort_edges = True
-        self.sort_faces = True
 
     def scale_all(self, scale):
         """Scale all wireframes by a given scale, centered on the center of the wireframe."""
@@ -314,7 +317,10 @@ class Viewer:
         self.vp[2] = int(round(self.width * self.data.depth))
 
     def set_rotation(self):
+        """Set rotation values from data.angle which is in degrees."""
+        # convert to radians
         self.rotation = float(self.data.angle) * np.pi / 180
+        # take 2 steps per degree
         self.rotation_count = self.data.angle * 2
 
     def show(self):
@@ -327,14 +333,16 @@ class Viewer:
 
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
-    re_rotate = re.compile(r'R(\d)(\d)(\+|-)')
+    re_rotate = re.compile(r'R(\d)(\d)(\d)?(\+|-)')
     re_zoom = re.compile(r'Z(\+|-)')
     def take_action(self, action: str, playback=False):
         """Perform and display the supplied action."""
         acted = True
         if match := Viewer.re_rotate.match(action):
-            rotation = self.rotation if match.group(3) == '+' else -self.rotation
-            self.rotate_all(int(match.group(1)), int(match.group(2)), rotation)
+            # The 3rd dimension is optional
+            dim3 = int(match.group(3) or -1)
+            rotation = self.rotation if match.group(4) == '+' else -self.rotation
+            self.rotate_all(int(match.group(1)), int(match.group(2)), rotation, dim3)
         elif match := Viewer.re_zoom.match(action):
             if match.group(1) == '+':
                 self.scale_all(SCALE)

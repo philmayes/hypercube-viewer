@@ -4,6 +4,7 @@
 import argparse
 from functools import partial
 import os
+import random
 import sys
 import tkinter as tk
 from tkinter import ttk
@@ -45,9 +46,9 @@ class PlaneControl:
         # create a subframe and place it as requested
         rot_frame = tk.Frame(frame)
         rot_frame.grid(row=row, column=1)
-        self.rotate1 = tk.Button(rot_frame, text=' < ', command=partial(app.on_rotate, '-', self))
+        self.rotate1 = tk.Button(rot_frame, text=' < ', command=partial(app.on_rotate, '+', self))
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate2 = tk.Button(rot_frame, text=' > ', command=partial(app.on_rotate, '+', self))
+        self.rotate2 = tk.Button(rot_frame, text=' > ', command=partial(app.on_rotate, '-', self))
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert information about colors of dimensions
@@ -57,7 +58,6 @@ class PlaneControl:
         color = colors.html[dim2]
         self.color2 = tk.Label(frame, text=f'{dim2str}: ████', bg='black', fg=color)
         self.color2.grid(row=row, column=3, sticky=tk.NSEW)
-        tk.NS
 
     def enable(self, dim_size: int):
         applicable = self.dim1 < dim_size and self.dim2 < dim_size
@@ -219,6 +219,18 @@ class App(tk.Frame):
         for plane in planes:
             self.dim_controls.append(PlaneControl(frame, row, plane[0], plane[1], self))
             row += 1
+
+        # add a random rotation
+        ctl = tk.Label(frame, text='Random')
+        ctl.grid(row=row, column=0, sticky=tk.EW, padx=2, pady=2)
+        # insert controls for random rotation in a subframe
+        rot_frame = tk.Frame(frame)
+        rot_frame.grid(row=row, column=1)
+        btn = tk.Button(rot_frame, text=' < ', command=partial(self.on_random, '-'))
+        btn.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
+        btn = tk.Button(rot_frame, text=' > ', command=partial(self.on_random, '+'))
+        btn.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
+        row += 1
 
     def add_setup_controls(self, parent_frame, row, col):
         """Add setup controls to the window."""
@@ -419,6 +431,18 @@ class App(tk.Frame):
         """The "show center" checkbox has been clicked."""
         self.data.show_perspective = bool(self.show_perspective.get())
         self.viewer.display()
+
+    def on_random(self, direction):
+        """Rotate the wireframe randomly in 3 dimensions."""
+        dims = list(range(self.data.dims))
+        dim1 = random.randint(0, 1)
+        dims.remove(dim1)
+        dim2 = random.choice(dims)
+        dims.remove(dim2)
+        dim3 = random.choice(dims)
+        action = f'R{dim1}{dim2}{dim3}{direction}'
+        print(action)
+        self.viewer.take_action(action)
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""

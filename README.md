@@ -38,12 +38,12 @@ In the real world, we think of rotation as about an axis. A square on your scree
 ### Visibility
 
 * **Show faces, edges, corners:** Control what is drawn.
-* **Show coords:** Show the coordinates of every point. Points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
+* **Show coordinates:** Show the coordinates of every point. Points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
 * **Show intermediate steps:** 
 * **Show center:** Show the centerpoint of the hypercube.
 * **Perspective view:** Choose whether the hypercube is projected as a perspective or orthographic view.
 * **Show vanishing point:** When perspective view is selected, show the vanishing point.
 * **Depth of perspective:** Controls the amount of perspective. The vanishing point is placed at this value times the screen width.
-* **Amount of ghosting:** As the hypercube moves, the program can leave a ghost image that fades out. 0 indicates no ghosting, and with 1, no fading takes place.
+* **Amount of ghosting:** As the hypercube moves, the program can leave a ghost image that fades out. 0 indicates no ghosting, and with 10, no fading takes place.
 
 
