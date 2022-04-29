@@ -186,6 +186,9 @@ class App(tk.Frame):
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
         ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.viewer.take_action, 'Mr'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        # add a "Stop" control
+        self.stop = tk.Button(frame, text="Stop", font=self.big_font, command=self.on_stop)
+        self.stop.grid(row=row, column=3, sticky=tk.E, padx=12, pady=2)
 
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
@@ -453,6 +456,9 @@ class App(tk.Frame):
         """The "show intermediate steps" checkbox has been clicked."""
         self.data.show_steps = bool(self.show_steps.get())
         self.viewer.display()
+
+    def on_stop(self):
+        pass
 
     def on_view_files(self):
         os.startfile(self.viewer.output_dir)
