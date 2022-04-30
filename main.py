@@ -93,6 +93,7 @@ class App(tk.Frame):
         # into display.Viewer so that App and Viewer share the data.
         self.data = data.Data()
         self.data_file = data.get_location()
+        self.actionQ = []
 
         self.max_dim = 6
         self.dim_controls = []
@@ -121,6 +122,7 @@ class App(tk.Frame):
 
         self.load_settings()
         self.set_view_size()
+        self.run()
 
     def add_controls(self, parent_frame, row, col):
         """Add user controls to the window."""
@@ -173,22 +175,23 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=4)
         row = 0
-        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.viewer.take_action, 'Z-'))
+        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.queue_action, 'Z-'))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.viewer.take_action, 'Mu'))
+        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.queue_action, 'Mu'))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.viewer.take_action, 'Z+'))
+        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.queue_action, 'Z+'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
         row += 1
-        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.viewer.take_action, 'Ml'))
+        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, 'Ml'))
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.viewer.take_action, 'Md'))
+        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.queue_action, 'Md'))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.viewer.take_action, 'Mr'))
+        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.queue_action, 'Mr'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
         # add a "Stop" control
         self.stop = tk.Button(frame, text="Stop", font=self.big_font, command=self.on_stop)
         self.stop.grid(row=row, column=3, sticky=tk.E, padx=12, pady=2)
+        self.set_stop_button(False)
 
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
@@ -445,12 +448,12 @@ class App(tk.Frame):
         dim3 = random.choice(dims)
         action = f'R{dim1}{dim2}{dim3}{direction}'
         print(action)
-        self.viewer.take_action(action)
+        self.queue_action(action)
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
         action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
-        self.viewer.take_action(action)
+        self.queue_action(action)
 
     def on_steps(self):
         """The "show intermediate steps" checkbox has been clicked."""
@@ -458,7 +461,10 @@ class App(tk.Frame):
         self.viewer.display()
 
     def on_stop(self):
-        pass
+        print('KILLED', len(self.actionQ), 'actions')
+        self.actionQ = []
+        self.viewer.stop = True
+
 
     def on_view_files(self):
         os.startfile(self.viewer.output_dir)
@@ -482,6 +488,11 @@ class App(tk.Frame):
         self.data.show_vp = bool(self.show_vp.get())
         self.viewer.display()
 
+    def queue_action(self, action):
+        print('queue action', action)
+        self.actionQ.append(action)
+        self.set_stop_button(True)
+
     def replay(self, active):
         """Callback for button pair.
         
@@ -497,7 +508,7 @@ class App(tk.Frame):
             # stop playing back if the user has canceled
             if not self.replay_buttons.active:
                 break
-            self.viewer.take_action(action, playback=True)
+            self.queue_action(action, playback=True)
         self.replay_buttons.stop()
 
     def reset(self):
@@ -510,6 +521,21 @@ class App(tk.Frame):
         self.viewer.init()
         self.viewer.display()
 
+    def run(self):
+        """Run the actions on the action queue.
+
+        https://stackoverflow.com/questions/18499082/tkinter-only-calls-after-idle-once
+        """
+        if self.actionQ:
+            action = self.actionQ[0]
+            print('run action', action)
+            del self.actionQ[0]
+            self.viewer.take_action(action)
+            if not self.actionQ:
+                self.set_stop_button(False)
+        # wait 10ms, which allows tk UI actions, then check again
+        self.root.after(10, self.run)
+
     def set_dim(self):
         """Set the number of dimensions to use."""
         dim = self.data.dims
@@ -518,6 +544,12 @@ class App(tk.Frame):
         for control in self.dim_controls:
             control.enable(dim)
         self.reset()
+
+    def set_stop_button(self, active):
+        """Set the Stop button as active or disabled."""
+        print('set stop button', active)
+        states = (tk.DISABLED, tk.NORMAL)
+        self.stop["state"] = states[int(active)]
 
     def set_view_size(self):
         """Set the viewing size from the values in data."""
