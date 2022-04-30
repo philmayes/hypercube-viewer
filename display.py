@@ -100,8 +100,10 @@ class Viewer:
         self.sort_edges = True
         self.sort_faces = True
 
+        self.stop = False
+
         # initialize recording settings
-        # When initializing the viweer for playing back, we:
+        # When initializing the viewer for playing back, we:
         # * skip clearing the list of actions;
         # * continue to let video recording run;
         if not playback:
@@ -280,6 +282,8 @@ class Viewer:
         if theta < 0.0:
             angles.reverse()
         for n in range(count):
+            if self.stop:
+                break
             # calculate the rotation needed
             angle = angles[-n - 1]
             matrix = wireframe.get_rotate_matrix(dim1, dim2, angle)
@@ -305,6 +309,8 @@ class Viewer:
         scale = math.pow(scale, (1 / count))
         wireframe = self.wireframe
         for _ in range(count):
+            if self.stop:
+                break
             matrix = wireframe.get_scale_matrix(scale)
             # move, scale, move back
             wireframe.transform(self.norm_matrix)
@@ -338,6 +344,7 @@ class Viewer:
     def take_action(self, action: str, playback=False):
         """Perform and display the supplied action."""
         acted = True
+        self.stop = False
         if match := Viewer.re_rotate.match(action):
             # The 3rd dimension is optional
             dim3 = int(match.group(3) or -1)
@@ -399,6 +406,8 @@ class Viewer:
         vector[dim] = delta
         matrix = wireframe.get_translation_matrix(vector)
         for n in range(count):
+            if self.stop:
+                break
             wireframe.transform(matrix)
             wireframe.center[dim] += delta
             self.make_normalize_translations()
