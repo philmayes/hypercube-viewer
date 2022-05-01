@@ -30,6 +30,11 @@ STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
 
+# names for the states of buttons
+DISABLED = 0
+ENABLED = 1
+REPLAYING = 2
+
 class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
 
@@ -79,6 +84,9 @@ class PlaneControl:
 
 
 class App(tk.Frame):
+
+    PLAYBACK_ACTION = 'PB'
+
     def __init__(self, root=None):
         tk.Frame.__init__(self, root)
         # set up hooks for program close
@@ -94,6 +102,7 @@ class App(tk.Frame):
         self.data = data.Data()
         self.data_file = data.get_location()
         self.actionQ = []
+        self.playback_index = -1
 
         self.max_dim = 6
         self.dim_controls = []
@@ -181,6 +190,11 @@ class App(tk.Frame):
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
         ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.queue_action, 'Z+'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        # add a "Replay" control
+        spacer1 = tk.Label(frame, text="")
+        spacer1.grid(row=row, column=3, padx=20)
+        self.replay_button = tk.Button(frame, text="Replay", font=self.big_font, width=12, command=partial(self.queue_action, App.PLAYBACK_ACTION))
+        self.replay_button.grid(row=row, column=4, columnspan=2, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
         ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, 'Ml'))
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
@@ -189,9 +203,13 @@ class App(tk.Frame):
         ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.queue_action, 'Mr'))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
         # add a "Stop" control
-        self.stop = tk.Button(frame, text="Stop", font=self.big_font, command=self.on_stop)
-        self.stop.grid(row=row, column=3, sticky=tk.E, padx=12, pady=2)
-        self.set_stop_button(False)
+        self.stop_button = tk.Button(frame, text="Stop", font=self.big_font, width=12, command=self.on_stop)
+        self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        row += 1
+        # add a "Clear history" control
+        self.clear_button = tk.Button(frame, text="Clear History", command=self.on_clear)
+        self.clear_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        row += 1
 
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
@@ -201,8 +219,6 @@ class App(tk.Frame):
         self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
         ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
         ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
-        row += 1
-        self.replay_buttons = utils.ButtonPair(frame, ['Start replay', 'Stop replay'], self.replay, row=row)
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
@@ -386,6 +402,13 @@ class App(tk.Frame):
         self.data.show_center = bool(self.show_center.get())
         self.viewer.display()
 
+    def on_clear(self):
+        """User has asked for the history to be cleared."""
+        self.actionQ = []
+        self.viewer.actions = []
+        self.set_replay_button(DISABLED)
+        self.set_widget_state(self.clear_button, DISABLED)
+
     def on_close(self):
         """App is closing."""
         data = self.data
@@ -447,7 +470,6 @@ class App(tk.Frame):
         dims.remove(dim2)
         dim3 = random.choice(dims)
         action = f'R{dim1}{dim2}{dim3}{direction}'
-        print(action)
         self.queue_action(action)
 
     def on_rotate(self, direction, dim_control):
@@ -461,10 +483,16 @@ class App(tk.Frame):
         self.viewer.display()
 
     def on_stop(self):
-        print('KILLED', len(self.actionQ), 'actions')
-        self.actionQ = []
+        """User has asked for the current and pending actions to be stopped."""
+        # ask the viewer to stop ASAP
         self.viewer.stop = True
-
+        # discard all actions in the pending queue
+        self.actionQ = []
+        # stop any playback
+        self.playback_index = -1
+        # adjust button states
+        self.set_replay_button(ENABLED)
+        self.set_stop_button(DISABLED)
 
     def on_view_files(self):
         os.startfile(self.viewer.output_dir)
@@ -489,35 +517,23 @@ class App(tk.Frame):
         self.viewer.display()
 
     def queue_action(self, action):
-        print('queue action', action)
+        """Add this action to the queue awaiting execution."""
         self.actionQ.append(action)
-        self.set_stop_button(True)
-
-    def replay(self, active):
-        """Callback for button pair.
-        
-        Either replay the previous actions or stop replaying.
-        """
-        if not active:
-            # replay has been stopped
-            return
-        # reinitialize the viewer, but leave the playback and recording states untouched
-        self.viewer.init(playback=True)
-        self.viewer.display()
-        for action in self.viewer.actions:
-            # stop playing back if the user has canceled
-            if not self.replay_buttons.active:
-                break
-            self.queue_action(action, playback=True)
-        self.replay_buttons.stop()
+        self.set_widget_state(self.clear_button, ENABLED)
+        self.set_stop_button(ENABLED)
 
     def reset(self):
         """The dimensions,aspect or view size has changed.
 
-        Reinitialize the viewer with the current values set up in .data.
+        This is called at initial start, too.
+        (Re)set all buttons to initial state.
+        (Re)initialize the viewer with the current values set up in .data.
         """
         self.rec_buttons.stop()
-        self.replay_buttons.stop()
+        self.set_replay_button(DISABLED)
+        self.set_stop_button(DISABLED)
+        self.set_widget_state(self.clear_button, DISABLED)
+
         self.viewer.init()
         self.viewer.display()
 
@@ -526,13 +542,42 @@ class App(tk.Frame):
 
         https://stackoverflow.com/questions/18499082/tkinter-only-calls-after-idle-once
         """
-        if self.actionQ:
+        if self.playback_index >= 0:
+            # we're playing back the actions previously taken
+            if self.playback_index < len(self.viewer.actions):
+                # there are more actions to take
+                action = self.viewer.actions[self.playback_index]
+                self.playback_index += 1
+                # stop playing back if the user has canceled
+                self.viewer.take_action(action, playback=True)
+            else:
+                # we've played back all the actions, so cancel playback
+                self.playback_index = -1
+                self.set_replay_button(ENABLED)
+                self.set_stop_button(DISABLED)
+
+        elif self.actionQ:
+            # the user has initiated an action like rotate, zoom, etc.
+            # and it has been placed on a queue. Take it off the queue.
             action = self.actionQ[0]
-            print('run action', action)
             del self.actionQ[0]
-            self.viewer.take_action(action)
-            if not self.actionQ:
-                self.set_stop_button(False)
+            if action == app.PLAYBACK_ACTION:
+                # the action is to play back all the actions up until now,
+                self.set_replay_button(REPLAYING)
+                self.playback_index = 0
+                self.viewer.init(playback=True)
+                self.viewer.display()
+            else:
+                # It's a regular action. Enable the replay button
+                # (it would have been disabled if the queue were formerly empty)
+                self.set_replay_button(ENABLED)
+                # execute the action
+                self.viewer.take_action(action)
+                if not self.actionQ:
+                    # if there are no more actions queued, it makes no sense
+                    # to offer a "Stop" action, so disable the button
+                    self.set_stop_button(DISABLED)
+
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
 
@@ -545,11 +590,24 @@ class App(tk.Frame):
             control.enable(dim)
         self.reset()
 
-    def set_stop_button(self, active):
+    def set_replay_button(self, state):
+        """Set the Replay button as disabled, ready or replaying."""
+        states = (tk.DISABLED, tk.NORMAL, tk.NORMAL)
+        text = ["Replay", "Replay", "Replaying"]
+        self.replay_button.configure(state = states[state],
+                                     text= text[state])
+
+    def set_stop_button(self, state):
         """Set the Stop button as active or disabled."""
-        print('set stop button', active)
         states = (tk.DISABLED, tk.NORMAL)
-        self.stop["state"] = states[int(active)]
+        color = ['SystemButtonFace', 'red']
+        self.stop_button.configure(state = states[state],
+                                   bg=color[state])
+
+    def set_widget_state(self, control, state):
+        """Set the control as active or disabled."""
+        states = (tk.DISABLED, tk.NORMAL)
+        control.configure(state = states[state])
 
     def set_view_size(self):
         """Set the viewing size from the values in data."""
