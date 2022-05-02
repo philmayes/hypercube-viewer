@@ -1,7 +1,6 @@
 #! python3.10
 # -*- coding: utf-8 -*-
 
-import argparse
 from functools import partial
 import os
 import random
@@ -30,7 +29,7 @@ STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
 
-# names for the states of buttons
+# Names for the states of buttons. Values are indices into lists.
 DISABLED = 0
 ENABLED = 1
 REPLAYING = 2
@@ -206,8 +205,8 @@ class App(tk.Frame):
         self.stop_button = tk.Button(frame, text="Stop", font=self.big_font, width=12, command=self.on_stop)
         self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
-        # add a "Clear history" control
-        self.clear_button = tk.Button(frame, text="Clear History", command=self.on_clear)
+        # add a "Restart" control
+        self.clear_button = tk.Button(frame, text="Restart", command=self.reset)
         self.clear_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
 
@@ -402,13 +401,6 @@ class App(tk.Frame):
         self.data.show_center = bool(self.show_center.get())
         self.viewer.display()
 
-    def on_clear(self):
-        """User has asked for the history to be cleared."""
-        self.actionQ = []
-        self.viewer.actions = []
-        self.set_replay_button(DISABLED)
-        self.set_widget_state(self.clear_button, DISABLED)
-
     def on_close(self):
         """App is closing."""
         data = self.data
@@ -443,13 +435,11 @@ class App(tk.Frame):
         self.viewer.display()
 
     def on_ghost(self, value):
+        """The amount of ghosting has been changed."""
         self.data.ghost = int(value)
 
     def on_key(self, event):
         print('on key', event)
-
-    def on_load(self):
-        self.viewer.run()
 
     def on_nodes(self):
         """The "show nodes" checkbox has been clicked."""
@@ -495,6 +485,7 @@ class App(tk.Frame):
         self.set_stop_button(DISABLED)
 
     def on_view_files(self):
+        """Show the folder where video output is saved."""
         os.startfile(self.viewer.output_dir)
 
     def on_viewer_size(self):
@@ -525,7 +516,7 @@ class App(tk.Frame):
     def reset(self):
         """The dimensions,aspect or view size has changed.
 
-        This is called at initial start, too.
+        This is called at initial start and restart, too.
         (Re)set all buttons to initial state.
         (Re)initialize the viewer with the current values set up in .data.
         """
@@ -617,9 +608,6 @@ class App(tk.Frame):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Hypercube')
-    parser.add_argument("-t", "--test", action="store_true", help="run in test mode")
-    args = parser.parse_args()
     root = tk.Tk()
     app = App(root)
     root.mainloop()
