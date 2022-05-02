@@ -38,48 +38,43 @@ class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
 
     def __init__(self, frame, row, dim1, dim2, app):
+        self.frame = frame
+        self.row = row
         self.dim1 = dim1
         self.dim2 = dim2
-        dim1str = labels[dim1]
-        dim2str = labels[dim2]
+        self.app = app
+
+    def add_controls(self):
+        dim1str = labels[self.dim1]
+        dim2str = labels[self.dim2]
+        color1 = colors.html[self.dim1]
+        color2 = colors.html[self.dim2]
         text = f'{dim1str}-{dim2str}'
-        self.planes = tk.Label(frame, text=text)
-        self.planes.grid(row=row, column=0, sticky=tk.EW, padx=2, pady=2)
+        self.planes = tk.Label(self.frame, text=text)
+        self.planes.grid(row=self.row, column=0, sticky=tk.EW, padx=2, pady=2)
+
+        # create a subframe for the rotation controls
+        rot_frame = tk.Frame(self.frame)
+        rot_frame.grid(row=self.row, column=1)
 
         # insert rotation controls
-        # create a subframe and place it as requested
-        rot_frame = tk.Frame(frame)
-        rot_frame.grid(row=row, column=1)
-        self.rotate1 = tk.Button(rot_frame, text=' < ', command=partial(app.on_rotate, '+', self))
+        self.rotate1 = tk.Button(rot_frame, text=' < ', command=partial(self.app.on_rotate, '+', self))
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate2 = tk.Button(rot_frame, text=' > ', command=partial(app.on_rotate, '-', self))
+        self.rotate2 = tk.Button(rot_frame, text=' > ', command=partial(self.app.on_rotate, '-', self))
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert information about colors of dimensions
-        color = colors.html[dim1]
-        self.color1 = tk.Label(frame, text=f'{dim1str}: ████', bg='black', fg=color)
-        self.color1.grid(row=row, column=2, sticky=tk.NSEW)
-        color = colors.html[dim2]
-        self.color2 = tk.Label(frame, text=f'{dim2str}: ████', bg='black', fg=color)
-        self.color2.grid(row=row, column=3, sticky=tk.NSEW)
+        self.swatch1 = tk.Label(self.frame, text=f'{dim1str}: ████', bg='black', fg=color1)
+        self.swatch1.grid(row=self.row, column=2, sticky=tk.NSEW)
+        self.swatch2 = tk.Label(self.frame, text=f'{dim2str}: ████', bg='black', fg=color2)
+        self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
 
-    def enable(self, dim_size: int):
-        applicable = self.dim1 < dim_size and self.dim2 < dim_size
-        state = tk.ACTIVE if applicable else tk.DISABLED
-        self.rotate1.configure(state=state)
-        self.rotate2.configure(state=state)
-        if applicable:
-            self.planes.grid()
-            self.rotate1.grid()
-            self.rotate2.grid()
-            self.color1.grid()
-            self.color2.grid()
-        else:
-            self.planes.grid_remove()
-            self.rotate1.grid_remove()
-            self.rotate2.grid_remove()
-            self.color1.grid_remove()
-            self.color2.grid_remove()
+    def delete_controls(self):
+        self.planes.destroy()
+        self.rotate1.destroy()
+        self.rotate2.destroy()
+        self.swatch1.destroy()
+        self.swatch2.destroy()
 
 
 class App(tk.Frame):
@@ -375,7 +370,7 @@ class App(tk.Frame):
         self.show_perspective.set(self.data.show_perspective)
         self.show_vp.set(self.data.show_vp)
         self.show_steps.set(self.data.show_steps)
-        self.set_dim()
+        self.set_dim(0)
 
     def on_angle(self, value):
         """The angle of rotation slider has been changed."""
@@ -421,8 +416,9 @@ class App(tk.Frame):
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
+        old = self.data.dims
         self.data.dims = int(param.widget.get())
-        self.set_dim()
+        self.set_dim(old)
 
     def on_edges(self):
         """The "show edges" checkbox has been clicked."""
@@ -572,13 +568,17 @@ class App(tk.Frame):
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
 
-    def set_dim(self):
-        """Set the number of dimensions to use."""
-        dim = self.data.dims
-        self.dim_choice.set(str(dim))
-        # hide/show the dimension controls as appropriate
-        for control in self.dim_controls:
-            control.enable(dim)
+    def set_dim(self, old_count):
+        """Set the number of dimensions to use and adjust the controls."""
+        dim_count = self.data.dims
+        self.dim_choice.set(str(dim_count))
+        # create or destroy the dimension controls as appropriate
+        if old_count < dim_count:
+            for dim in range(old_count, dim_count):
+                self.dim_controls[dim].add_controls()
+        else:
+            for dim in range(dim_count, old_count):
+                self.dim_controls[dim].delete_controls()
         self.reset()
 
     def set_replay_button(self, state):
