@@ -25,7 +25,6 @@ import utils
 import wireframe as wf
 
 X, Y, Z = range(3)          # syntactic sugar for the first three dimensions
-ROTATION_SCALE = 1.0#0.995  # amount to scale for each rotation step
 SCALE = 1.1                 # fraction by which to zoom in/out
 TRANSLATE = 40              # amount in pixels to move up/down/left/right
 cmd_to_values = {
@@ -281,6 +280,8 @@ class Viewer:
                 angles[0] = delta / 2
         if theta < 0.0:
             angles.reverse()
+        scale = (self.data.auto_scale - 1.0) / count + 1.0
+        print(self.data.auto_scale, count, scale)
         for n in range(count):
             if self.stop:
                 break
@@ -299,8 +300,8 @@ class Viewer:
             self.sort_edges = True
             self.sort_faces = True
             self.display()
-            if ROTATION_SCALE != 1.0:
-                self.scale_all(ROTATION_SCALE)
+            if scale != 1.0:
+                self.scale_all(scale)
 
     def scale_all(self, scale):
         """Scale all wireframes by a given scale, centered on the center of the wireframe."""

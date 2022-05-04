@@ -41,6 +41,7 @@ class Data:
 
         # settings for how the wireframe is rotated
         self.angle = 15
+        self.auto_scale = 1.0
 
     def get_viewer_size(self):
         """Test whether supplied string is valid for self.viewer_size."""

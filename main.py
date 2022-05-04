@@ -355,6 +355,16 @@ class App(tk.Frame):
         self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
         row += 1
 
+        # add a slider to control amount of scaling
+        ctl = tk.Label(frame, text='Resizing during rotation:')
+        ctl.grid(row=row, column=0, sticky=tk.SW)
+        self.auto_scale = tk.Scale(frame, from_=0.90, to=1.10,
+                              resolution=0.02,
+                              orient=tk.HORIZONTAL,
+                              command=self.on_auto_scale)
+        self.auto_scale.grid(row=row, column=1, sticky=tk.W, pady=0)
+        row += 1
+
     def load_settings(self):
         """Load initial settings."""
         self.data.load(self.data_file)
@@ -363,6 +373,7 @@ class App(tk.Frame):
         self.depth.set(self.data.depth)
         self.ghost.set(self.data.ghost)
         self.angle.set(self.data.angle)
+        self.auto_scale.set(self.data.auto_scale)
         self.show_faces.set(self.data.show_faces)
         self.show_edges.set(self.data.show_edges)
         self.show_nodes.set(self.data.show_nodes)
@@ -391,6 +402,11 @@ class App(tk.Frame):
             self.reset()
         else:
             self.aspect.configure(bg='yellow')
+
+    def on_auto_scale(self, value):
+        """The scaling for rotations has been changed."""
+        self.data.auto_scale = float(value)
+        self.viewer.set_rotation()
 
     def on_center(self):
         """The "show center" checkbox has been clicked."""
