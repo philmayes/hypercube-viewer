@@ -54,13 +54,13 @@ class PlaneControl:
         self.planes.grid(row=self.row, column=0, sticky=tk.EW, padx=2, pady=2)
 
         # create a subframe for the rotation controls
-        rot_frame = tk.Frame(self.frame)
-        rot_frame.grid(row=self.row, column=1)
+        self.rot_frame = tk.Frame(self.frame)
+        self.rot_frame.grid(row=self.row, column=1)
 
         # insert rotation controls
-        self.rotate1 = tk.Button(rot_frame, text=' < ', command=partial(self.app.on_rotate, '+', self))
+        self.rotate1 = tk.Button(self.rot_frame, text=' < ', command=partial(self.app.on_rotate, '+', self))
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate2 = tk.Button(rot_frame, text=' > ', command=partial(self.app.on_rotate, '-', self))
+        self.rotate2 = tk.Button(self.rot_frame, text=' > ', command=partial(self.app.on_rotate, '-', self))
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert information about colors of dimensions
@@ -70,6 +70,7 @@ class PlaneControl:
         self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
 
     def delete_controls(self):
+        self.rot_frame.destroy()
         self.planes.destroy()
         self.rotate1.destroy()
         self.rotate2.destroy()
