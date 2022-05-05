@@ -33,7 +33,6 @@ cmd_to_values = {
     'u': (Y, -TRANSLATE),
     'd': (Y, TRANSLATE),
     }
-FRAME_RATE = 30
 
 class Viewer:
     """Display hypercube objects on a tkinter canvas."""
@@ -64,7 +63,6 @@ class Viewer:
         self.node_radius = 4
         self.center_radius = 1
         self.vp_radius = 2
-        self.frame_time = 1 / FRAME_RATE
 
     def init(self, playback=False):
         """Initialize the viewer size and dimension count."""
@@ -124,7 +122,8 @@ class Viewer:
         # wait for the time a video frame would take to play back
         # (although writing a frame often takes longer than this),
         # thus emulating what a video would look like
-        pause = self.frame_time - t2 + t1
+        frame_time = 1 / self.data.frame_rate
+        pause = frame_time - t2 + t1
         if pause > 0.0:
             time.sleep(pause)
 
@@ -281,7 +280,6 @@ class Viewer:
         if theta < 0.0:
             angles.reverse()
         scale = (self.data.auto_scale - 1.0) / count + 1.0
-        print(self.data.auto_scale, count, scale)
         for n in range(count):
             if self.stop:
                 break
@@ -389,7 +387,7 @@ class Viewer:
             output = os.path.join(self.output_dir, fname)
             self.video = cv2.VideoWriter(output,
                                          cv2.VideoWriter_fourcc(*codec),
-                                         FRAME_RATE,
+                                         self.data.frame_rate,
                                          (self.width, self.height))
         else:
             # I /think/ start_video is only called when there isn't one

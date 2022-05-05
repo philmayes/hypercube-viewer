@@ -211,6 +211,19 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=4)
         row = 0
+
+        # add choice of frame rate
+        ctl = tk.Label(frame, text='Frame rate:')
+        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
+        self.frame_rate = ttk.Combobox(frame,
+                          state='readonly',
+                          width=4,
+                          values=['24', '25', '30', '60', '120'],
+                          )
+        self.frame_rate.grid(row=row, column=1, sticky=tk.W, pady=0)
+        self.frame_rate.bind('<<ComboboxSelected>>', self.on_frame_rate)
+        row += 1
+
         self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
         ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
         ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
@@ -382,6 +395,7 @@ class App(tk.Frame):
         self.show_perspective.set(self.data.show_perspective)
         self.show_vp.set(self.data.show_vp)
         self.show_steps.set(self.data.show_steps)
+        self.frame_rate.set(str(self.data.frame_rate))
         self.set_dim(0)
 
     def on_angle(self, value):
@@ -417,6 +431,7 @@ class App(tk.Frame):
         """App is closing."""
         data = self.data
         data.dims = int(self.dim_choice.get())
+        data.frame_rate = int(self.frame_rate.get())
         data.angle = self.angle.get()
         data.save(self.data_file)
         self.root.destroy()
@@ -446,6 +461,9 @@ class App(tk.Frame):
         """The "show faces" checkbox has been clicked."""
         self.data.show_faces = bool(self.show_faces.get())
         self.viewer.display()
+
+    def on_frame_rate(self, param):
+        self.data.frame_rate = float(param.widget.get())
 
     def on_ghost(self, value):
         """The amount of ghosting has been changed."""

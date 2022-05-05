@@ -43,6 +43,9 @@ class Data:
         self.angle = 15
         self.auto_scale = 1.0
 
+        # settings for recording
+        self.frame_rate = 30
+
     def get_viewer_size(self):
         """Test whether supplied string is valid for self.viewer_size."""
         match = Data.re_view.match(self.viewer_size)
