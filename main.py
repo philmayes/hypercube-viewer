@@ -156,20 +156,14 @@ class App(tk.Frame):
         row = 0
 
         # add choice of frame rate
-        ctl = tk.Label(frame, text='Frame rate of video:')
-        ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
-        self.frame_rate = ttk.Combobox(frame,
-                          state='readonly',
-                          width=4,
-                          values=['24', '25', '30', '60', '120'],
-                          )
-        self.frame_rate.grid(row=row, column=1, sticky=tk.W, pady=0)
-        self.frame_rate.bind('<<ComboboxSelected>>', self.on_frame_rate)
+        ctrl = controls.ComboControl(self.data, 'Frame rate of video:', 'frame_rate', int, self.on_frame_rate, ['24', '25', '30', '60', '120'])
+        ctrl.add_control(frame, row, 1)
         row += 1
 
         self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
+        row += 1
         ctl = tk.Button(frame, text='View Recording Folder', command=self.on_view_files)
-        ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
+        ctl.grid(row=row, column=0, columnspan=2, pady=2)
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
@@ -278,12 +272,10 @@ class App(tk.Frame):
         """Load initial settings."""
         self.aspect.insert(0, self.data.aspects)
         self.viewer_size.insert(0, self.data.viewer_size)
-        self.frame_rate.set(str(self.data.frame_rate))
         self.set_dim(0)
 
-    def on_angle(self, value):
+    def on_angle(self):
         """The angle of rotation slider has been changed."""
-        self.data.angle = int(value)
         self.viewer.set_rotation()
 
     def on_aspect(self):
@@ -309,7 +301,6 @@ class App(tk.Frame):
         """App is closing."""
         data = self.data
         data.dims = int(self.dim_choice.get())
-        data.frame_rate = int(self.frame_rate.get())
         data.save(self.data_file)
         self.root.destroy()
 
@@ -332,7 +323,7 @@ class App(tk.Frame):
         self.data.ghost = g
 
     def on_frame_rate(self, param):
-        self.data.frame_rate = float(param.widget.get())
+        self.data.frame_rate = int(param.widget.get())
 
     def on_key(self, event):
         print('on key', event)

@@ -39,12 +39,34 @@ class CheckControl(Control):
         ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
 
     def action(self):
-        print('Visibility.action', self.dataname, self.var.get())
         value = self.var.get()
         if self.datatype is bool:
             value = bool(value)
         setattr(self.data, self.dataname, value)
         self.user_action()
+
+
+class ComboControl(Control):
+    """Class to manage a ttk.Combobox widget."""
+    def __init__(self, data, label, dataname, datatype, user_action, values):
+        self.values = values
+        super().__init__(data, label, dataname, datatype, user_action)
+
+    def add_control(self, frame, row, col):
+        ctl = tk.Label(frame, text=self.label)
+        ctl.grid(row=row, column=0, sticky=tk.SW)
+        ctl = ttk.Combobox(frame,
+                           state='readonly',
+                           width=4,
+                           values=self.values,
+                          )
+        value = str(getattr(self.data, self.dataname))
+        ctl.set(value)
+        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        ctl.bind('<<ComboboxSelected>>', self.user_action)
+
+    def action(self):
+        assert 0
 
 
 class SlideControl(Control):
@@ -59,10 +81,12 @@ class SlideControl(Control):
         value = self.datatype(getattr(self.data, self.dataname))
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        ctl = tk.Scale(frame, from_=self.fr, to=self.to,
-                              resolution=self.res,
-                              orient=tk.HORIZONTAL,
-                              command=self.action)
+        ctl = tk.Scale(frame,
+                       from_=self.fr,
+                       to=self.to,
+                       resolution=self.res,
+                       orient=tk.HORIZONTAL,
+                       command=self.action)
         ctl.set(value)
         ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
 
