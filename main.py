@@ -8,21 +8,11 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 
-import colors
+import dims
+import controls
 import data
 import display
 import utils
-
-MAX_DIM = 10
-# construct all the planes where rotation is visible
-planes = [(0, 1), (0, 2), (1, 2)]
-for dim in range(3, MAX_DIM):
-    planes.append((0, dim))
-    planes.append((1, dim))
-# construct labels for all dimensions
-labels = ['X', 'Y', 'Z']
-for dim in range(3, MAX_DIM):
-    labels.append(str(dim + 1))
 
 STR_UP = '↑'
 STR_DN = '↓'
@@ -33,50 +23,6 @@ STR_RIGHT = '→'
 DISABLED = 0
 ENABLED = 1
 REPLAYING = 2
-
-class PlaneControl:
-    """A class to manage tkinter controls for a single plane."""
-
-    def __init__(self, frame, row, dim1, dim2, app):
-        self.frame = frame
-        self.row = row
-        self.dim1 = dim1
-        self.dim2 = dim2
-        self.app = app
-
-    def add_controls(self):
-        dim1str = labels[self.dim1]
-        dim2str = labels[self.dim2]
-        color1 = colors.html[self.dim1]
-        color2 = colors.html[self.dim2]
-        text = f'{dim1str}-{dim2str}'
-        self.planes = tk.Label(self.frame, text=text)
-        self.planes.grid(row=self.row, column=0, sticky=tk.EW, padx=2, pady=2)
-
-        # create a subframe for the rotation controls
-        self.rot_frame = tk.Frame(self.frame)
-        self.rot_frame.grid(row=self.row, column=1)
-
-        # insert rotation controls
-        self.rotate1 = tk.Button(self.rot_frame, text=' < ', command=partial(self.app.on_rotate, '+', self))
-        self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate2 = tk.Button(self.rot_frame, text=' > ', command=partial(self.app.on_rotate, '-', self))
-        self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
-
-        # insert information about colors of dimensions
-        self.swatch1 = tk.Label(self.frame, text=f'{dim1str}: ████', bg='black', fg=color1)
-        self.swatch1.grid(row=self.row, column=2, sticky=tk.NSEW)
-        self.swatch2 = tk.Label(self.frame, text=f'{dim2str}: ████', bg='black', fg=color2)
-        self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
-
-    def delete_controls(self):
-        self.rot_frame.destroy()
-        self.planes.destroy()
-        self.rotate1.destroy()
-        self.rotate2.destroy()
-        self.swatch1.destroy()
-        self.swatch2.destroy()
-
 
 class App(tk.Frame):
 
@@ -96,6 +42,7 @@ class App(tk.Frame):
         # into display.Viewer so that App and Viewer share the data.
         self.data = data.Data()
         self.data_file = data.get_location()
+        self.data.load(self.data_file)
         self.actionQ = []
         self.playback_index = -1
 
@@ -201,10 +148,6 @@ class App(tk.Frame):
         self.stop_button = tk.Button(frame, text="Stop", font=self.big_font, width=12, command=self.on_stop)
         self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
-        # add a "Restart" control
-        self.clear_button = tk.Button(frame, text="Restart", command=self.reset)
-        self.clear_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
-        row += 1
 
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
@@ -213,7 +156,7 @@ class App(tk.Frame):
         row = 0
 
         # add choice of frame rate
-        ctl = tk.Label(frame, text='Frame rate:')
+        ctl = tk.Label(frame, text='Frame rate of video:')
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
         self.frame_rate = ttk.Combobox(frame,
                           state='readonly',
@@ -225,7 +168,7 @@ class App(tk.Frame):
         row += 1
 
         self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
-        ctl = tk.Button(frame, text='View File Location', command=self.on_view_files)
+        ctl = tk.Button(frame, text='View Recording Folder', command=self.on_view_files)
         ctl.grid(row=row, column=2, sticky=tk.W, padx=6, pady=2)
         row += 1
 
@@ -246,8 +189,8 @@ class App(tk.Frame):
             ctl.grid(row=row, column=col, sticky=tk.W, padx=2, pady=2)
         row += 1
 
-        for plane in planes:
-            self.dim_controls.append(PlaneControl(frame, row, plane[0], plane[1], self))
+        for plane in dims.planes:
+            self.dim_controls.append(controls.PlaneControl(frame, row, plane[0], plane[1], self))
             row += 1
 
         # add a random rotation
@@ -273,7 +216,7 @@ class App(tk.Frame):
         self.dim_choice = ttk.Combobox(frame,
                           state='readonly',
                           width=3,
-                          values=[str(n+1) for n in range(2, MAX_DIM)],
+                          values=[str(n+1) for n in range(2, dims.MAX)],
                           )
         self.dim_choice.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
@@ -291,6 +234,11 @@ class App(tk.Frame):
         self.add_viewer_size_control(frame, row, 1)
         row += 1
 
+        # add a "Restart" control
+        self.clear_button = tk.Button(frame, text="Restart", command=self.reset)
+        self.clear_button.grid(row=row, column=1, sticky=tk.NSEW, padx=2, pady=8)
+        row += 1
+
     def add_viewer_size_control(self, parent_frame, row, col):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
@@ -305,96 +253,31 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         row = 0
-        self.show_faces = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show faces', variable=self.show_faces, command=self.on_faces)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_edges = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show edges', variable=self.show_edges, command=self.on_edges)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_nodes = tk.IntVar()
-        ctl = ttk.Checkbutton(frame, text='Show corners', variable=self.show_nodes, command=self.on_nodes)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_coords = tk.IntVar()
-        ctl = ttk.Checkbutton(frame, text='Show coordinates', variable=self.show_coords, command=self.on_coords)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_steps = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show intermediate steps', variable=self.show_steps, command=self.on_steps)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_center = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show center', variable=self.show_center, command=self.on_center)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_perspective = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Perspective view', variable=self.show_perspective, command=self.on_perspective)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-        self.show_vp = tk.IntVar(value=1)
-        ctl = ttk.Checkbutton(frame, text='Show vanishing point', variable=self.show_vp, command=self.on_vp)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-
-        # add a slider to control perspective depth
-        ctl = tk.Label(frame, text='Depth of perspective:')
-        ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.depth = tk.Scale(frame, from_=2.0, to=10.0,
-                              resolution=0.5,
-                              orient=tk.HORIZONTAL,
-                              command=self.on_depth)
-        self.depth.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-
-        # add a slider to control amount of ghosting
-        ctl = tk.Label(frame, text='Amount of ghosting:')
-        ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.ghost = tk.Scale(frame, to=10,
-                              resolution=1,
-                              orient=tk.HORIZONTAL,
-                              command=self.on_ghost)
-        self.ghost.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-
-        # add a slider to control amount of rotation
-        ctl = tk.Label(frame, text='Rotation per click in degrees:')
-        ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.angle = tk.Scale(frame, from_=1, to=20,
-                              resolution=1,
-                              orient=tk.HORIZONTAL,
-                              command=self.on_angle)
-        self.angle.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
-
-        # add a slider to control amount of scaling
-        ctl = tk.Label(frame, text='Resizing during rotation:')
-        ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.auto_scale = tk.Scale(frame, from_=0.90, to=1.10,
-                              resolution=0.02,
-                              orient=tk.HORIZONTAL,
-                              command=self.on_auto_scale)
-        self.auto_scale.grid(row=row, column=1, sticky=tk.W, pady=0)
-        row += 1
+        # syntactic sugar for ctrls
+        data = self.data
+        action = self.viewer.display
+        ctrls = (
+            controls.CheckControl(data, 'Show faces', 'show_faces', bool, self.on_faces),
+            controls.CheckControl(data, 'Show edges', 'show_edges', bool, action),
+            controls.CheckControl(data, 'Show corners', 'show_nodes', bool, action),
+            controls.CheckControl(data, 'Show coordinates', 'show_coords', bool, action),
+            controls.CheckControl(data, 'Show intermediate steps', 'show_steps', bool, action),
+            controls.CheckControl(data, 'Show center', 'show_center', bool, action),
+            controls.CheckControl(data, 'Perspective view', 'show_perspective', bool, action),
+            controls.CheckControl(data, 'Show vanishing point', 'show_vp', bool, action),
+            controls.SlideControl(data, 'Depth of perspective:', 'depth', float, self.on_depth, 2.0, 10.0, 0.5),
+            controls.SlideControl(data, 'Amount of ghosting:', 'ghost', int, action, 0, 10, 1),
+            controls.SlideControl(data, 'Rotation per click in degrees:', 'angle', int, self.on_angle, 1, 20, 1),
+            controls.SlideControl(data, 'Resizing during rotation:', 'auto_scale', float, self.on_auto_scale, 0.90, 1.10, 0.02),
+        )
+        for control in ctrls:
+            control.add_control(frame, row, 1)
+            row += 1
 
     def load_settings(self):
         """Load initial settings."""
-        self.data.load(self.data_file)
         self.aspect.insert(0, self.data.aspects)
         self.viewer_size.insert(0, self.data.viewer_size)
-        self.depth.set(self.data.depth)
-        self.ghost.set(self.data.ghost)
-        self.angle.set(self.data.angle)
-        self.auto_scale.set(self.data.auto_scale)
-        self.show_faces.set(self.data.show_faces)
-        self.show_edges.set(self.data.show_edges)
-        self.show_nodes.set(self.data.show_nodes)
-        self.show_coords.set(self.data.show_coords)
-        self.show_center.set(self.data.show_center)
-        self.show_perspective.set(self.data.show_perspective)
-        self.show_vp.set(self.data.show_vp)
-        self.show_steps.set(self.data.show_steps)
         self.frame_rate.set(str(self.data.frame_rate))
         self.set_dim(0)
 
@@ -422,27 +305,15 @@ class App(tk.Frame):
         self.data.auto_scale = float(value)
         self.viewer.set_rotation()
 
-    def on_center(self):
-        """The "show center" checkbox has been clicked."""
-        self.data.show_center = bool(self.show_center.get())
-        self.viewer.display()
-
     def on_close(self):
         """App is closing."""
         data = self.data
         data.dims = int(self.dim_choice.get())
         data.frame_rate = int(self.frame_rate.get())
-        data.angle = self.angle.get()
         data.save(self.data_file)
         self.root.destroy()
 
-    def on_coords(self):
-        """The "show coords" checkbox has been clicked."""
-        self.data.show_coords = bool(self.show_coords.get())
-        self.viewer.display()
-
-    def on_depth(self, value):
-        self.data.depth = float(value)
+    def on_depth(self):
         self.viewer.set_depth()
         self.viewer.display()
 
@@ -452,35 +323,19 @@ class App(tk.Frame):
         self.data.dims = int(param.widget.get())
         self.set_dim(old)
 
-    def on_edges(self):
-        """The "show edges" checkbox has been clicked."""
-        self.data.show_edges = bool(self.show_edges.get())
-        self.viewer.display()
-
     def on_faces(self):
         """The "show faces" checkbox has been clicked."""
-        self.data.show_faces = bool(self.show_faces.get())
+        g = self.data.ghost
+        if not self.data.show_faces:
+            self.data.ghost = 0
         self.viewer.display()
+        self.data.ghost = g
 
     def on_frame_rate(self, param):
         self.data.frame_rate = float(param.widget.get())
 
-    def on_ghost(self, value):
-        """The amount of ghosting has been changed."""
-        self.data.ghost = int(value)
-
     def on_key(self, event):
         print('on key', event)
-
-    def on_nodes(self):
-        """The "show nodes" checkbox has been clicked."""
-        self.data.show_nodes = bool(self.show_nodes.get())
-        self.viewer.display()
-
-    def on_perspective(self):
-        """The "show center" checkbox has been clicked."""
-        self.data.show_perspective = bool(self.show_perspective.get())
-        self.viewer.display()
 
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
@@ -532,11 +387,6 @@ class App(tk.Frame):
             self.set_view_size()
         else:
             self.viewer_size.configure(bg='yellow')
-
-    def on_vp(self):
-        """The "show vanishing point" checkbox has been clicked."""
-        self.data.show_vp = bool(self.show_vp.get())
-        self.viewer.display()
 
     def queue_action(self, action):
         """Add this action to the queue awaiting execution."""
