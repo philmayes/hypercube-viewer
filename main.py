@@ -24,6 +24,9 @@ DISABLED = 0
 ENABLED = 1
 REPLAYING = 2
 
+def nothing():
+    pass
+
 class App(tk.Frame):
 
     PLAYBACK_ACTION = 'PB'
@@ -45,6 +48,7 @@ class App(tk.Frame):
         self.data.load(self.data_file)
         self.actionQ = []
         self.playback_index = -1
+        self.lookup = None
 
         self.max_dim = 6
         self.dim_controls = []
@@ -197,6 +201,11 @@ class App(tk.Frame):
         btn.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
         btn = tk.Button(rot_frame, text=' > ', command=partial(self.on_random, '+'))
         btn.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
+
+        # blah
+        ctl = controls.CheckControl('Replay visible', 'replay_visible', bool)
+        ctl.add_control(frame, row, 2)
+
         row += 1
 
     def add_setup_controls(self, parent_frame, row, col):
@@ -246,12 +255,7 @@ class App(tk.Frame):
         """Add controls for what to display to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        row = 0
-        controls.Control.callback = self.execute_action
-        controls.Control.data = self.data
-        # syntactic sugar for ctrls
-        data = self.data
-        action = self.viewer.display
+        # list of all visibility controls
         ctrls = (
             controls.CheckControl('Show faces', 'show_faces', bool),
             controls.CheckControl('Show edges', 'show_edges', bool),
@@ -266,32 +270,41 @@ class App(tk.Frame):
             controls.SlideControl('Rotation per click in degrees:', 'angle', int, 1, 20, 1),
             controls.SlideControl('Resizing during rotation:', 'auto_scale', float, 0.90, 1.10, 0.02),
         )
+        row = 0
+        # set parameters that apply for all controls as class-global
+        controls.Control.callback = self.execute_action
+        controls.Control.data = self.data
+        # add every control to this frame
         for control in ctrls:
             control.add_control(frame, row, 1)
             row += 1
 
-    def execute_action(self, command, value):
+    def execute_action(self, name, value, playback=False):
         """Execute a visibility action. Plus some others."""
-        print('execute_action', command, value)
-        default = self.viewer.display
-        lookup = {\
-            'show_faces': self.on_faces,
-            'show_edges': default,
-            'show_nodes': default,
-            'show_coords': default,
-            'show_steps': default,
-            'show_center': default,
-            'show_perspective': default,
-            'show_vp': default,
-            'depth': self.on_depth,
-            'ghost': default,
-            'angle': self.on_angle,
-            'auto_scale': self.on_auto_scale,
-            'frame_rate': default,
-        }
-        action = lookup[command]
+        print(f'execute_action: {name}, {value}, {playback=}')
+        if not self.lookup:
+            # cache the building of this table
+            default = self.viewer.display
+            self.lookup = {\
+                'show_faces': self.on_faces,
+                'show_edges': default,
+                'show_nodes': default,
+                'show_coords': default,
+                'show_steps': default,
+                'show_center': default,
+                'show_perspective': default,
+                'show_vp': default,
+                'depth': self.on_depth,
+                'ghost': default,
+                'angle': self.on_angle,
+                'auto_scale': self.on_auto_scale,
+                'frame_rate': default,
+                'replay_visible': nothing,
+            }
+        action = self.lookup[name]
         action()
-
+        cmd = f'V{name}:{value}'
+        self.queue_action(cmd)
 
     def load_settings(self):
         """Load initial settings."""
@@ -317,9 +330,8 @@ class App(tk.Frame):
         else:
             self.aspect.configure(bg='yellow')
 
-    def on_auto_scale(self, value):
+    def on_auto_scale(self):
         """The scaling for rotations has been changed."""
-        self.data.auto_scale = float(value)
         self.viewer.set_rotation()
 
     def on_close(self):
@@ -388,7 +400,9 @@ class App(tk.Frame):
 
     def on_view_files(self):
         """Show the folder where video output is saved."""
-        os.startfile(self.viewer.output_dir)
+        # os.startfile(self.viewer.output_dir)
+        # HACK
+        print(self.viewer.actions)
 
     def on_viewer_size(self):
         """The viewer_size ratios have been changed.
@@ -436,8 +450,14 @@ class App(tk.Frame):
                 # there are more actions to take
                 action = self.viewer.actions[self.playback_index]
                 self.playback_index += 1
-                # stop playing back if the user has canceled
-                self.viewer.take_action(action, playback=True)
+                if action[0] == 'V':
+                    if self.data.replay_visible:
+                        # perform the visibility action
+                        match = self.viewer.re_visible.match(action)
+                        assert match is not None
+                        self.execute_action(match.group(1), match.group(2), playback=True)
+                else:
+                    self.viewer.take_action(action, playback=True)
             else:
                 # we've played back all the actions, so cancel playback
                 self.playback_index = -1
@@ -449,7 +469,7 @@ class App(tk.Frame):
             # and it has been placed on a queue. Take it off the queue.
             action = self.actionQ[0]
             del self.actionQ[0]
-            if action == app.PLAYBACK_ACTION:
+            if action == App.PLAYBACK_ACTION:
                 # the action is to play back all the actions up until now,
                 self.set_replay_button(REPLAYING)
                 self.playback_index = 0

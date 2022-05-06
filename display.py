@@ -27,7 +27,7 @@ import wireframe as wf
 X, Y, Z = range(3)          # syntactic sugar for the first three dimensions
 SCALE = 1.1                 # fraction by which to zoom in/out
 TRANSLATE = 40              # amount in pixels to move up/down/left/right
-cmd_to_values = {
+direction_to_values = {
     'l': (X, -TRANSLATE),
     'r': (X, TRANSLATE),
     'u': (Y, -TRANSLATE),
@@ -336,10 +336,15 @@ class Viewer:
         self.canvas.create_image(0, 0, anchor='nw', image=self.image)
         self.canvas.update()
 
+    # Action regexes are class-global. Placing them here makes take_action()
+    # easier to follow.
+    # As an aside, https://regex101.com/ is a great way to test them.
     re_dim = re.compile(r'D([3-9])')
     re_move = re.compile(r'M([udlr])')
     re_rotate = re.compile(r'R(\d)(\d)(\d)?(\+|-)')
+    re_visible = re.compile(r'V(\w+?):(.+)')
     re_zoom = re.compile(r'Z(\+|-)')
+
     def take_action(self, action: str, playback=False):
         """Perform and display the supplied action."""
         acted = True
@@ -349,13 +354,19 @@ class Viewer:
             dim3 = int(match.group(3) or -1)
             rotation = self.rotation if match.group(4) == '+' else -self.rotation
             self.rotate_all(int(match.group(1)), int(match.group(2)), rotation, dim3)
+        elif match := Viewer.re_visible.match(action):
+            # This is a visibility action like showing faces, etc.
+            # It does not make any changes to the wireframe model, but we need
+            # the wireframe to be drawn with the changed visibility setting.
+            print('viewer.take_action', action)
+            acted = True
         elif match := Viewer.re_zoom.match(action):
             if match.group(1) == '+':
                 self.scale_all(SCALE)
             else:
                 self.scale_all(1 / SCALE)
         elif match := Viewer.re_move.match(action):
-            dim, amount = cmd_to_values[match.group(1)]
+            dim, amount = direction_to_values[match.group(1)]
             self.translate_all(dim, amount)
         elif match := Viewer.re_dim.match(action):
             self.data.dims = match.group(1)

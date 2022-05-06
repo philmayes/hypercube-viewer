@@ -111,7 +111,7 @@ class SlideControl(Control):
         else:
             raise TypeError
         setattr(Control.data, self.dataname, value)
-        Control.callback(self.dataname)
+        Control.callback(self.dataname, value)
 
 
 class PlaneControl:

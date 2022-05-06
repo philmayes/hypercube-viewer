@@ -46,6 +46,9 @@ class Data:
         # settings for recording
         self.frame_rate = 30
 
+        # settings for playback
+        self.replay_visible = False
+
     def get_viewer_size(self):
         """Test whether supplied string is valid for self.viewer_size."""
         match = Data.re_view.match(self.viewer_size)
