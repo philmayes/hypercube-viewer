@@ -8,12 +8,18 @@ import colors
 import dims
 
 class Control:
+
+    # these get filled in early; it's a lazy way of supplying the same values
+    # to all instances
+    callback = None
+    data = None
+
     """Base class for customized widgets."""
-    def __init__(self, data, label, dataname, datatype, user_action):
-        self.data = data
+    def __init__(self, label, dataname, datatype):
         self.label = label
         self.dataname = dataname
         self.datatype = datatype
+        # construct a tkinter variable that is compatible with our data
         if datatype is int or datatype is bool:
             self.var = tk.IntVar()
         elif datatype is float:
@@ -22,16 +28,21 @@ class Control:
             self.var = tk.StringVar()
         else:
             raise TypeError
-        self.user_action = user_action
 
+    def get(self):
+        value = self.var.get()
+        return value
+
+    def set(self, value):
+        self.var.set(value)
 
 class CheckControl(Control):
     """Class to manage a ttk.CheckButton widget."""
-    def __init__(self, data, label, dataname, datatype, user_action):
-        super().__init__(data, label, dataname, datatype, user_action)
+    def __init__(self, label, dataname, datatype):
+        super().__init__(label, dataname, datatype)
 
     def add_control(self, frame, row, col):
-        value = getattr(self.data, self.dataname)
+        value = getattr(Control.data, self.dataname)
         if self.datatype is bool:
             value = int(value)
         self.var.set(value)
@@ -42,15 +53,15 @@ class CheckControl(Control):
         value = self.var.get()
         if self.datatype is bool:
             value = bool(value)
-        setattr(self.data, self.dataname, value)
-        self.user_action()
+        setattr(Control.data, self.dataname, value)
+        Control.callback(self.dataname, value)
 
 
 class ComboControl(Control):
     """Class to manage a ttk.Combobox widget."""
-    def __init__(self, data, label, dataname, datatype, user_action, values):
+    def __init__(self, label, dataname, datatype, values):
         self.values = values
-        super().__init__(data, label, dataname, datatype, user_action)
+        super().__init__(label, dataname, datatype)
 
     def add_control(self, frame, row, col):
         ctl = tk.Label(frame, text=self.label)
@@ -60,25 +71,27 @@ class ComboControl(Control):
                            width=4,
                            values=self.values,
                           )
-        value = str(getattr(self.data, self.dataname))
+        value = str(getattr(Control.data, self.dataname))
         ctl.set(value)
         ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        ctl.bind('<<ComboboxSelected>>', self.user_action)
+        ctl.bind('<<ComboboxSelected>>', self.action, value)
 
-    def action(self):
-        assert 0
+    def action(self, param):
+        value = self.datatype(param.widget.get())
+        setattr(Control.data, self.dataname, value)
+        Control.callback(self.dataname, value)
 
 
 class SlideControl(Control):
     """Class to manage a tk.Scale widget."""
-    def __init__(self, data, label, dataname, datatype, user_action, from_, to, res):
+    def __init__(self, label, dataname, datatype, from_, to, res):
         self.fr = from_
         self.to = to
         self.res = res
-        super().__init__(data, label, dataname, datatype, user_action)
+        super().__init__(label, dataname, datatype)
 
     def add_control(self, frame, row, col):
-        value = self.datatype(getattr(self.data, self.dataname))
+        value = self.datatype(getattr(Control.data, self.dataname))
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
         ctl = tk.Scale(frame,
@@ -97,8 +110,8 @@ class SlideControl(Control):
             value = float(value)
         else:
             raise TypeError
-        setattr(self.data, self.dataname, value)
-        self.user_action()
+        setattr(Control.data, self.dataname, value)
+        Control.callback(self.dataname)
 
 
 class PlaneControl:

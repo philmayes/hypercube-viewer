@@ -156,7 +156,7 @@ class App(tk.Frame):
         row = 0
 
         # add choice of frame rate
-        ctrl = controls.ComboControl(self.data, 'Frame rate of video:', 'frame_rate', int, self.on_frame_rate, ['24', '25', '30', '60', '120'])
+        ctrl = controls.ComboControl('Frame rate of video:', 'frame_rate', int, ['24', '25', '30', '60', '120'])
         ctrl.add_control(frame, row, 1)
         row += 1
 
@@ -247,26 +247,51 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         row = 0
+        controls.Control.callback = self.execute_action
+        controls.Control.data = self.data
         # syntactic sugar for ctrls
         data = self.data
         action = self.viewer.display
         ctrls = (
-            controls.CheckControl(data, 'Show faces', 'show_faces', bool, self.on_faces),
-            controls.CheckControl(data, 'Show edges', 'show_edges', bool, action),
-            controls.CheckControl(data, 'Show corners', 'show_nodes', bool, action),
-            controls.CheckControl(data, 'Show coordinates', 'show_coords', bool, action),
-            controls.CheckControl(data, 'Show intermediate steps', 'show_steps', bool, action),
-            controls.CheckControl(data, 'Show center', 'show_center', bool, action),
-            controls.CheckControl(data, 'Perspective view', 'show_perspective', bool, action),
-            controls.CheckControl(data, 'Show vanishing point', 'show_vp', bool, action),
-            controls.SlideControl(data, 'Depth of perspective:', 'depth', float, self.on_depth, 2.0, 10.0, 0.5),
-            controls.SlideControl(data, 'Amount of ghosting:', 'ghost', int, action, 0, 10, 1),
-            controls.SlideControl(data, 'Rotation per click in degrees:', 'angle', int, self.on_angle, 1, 20, 1),
-            controls.SlideControl(data, 'Resizing during rotation:', 'auto_scale', float, self.on_auto_scale, 0.90, 1.10, 0.02),
+            controls.CheckControl('Show faces', 'show_faces', bool),
+            controls.CheckControl('Show edges', 'show_edges', bool),
+            controls.CheckControl('Show corners', 'show_nodes', bool),
+            controls.CheckControl('Show coordinates', 'show_coords', bool),
+            controls.CheckControl('Show intermediate steps', 'show_steps', bool),
+            controls.CheckControl('Show center', 'show_center', bool),
+            controls.CheckControl('Perspective view', 'show_perspective', bool),
+            controls.CheckControl('Show vanishing point', 'show_vp', bool),
+            controls.SlideControl('Depth of perspective:', 'depth', float, 2.0, 10.0, 0.5),
+            controls.SlideControl('Amount of ghosting:', 'ghost', int, 0, 10, 1),
+            controls.SlideControl('Rotation per click in degrees:', 'angle', int, 1, 20, 1),
+            controls.SlideControl('Resizing during rotation:', 'auto_scale', float, 0.90, 1.10, 0.02),
         )
         for control in ctrls:
             control.add_control(frame, row, 1)
             row += 1
+
+    def execute_action(self, command, value):
+        """Execute a visibility action. Plus some others."""
+        print('execute_action', command, value)
+        default = self.viewer.display
+        lookup = {\
+            'show_faces': self.on_faces,
+            'show_edges': default,
+            'show_nodes': default,
+            'show_coords': default,
+            'show_steps': default,
+            'show_center': default,
+            'show_perspective': default,
+            'show_vp': default,
+            'depth': self.on_depth,
+            'ghost': default,
+            'angle': self.on_angle,
+            'auto_scale': self.on_auto_scale,
+            'frame_rate': default,
+        }
+        action = lookup[command]
+        action()
+
 
     def load_settings(self):
         """Load initial settings."""
