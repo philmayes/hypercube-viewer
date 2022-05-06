@@ -24,9 +24,6 @@ DISABLED = 0
 ENABLED = 1
 REPLAYING = 2
 
-def nothing():
-    pass
-
 class App(tk.Frame):
 
     PLAYBACK_ACTION = 'PB'
@@ -164,7 +161,7 @@ class App(tk.Frame):
         ctrl.add_control(frame, row, 1)
         row += 1
 
-        self.rec_buttons = utils.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
+        self.rec_buttons = controls.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
         row += 1
         ctl = tk.Button(frame, text='View Recording Folder', command=self.on_view_files)
         ctl.grid(row=row, column=0, columnspan=2, pady=2)
@@ -299,7 +296,7 @@ class App(tk.Frame):
                 'angle': self.on_angle,
                 'auto_scale': self.on_auto_scale,
                 'frame_rate': default,
-                'replay_visible': nothing,
+                'replay_visible': utils.nothing,
             }
         action = self.lookup[name]
         action()
