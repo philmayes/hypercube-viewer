@@ -20,6 +20,7 @@ import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
+from action import Action
 import colors
 import utils
 import wireframe as wf
@@ -251,14 +252,16 @@ class Viewer:
         for _ in range(count):
             self.display()
 
-    def rotate_all(self, dim1, dim2, theta, dim3=-1):
+    def rotate_all(self, dim1, dim2, theta, dim3=None):
         """Rotate all wireframes about their center, around one or two planes
             by a given angle."""
         wireframe = self.wireframe
-        assert dim1 < wireframe.dims and dim2 < wireframe.dims and dim3 < wireframe.dims
+        assert dim1 < wireframe.dims and dim2 < wireframe.dims
+        if dim3 is not None:
+            assert dim3 < wireframe.dims
         count = self.rotation_count if self.data.show_steps else 1
         delta = theta / count
-        if dim3 < 0:
+        if dim3 is None:
             # we're rotating about a single plane so move in regular steps
             angles = [delta] * count
         else:
@@ -286,7 +289,7 @@ class Viewer:
             # calculate the rotation needed
             angle = angles[-n - 1]
             matrix = wireframe.get_rotate_matrix(dim1, dim2, angle)
-            if dim3 >= 0:
+            if dim3 is not None:
                 angle = angles[n]
                 matrix = wireframe.get_rotate_matrix(dim1, dim3, angle, matrix)
             # move, rotate, move back
@@ -345,33 +348,34 @@ class Viewer:
     re_visible = re.compile(r'V(\w+?):(.+)')
     re_zoom = re.compile(r'Z(\+|-)')
 
-    def take_action(self, action: str, playback=False):
+    def take_action(self, action: Action, playback=False):
         """Perform and display the supplied action."""
         acted = True
         self.stop = False
-        if match := Viewer.re_rotate.match(action):
+        cmd = action.cmd
+        if cmd == 'R':
             # The 3rd dimension is optional
-            dim3 = int(match.group(3) or -1)
-            rotation = self.rotation if match.group(4) == '+' else -self.rotation
-            self.rotate_all(int(match.group(1)), int(match.group(2)), rotation, dim3)
-        elif match := Viewer.re_visible.match(action):
+            rotation = self.rotation if action.p4 == '+' else -self.rotation
+            self.rotate_all(action.p1, action.p2, rotation, action.p3)
+        elif cmd == 'V':
             # This is a visibility action like showing faces, etc.
             # It does not make any changes to the wireframe model, but we need
             # the wireframe to be drawn with the changed visibility setting.
             acted = True
-        elif match := Viewer.re_zoom.match(action):
-            if match.group(1) == '+':
+        elif cmd == 'Z':
+            if action.p1 == '+':
                 self.scale_all(SCALE)
             else:
                 self.scale_all(1 / SCALE)
-        elif match := Viewer.re_move.match(action):
-            dim, amount = direction_to_values[match.group(1)]
+        elif cmd == 'M':
+            dim, amount = direction_to_values[action.p1]
             self.translate_all(dim, amount)
-        elif match := Viewer.re_dim.match(action):
-            self.data.dims = match.group(1)
+        elif cmd == 'D':
+            assert isinstance(action.p1, int)
+            self.data.dims = action.p1
             self.init()
-        elif match := Viewer.re_video.match(action):
-            self.video(match.group(1))
+        elif cmd == '!!!':
+            self.video(action.p1)
             acted = False
         else:
             acted = False

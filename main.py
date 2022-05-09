@@ -14,6 +14,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 
+from action import Action
 import dims
 import controls
 import data
@@ -29,12 +30,6 @@ STR_RIGHT = '→'
 DISABLED = 0
 ENABLED = 1
 REPLAYING = 2
-
-class Action:
-    """An action request."""
-    def __init__(self, name, data_value):
-        self.data_name = name
-        self.data_value = data_value
 
 class App(tk.Frame):
 
@@ -156,10 +151,11 @@ class App(tk.Frame):
         row += 1
 
     def on_test1(self):
-        self.viewer.actions = ['R01-', 'Vshow_nodes:True', 'R02-', 'Vshow_coords:False', 'R03-']
+        print(self.viewer.actions)
 
     def on_test2(self):
-        print(self.viewer.actions)
+        # self.viewer.actions = ['R01-', 'Vshow_nodes:True', 'R02-', 'Vshow_coords:False', 'R03-']
+        pass
 
     def on_test3(self):
         control = self.controls['show_faces']
@@ -192,23 +188,30 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=4)
         row = 0
-        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.queue_action, 'Z-'))
+        Zm = Action('Z', '-')
+        Zp = Action('Z', '+')
+        Ml = Action('M', 'l')
+        Mr = Action('M', 'r')
+        Mu = Action('M', 'u')
+        Md = Action('M', 'd')
+        PB = Action('P')
+        ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.queue_action, Zm))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.queue_action, 'Mu'))
+        ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.queue_action, Mu))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.queue_action, 'Z+'))
+        ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.queue_action, Zp))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
         # add a "Replay" control
         spacer1 = tk.Label(frame, text="")
         spacer1.grid(row=row, column=3, padx=20)
-        self.replay_button = tk.Button(frame, text="Replay", font=self.big_font, width=12, command=partial(self.queue_action, App.PLAYBACK_ACTION))
+        self.replay_button = tk.Button(frame, text="Replay", font=self.big_font, width=12, command=partial(self.queue_action, PB))
         self.replay_button.grid(row=row, column=4, columnspan=2, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
-        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, 'Ml'))
+        ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, Ml))
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.queue_action, 'Md'))
+        ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.queue_action, Md))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.queue_action, 'Mr'))
+        ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.queue_action, Mr))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
         # add a "Stop" control
         self.stop_button = tk.Button(frame, text="Stop", font=self.big_font, width=12, command=self.on_stop)
@@ -444,12 +447,12 @@ class App(tk.Frame):
         dim2 = random.choice(dims)
         dims.remove(dim2)
         dim3 = random.choice(dims)
-        action = f'R{dim1}{dim2}{dim3}{direction}'
+        action = Action('R', dim1, dim2, dim3, direction)
         self.queue_action(action)
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
-        action = f'R{dim_control.dim1}{dim_control.dim2}{direction}'
+        action = Action('R', dim_control.dim1, dim_control.dim2, None, direction)
         self.queue_action(action)
 
     def on_steps(self):
@@ -487,7 +490,7 @@ class App(tk.Frame):
         else:
             self.viewer_size.configure(bg='yellow')
 
-    def queue_action(self, action):
+    def queue_action(self, action: Action):
         """Add this action to the queue awaiting execution."""
         self.actionQ.append(action)
         self.set_widget_state(self.clear_button, ENABLED)
@@ -519,7 +522,7 @@ class App(tk.Frame):
                 # there are more actions to take
                 action = self.viewer.actions[self.playback_index]
                 self.playback_index += 1
-                if action[0] == 'V':
+                if action.visible:
                     if self.data.replay_visible:
                         self.set_visible_state(action)
                         # perform the visibility action
@@ -537,7 +540,7 @@ class App(tk.Frame):
             # and it has been placed on a queue. Take it off the queue.
             action = self.actionQ[0]
             del self.actionQ[0]
-            if action == App.PLAYBACK_ACTION:
+            if action.cmd == 'P':
                 # the action is to play back all the actions up until now,
                 self.set_replay_button(REPLAYING)
                 self.playback_index = 0
@@ -549,13 +552,13 @@ class App(tk.Frame):
                 self.set_replay_button(ENABLED)
 
                 # certain actions need special treatment
-                callbacks = {\
-                    'show_faces': self.on_faces,
-                    'depth': self.on_depth,
-                    'angle': self.on_angle,
-                    'auto_scale': self.on_auto_scale,
-                    'replay_visible': utils.nothing,
-                }
+                # callbacks = {\
+                #     'show_faces': self.on_faces,
+                #     'depth': self.on_depth,
+                #     'angle': self.on_angle,
+                #     'auto_scale': self.on_auto_scale,
+                #     'replay_visible': utils.nothing,
+                # }
                 self.set_visible_state(action)
                 # execute the action
                 self.viewer.take_action(action)
@@ -595,28 +598,12 @@ class App(tk.Frame):
         self.stop_button.configure(state = states[state],
                                    bg=color[state])
 
-    def set_visible_state(self, action):
-        if action[0] != 'V':
+    def set_visible_state(self, action: Action):
+        if not action.visible:
             return
-        match = self.viewer.re_visible.match(action)
-        if not match:
-            print(f'visibility_action FAIL: {action=}')
-            return
-        data_name = match.group(1)
-        value = match.group(2)
-        # convert the type of the action value, initially a string, to one
-        # that matches the data type, and update the data with it
-        if value.isdigit():
-            value = int(value)
-        elif value == "True":
-            value = True
-        elif value == "False":
-            value = False
-        else:
-            try:
-                value = float(value)
-            except:
-                pass
+        data_name = action.p1
+        value = action.p2
+
         old_data = getattr(self.data, data_name)
         assert type(value) is type(old_data)
         setattr(self.data, data_name, value)
@@ -637,25 +624,14 @@ class App(tk.Frame):
         print(f'visibility_action: {data_name}')
         # get the control associated with the data_name and the present value
         control = self.controls[data_name]
-        c_value = control.get()
-
-        # convert the control value to the correct type
-        old_data = getattr(self.data, data_name)
-        value = type(old_data)(c_value)
-
-        action = f'V{data_name}:{value}'
-        # self.viewer.take_action(action)
+        control_value = control.get()
+        action = Action('V', data_name, self.data.coerce(control_value, data_name))
         self.queue_action(action)
 
-
-    def visibility_playback(self, action):
+    def visibility_playback(self, action: Action):
         """Execute a visibility playback action."""
-        match = self.viewer.re_visible.match(action)
-        if not match:
-            print(f'visibility_playback FAIL: {action=}')
-            return
-        data_name = match.group(1)
-        value = match.group(2)
+        data_name = action.p1
+        value = action.p2
 
         if data_name == 'replay_visible':
             # special case: don't bother

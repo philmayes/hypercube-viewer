@@ -106,3 +106,23 @@ class Data:
         with open(fname, "w") as write_file:
             json.dump(data, write_file)
 
+    def coerce(self, value, data_name):
+        """Coerce the value from a widget into the data type."""
+
+        data_type = type(getattr(self, data_name))
+        if isinstance(value, str):
+            if value.isdigit():
+                value = int(value)
+            elif value == "True":
+                value = True
+            elif value == "False":
+                value = False
+            else:
+                try:
+                    value = float(value)
+                except:
+                    pass
+
+        value = data_type(value)
+        assert type(value) is data_type
+        return value

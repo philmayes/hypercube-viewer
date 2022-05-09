@@ -10,10 +10,6 @@ import dims
 class Control:
     """Abstract base class for widgets."""
 
-    # these get filled in early; it's a lazy way of supplying the same values
-    # to all instances
-    # callback = None
-
     """Base class for customized widgets."""
     def __init__(self, label):
         self.label = label
