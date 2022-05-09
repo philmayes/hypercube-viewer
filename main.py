@@ -151,7 +151,8 @@ class App(tk.Frame):
         row += 1
 
     def on_test1(self):
-        print(self.viewer.actions)
+        for a in self.viewer.actions:
+            print(a)
 
     def on_test2(self):
         # self.viewer.actions = ['R01-', 'Vshow_nodes:True', 'R02-', 'Vshow_coords:False', 'R03-']
@@ -372,23 +373,10 @@ class App(tk.Frame):
 
         # set up a sleazy but convenient way of associating the control
         # and the callback
-        default = self.visibility_action
-        callbacks = {\
-            # 'show_faces': self.on_faces,
-            # 'depth': self.on_depth,
-            'angle': self.on_angle,
-            'auto_scale': self.on_auto_scale,
-            'replay_visible': utils.nothing,
-        }
+        callback = self.visibility_action
         for dataname, control in self.controls.items():
             control.set_data(dataname, self.data)
-            callback = callbacks.get(dataname, default)
-            # print('callback for', dataname, callback)
-            control.callback = default
-
-    def on_angle(self, data_name):
-        """The angle of rotation slider has been changed."""
-        self.viewer.set_rotation()
+            control.callback = callback
 
     def on_aspect(self):
         """The aspect ratios have been changed.
@@ -404,10 +392,6 @@ class App(tk.Frame):
         else:
             self.aspect.configure(bg='yellow')
 
-    def on_auto_scale(self, data_name):
-        """The scaling for rotations has been changed."""
-        self.viewer.set_rotation()
-
     def on_close(self):
         """App is closing."""
         data = self.data
@@ -415,23 +399,11 @@ class App(tk.Frame):
         data.save(self.data_file)
         self.root.destroy()
 
-    def on_depth(self, data_name):
-        self.viewer.set_depth()
-        self.viewer.display()
-
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
         old = self.data.dims
         self.data.dims = int(param.widget.get())
         self.set_dim(old)
-
-    def on_faces(self, data_name):
-        """The "show faces" checkbox has been clicked."""
-        g = self.data.ghost
-        if not self.data.show_faces:
-            self.data.ghost = 0
-        self.viewer.display()
-        self.data.ghost = g
 
     def on_frame_rate(self, param):
         self.data.frame_rate = int(param.widget.get())
@@ -551,17 +523,37 @@ class App(tk.Frame):
                 # (it would have been disabled if the queue were formerly empty)
                 self.set_replay_button(ENABLED)
 
-                # certain actions need special treatment
-                # callbacks = {\
-                #     'show_faces': self.on_faces,
-                #     'depth': self.on_depth,
-                #     'angle': self.on_angle,
-                #     'auto_scale': self.on_auto_scale,
-                #     'replay_visible': utils.nothing,
-                # }
-                self.set_visible_state(action)
-                # execute the action
-                self.viewer.take_action(action)
+                need_action = True
+                real_ghost = 0
+                if action.visible:
+                    # change the visible state of the control
+                    # and its value in .data
+                    self.set_visible_state(action)
+                    # certain actions need special treatment
+                    vis = action.p1
+                    if vis == 'show_faces':
+                        # If ghosting is on when we hide faces, they don't
+                        # seem to be hidden because their ghost is still
+                        # visible, so turn ghosting off and then back on.
+                        if not self.data.show_faces:
+                            real_ghost = self.data.ghost
+                            self.data.ghost = 0
+                        pass
+                    elif vis == 'depth':
+                        self.viewer.set_depth()
+                    elif vis == 'angle':
+                        self.viewer.set_rotation()
+                    elif vis == 'auto_scale':
+                        need_action = False
+                    elif vis == 'replay_visible':
+                        need_action = False
+
+                if need_action:
+                    # execute the action
+                    self.viewer.take_action(action)
+                if real_ghost:
+                    # We turned off ghosting. Turn it back on.
+                    self.data.ghost = real_ghost
 
                 if not self.actionQ:
                     # if there are no more actions queued, it makes no sense
