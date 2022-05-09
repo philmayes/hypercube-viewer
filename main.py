@@ -7,6 +7,7 @@ Visibility requests are controlled by actions just like wireframe actions are.
 They exist in actionQ and viewer.actions
 
 """
+import copy
 from functools import partial
 import os
 import random
@@ -52,20 +53,17 @@ class App(tk.Frame):
         self.data = data.Data()
         self.data_file = data.get_location()
         self.data.load(self.data_file)
-        self.actionQ = []
-        self.playback_index = -1
-        self.lookup = None
+        self.actionQ = []               # queue of Action instances
+        self.playback_index = -1        # if >= 0, we are replaying actionQ
 
-        self.max_dim = 6
         self.dim_controls = []
         self.grid(sticky=tk.NSEW)
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.winfo_toplevel().title('Hypercube')
         self.big_font = ('calibri', 14, 'bold')
-        # self.bind_all('<Key>', self.on_key)
 
-        # create a frame for display
+        # create a frame for display and add a canvas to it
         self.right_frame = tk.Frame(self)
         self.right_frame.grid(row=0, column=1, sticky=tk.NE)
         self.canvas = tk.Canvas(self.right_frame, highlightthickness=0)
@@ -151,11 +149,12 @@ class App(tk.Frame):
         row += 1
 
     def on_test1(self):
+        print('Actions: ', end='')
         for a in self.viewer.actions:
-            print(a)
+            print(a, end='; ')
+        print()
 
     def on_test2(self):
-        # self.viewer.actions = ['R01-', 'Vshow_nodes:True', 'R02-', 'Vshow_coords:False', 'R03-']
         pass
 
     def on_test3(self):
@@ -167,7 +166,7 @@ class App(tk.Frame):
         self.viewer.show()
 
     def on_test4(self):
-        self.viewer.take_action('Vshow_faces:True')
+        pass
 
     def on_test5(self):
         pass
@@ -271,7 +270,6 @@ class App(tk.Frame):
         # add a checkbox for whether replay tracks the visible settings
         ctl = self.controls['replay_visible']
         ctl.add_control(frame, row, 2)
-
         row += 1
 
     def add_setup_controls(self, parent_frame, row, col):
@@ -351,7 +349,7 @@ class App(tk.Frame):
         self.set_dim(0)
 
     def make_controls(self):
-        """Construct (all?) controls in a dictionary."""
+        """Construct controls in a dictionary."""
         # set parameter that applies for all controls as class-global
         controls.Control.callback = self.visibility_action
         self.controls = {
@@ -367,7 +365,7 @@ class App(tk.Frame):
             'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
             'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
             'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
-            'replay_visible': controls.CheckControl('Replay visible'),
+            'replay_visible': controls.CheckControl('Replay uses\nvisibility settings'),
             'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
         }
 
@@ -407,9 +405,6 @@ class App(tk.Frame):
 
     def on_frame_rate(self, param):
         self.data.frame_rate = int(param.widget.get())
-
-    def on_key(self, event):
-        print('on key', event)
 
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
@@ -480,8 +475,19 @@ class App(tk.Frame):
         self.set_stop_button(DISABLED)
         self.set_widget_state(self.clear_button, DISABLED)
 
+        # make a copy of the data for when we replay with visibility
+        self.data_copy = copy.copy(self.data)
         self.viewer.init()
         self.viewer.display()
+
+    def restore_data(self):
+        """Restore the data settings in place at the beginning."""
+        for attr in self.data_copy.__dict__:
+            value = getattr(self.data_copy, attr)
+            setattr(self.data, attr, value)
+            if attr in self.controls:
+                control = self.controls[attr]
+                control.set(value)
 
     def run(self):
         """Run the actions on the action queue.
@@ -496,6 +502,8 @@ class App(tk.Frame):
                 self.playback_index += 1
                 if action.visible:
                     if self.data.replay_visible:
+                        # change the visible state of the control
+                        # and its value in .data
                         self.set_visible_state(action)
                         # perform the visibility action
                         self.visibility_playback(action)
@@ -516,6 +524,9 @@ class App(tk.Frame):
                 # the action is to play back all the actions up until now,
                 self.set_replay_button(REPLAYING)
                 self.playback_index = 0
+                if self.data.replay_visible:
+                    # restore the data settings in place at the beginning
+                    self.restore_data()
                 self.viewer.init(playback=True)
                 self.viewer.display()
             else:
