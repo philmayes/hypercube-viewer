@@ -8,18 +8,32 @@ import colors
 import dims
 
 class Control:
+    """Abstract base class for widgets."""
 
     # these get filled in early; it's a lazy way of supplying the same values
     # to all instances
-    callback = None
-    data = None
+    # callback = None
 
     """Base class for customized widgets."""
-    def __init__(self, label, dataname, datatype):
+    def __init__(self, label):
         self.label = label
+        self.callback = None
+
+    def action(self):
+        print('Control.action', self.dataname)
+        self.callback(self.dataname)
+
+    def get(self):
+        return self.var.get()
+
+    def set(self, value):
+        self.ctl.set(value)
+
+    def set_data(self, dataname, data):
+        """Construct a tkinter variable that is compatible with our data."""
         self.dataname = dataname
-        self.datatype = datatype
-        # construct a tkinter variable that is compatible with our data
+        value = getattr(data, dataname)
+        datatype = type(value)
         if datatype is int or datatype is bool:
             self.var = tk.IntVar()
         elif datatype is float:
@@ -29,89 +43,67 @@ class Control:
         else:
             raise TypeError
 
-    def get(self):
-        value = self.var.get()
-        return value
-
-    def set(self, value):
-        self.var.set(value)
 
 class CheckControl(Control):
     """Class to manage a ttk.CheckButton widget."""
-    def __init__(self, label, dataname, datatype):
-        super().__init__(label, dataname, datatype)
+    def __init__(self, label):
+        super().__init__(label)
 
     def add_control(self, frame, row, col):
-        value = getattr(Control.data, self.dataname)
-        if self.datatype is bool:
+        self.ctl = ttk.Checkbutton(frame, text=self.label, variable=self.var, command=self.action)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
+
+    def set(self, value):
+        if isinstance(value, str):
+            value = 1 if value == 'True' else 0
+        else:
             value = int(value)
         self.var.set(value)
-        ctl = ttk.Checkbutton(frame, text=self.label, variable=self.var, command=self.action)
-        ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
-
-    def action(self):
-        value = self.var.get()
-        if self.datatype is bool:
-            value = bool(value)
-        setattr(Control.data, self.dataname, value)
-        Control.callback(self.dataname, value)
 
 
 class ComboControl(Control):
     """Class to manage a ttk.Combobox widget."""
-    def __init__(self, label, dataname, datatype, values):
+    def __init__(self, label, values):
         self.values = values
-        super().__init__(label, dataname, datatype)
+        super().__init__(label)
 
     def add_control(self, frame, row, col):
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        ctl = ttk.Combobox(frame,
+        self.ctl = ttk.Combobox(frame,
                            state='readonly',
                            width=4,
                            values=self.values,
                           )
-        value = str(getattr(Control.data, self.dataname))
-        ctl.set(value)
-        ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
-        ctl.bind('<<ComboboxSelected>>', self.action, value)
-
-    def action(self, param):
-        value = self.datatype(param.widget.get())
-        setattr(Control.data, self.dataname, value)
-        Control.callback(self.dataname, value)
+        self.ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        self.ctl.bind('<<ComboboxSelected>>', self.action)
 
 
 class SlideControl(Control):
     """Class to manage a tk.Scale widget."""
-    def __init__(self, label, dataname, datatype, from_, to, res):
+    def __init__(self, label, from_, to, res):
         self.fr = from_
         self.to = to
         self.res = res
-        super().__init__(label, dataname, datatype)
+        super().__init__(label)
 
     def add_control(self, frame, row, col):
-        value = self.datatype(getattr(Control.data, self.dataname))
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        ctl = tk.Scale(frame,
+        self.ctl = tk.Scale(frame,
                        from_=self.fr,
                        to=self.to,
                        resolution=self.res,
                        orient=tk.HORIZONTAL,
                        command=self.action)
-        ctl.set(value)
-        ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
 
-    def action(self, value):
-        if self.datatype is int:
-            value = int(value)
-        elif self.datatype == float:
-            value = float(value)
-        else:
-            raise TypeError
-        setattr(Control.data, self.dataname, value)
-        Control.callback(self.dataname, value)
+    def action(self, x):
+        print('SlideControl.action', self.dataname, x)
+        self.callback(self.dataname)
+
+    def get(self):
+        return self.ctl.get()
 
 class ButtonPair:
     """Create a pair of buttons that act like radiobuttons."""

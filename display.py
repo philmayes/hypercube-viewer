@@ -358,7 +358,6 @@ class Viewer:
             # This is a visibility action like showing faces, etc.
             # It does not make any changes to the wireframe model, but we need
             # the wireframe to be drawn with the changed visibility setting.
-            print('viewer.take_action', action)
             acted = True
         elif match := Viewer.re_zoom.match(action):
             if match.group(1) == '+':

@@ -1,6 +1,12 @@
 #! python3.10
 # -*- coding: utf-8 -*-
+"""
+Visibility Management
+=====================
+Visibility requests are controlled by actions just like wireframe actions are.
+They exist in actionQ and viewer.actions
 
+"""
 from functools import partial
 import os
 import random
@@ -24,12 +30,20 @@ DISABLED = 0
 ENABLED = 1
 REPLAYING = 2
 
+class Action:
+    """An action request."""
+    def __init__(self, name, data_value):
+        self.data_name = name
+        self.data_value = data_value
+
 class App(tk.Frame):
 
     PLAYBACK_ACTION = 'PB'
 
     def __init__(self, root=None):
         tk.Frame.__init__(self, root)
+        # set top-left position
+        root.geometry("+200+200")
         # set up hooks for program close
         self.root = root
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -66,6 +80,7 @@ class App(tk.Frame):
         working = os.path.dirname(sys.argv[0])
         output = os.path.join(working, r'output')
         self.viewer = display.Viewer(self.data, output, self.canvas)
+        self.make_controls()
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
@@ -113,6 +128,56 @@ class App(tk.Frame):
         self.add_recording_controls(frame, row, 0)
         row += 1
 
+        # add test controls
+        ctl = tk.Label(frame, text='TEST', font=self.big_font)
+        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        row += 1
+        self.add_test_controls(frame, row, 0)
+        row += 1
+
+    def add_test_controls(self, parent_frame, row, col):
+        """Add test controls to the window."""
+        frame = tk.Frame(parent_frame)
+        frame.grid(row=row, column=col, sticky=tk.W, padx=2)
+        row = 0
+        ctl = tk.Button(frame, text="Test 1", command=self.on_test1)
+        ctl.grid(row=row, column=0, sticky=tk.E, padx=4)
+        ctl = tk.Button(frame, text="Test 2", command=self.on_test2)
+        ctl.grid(row=row, column=1, sticky=tk.E, padx=4)
+        ctl = tk.Button(frame, text="Test 3", command=self.on_test3)
+        ctl.grid(row=row, column=2, sticky=tk.E, padx=4)
+        row += 1
+        ctl = tk.Button(frame, text="Test 4", command=self.on_test4)
+        ctl.grid(row=row, column=0, sticky=tk.E, padx=4)
+        ctl = tk.Button(frame, text="Test 5", command=self.on_test5)
+        ctl.grid(row=row, column=1, sticky=tk.E, padx=4)
+        ctl = tk.Button(frame, text="Test 6", command=self.on_test6)
+        ctl.grid(row=row, column=2, sticky=tk.E, padx=4)
+        row += 1
+
+    def on_test1(self):
+        self.viewer.actions = ['R01-', 'Vshow_nodes:True', 'R02-', 'Vshow_coords:False', 'R03-']
+
+    def on_test2(self):
+        print(self.viewer.actions)
+
+    def on_test3(self):
+        control = self.controls['show_faces']
+        control.set(1)
+        # Draw the wireframe onto the xy plane
+        self.viewer.draw()
+        # Show the xy plane on the tkinter canvas
+        self.viewer.show()
+
+    def on_test4(self):
+        self.viewer.take_action('Vshow_faces:True')
+
+    def on_test5(self):
+        pass
+
+    def on_test6(self):
+        pass
+
     def add_aspect_control(self, parent_frame, row, col):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
@@ -157,7 +222,7 @@ class App(tk.Frame):
         row = 0
 
         # add choice of frame rate
-        ctrl = controls.ComboControl('Frame rate of video:', 'frame_rate', int, ['24', '25', '30', '60', '120'])
+        ctrl = self.controls['frame_rate']
         ctrl.add_control(frame, row, 1)
         row += 1
 
@@ -199,8 +264,8 @@ class App(tk.Frame):
         btn = tk.Button(rot_frame, text=' > ', command=partial(self.on_random, '+'))
         btn.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
-        # blah
-        ctl = controls.CheckControl('Replay visible', 'replay_visible', bool)
+        # add a checkbox for whether replay tracks the visible settings
+        ctl = self.controls['replay_visible']
         ctl.add_control(frame, row, 2)
 
         row += 1
@@ -252,64 +317,73 @@ class App(tk.Frame):
         """Add controls for what to display to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        # list of all visibility controls
-        ctrls = (
-            controls.CheckControl('Show faces', 'show_faces', bool),
-            controls.CheckControl('Show edges', 'show_edges', bool),
-            controls.CheckControl('Show corners', 'show_nodes', bool),
-            controls.CheckControl('Show coordinates', 'show_coords', bool),
-            controls.CheckControl('Show intermediate steps', 'show_steps', bool),
-            controls.CheckControl('Show center', 'show_center', bool),
-            controls.CheckControl('Perspective view', 'show_perspective', bool),
-            controls.CheckControl('Show vanishing point', 'show_vp', bool),
-            controls.SlideControl('Depth of perspective:', 'depth', float, 2.0, 10.0, 0.5),
-            controls.SlideControl('Amount of ghosting:', 'ghost', int, 0, 10, 1),
-            controls.SlideControl('Rotation per click in degrees:', 'angle', int, 1, 20, 1),
-            controls.SlideControl('Resizing during rotation:', 'auto_scale', float, 0.90, 1.10, 0.02),
-        )
         row = 0
-        # set parameters that apply for all controls as class-global
-        controls.Control.callback = self.execute_action
-        controls.Control.data = self.data
-        # add every control to this frame
-        for control in ctrls:
+        # add controls to this frame
+        for dataname in (
+            'show_faces',
+            'show_edges',
+            'show_nodes',
+            'show_coords',
+            'show_steps',
+            'show_center',
+            'show_perspective',
+            'show_vp',
+            'depth',
+            'ghost',
+            'angle',
+            'auto_scale',
+            ):
+            control = self.controls[dataname]
             control.add_control(frame, row, 1)
             row += 1
-
-    def execute_action(self, name, value, playback=False):
-        """Execute a visibility action. Plus some others."""
-        print(f'execute_action: {name}, {value}, {playback=}')
-        if not self.lookup:
-            # cache the building of this table
-            default = self.viewer.display
-            self.lookup = {\
-                'show_faces': self.on_faces,
-                'show_edges': default,
-                'show_nodes': default,
-                'show_coords': default,
-                'show_steps': default,
-                'show_center': default,
-                'show_perspective': default,
-                'show_vp': default,
-                'depth': self.on_depth,
-                'ghost': default,
-                'angle': self.on_angle,
-                'auto_scale': self.on_auto_scale,
-                'frame_rate': default,
-                'replay_visible': utils.nothing,
-            }
-        action = self.lookup[name]
-        action()
-        cmd = f'V{name}:{value}'
-        self.queue_action(cmd)
 
     def load_settings(self):
         """Load initial settings."""
         self.aspect.insert(0, self.data.aspects)
         self.viewer_size.insert(0, self.data.viewer_size)
+        for dataname, control in self.controls.items():
+            value = getattr(self.data, dataname)
+            control.set(value)
         self.set_dim(0)
 
-    def on_angle(self):
+    def make_controls(self):
+        """Construct (all?) controls in a dictionary."""
+        # set parameter that applies for all controls as class-global
+        controls.Control.callback = self.visibility_action
+        self.controls = {
+            'show_faces': controls.CheckControl('Show faces'),
+            'show_edges': controls.CheckControl('Show edges'),
+            'show_nodes': controls.CheckControl('Show corners'),
+            'show_coords': controls.CheckControl('Show coordinates'),
+            'show_steps': controls.CheckControl('Show intermediate steps'),
+            'show_center': controls.CheckControl('Show center'),
+            'show_perspective': controls.CheckControl('Perspective view'),
+            'show_vp': controls.CheckControl('Show vanishing point'),
+            'depth': controls.SlideControl('Depth of perspective:', 2.0, 10.0, 0.5),
+            'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
+            'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
+            'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
+            'replay_visible': controls.CheckControl('Replay visible'),
+            'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
+        }
+
+        # set up a sleazy but convenient way of associating the control
+        # and the callback
+        default = self.visibility_action
+        callbacks = {\
+            # 'show_faces': self.on_faces,
+            # 'depth': self.on_depth,
+            'angle': self.on_angle,
+            'auto_scale': self.on_auto_scale,
+            'replay_visible': utils.nothing,
+        }
+        for dataname, control in self.controls.items():
+            control.set_data(dataname, self.data)
+            callback = callbacks.get(dataname, default)
+            # print('callback for', dataname, callback)
+            control.callback = default
+
+    def on_angle(self, data_name):
         """The angle of rotation slider has been changed."""
         self.viewer.set_rotation()
 
@@ -327,7 +401,7 @@ class App(tk.Frame):
         else:
             self.aspect.configure(bg='yellow')
 
-    def on_auto_scale(self):
+    def on_auto_scale(self, data_name):
         """The scaling for rotations has been changed."""
         self.viewer.set_rotation()
 
@@ -338,7 +412,7 @@ class App(tk.Frame):
         data.save(self.data_file)
         self.root.destroy()
 
-    def on_depth(self):
+    def on_depth(self, data_name):
         self.viewer.set_depth()
         self.viewer.display()
 
@@ -348,7 +422,7 @@ class App(tk.Frame):
         self.data.dims = int(param.widget.get())
         self.set_dim(old)
 
-    def on_faces(self):
+    def on_faces(self, data_name):
         """The "show faces" checkbox has been clicked."""
         g = self.data.ghost
         if not self.data.show_faces:
@@ -397,9 +471,7 @@ class App(tk.Frame):
 
     def on_view_files(self):
         """Show the folder where video output is saved."""
-        # os.startfile(self.viewer.output_dir)
-        # HACK
-        print(self.viewer.actions)
+        os.startfile(self.viewer.output_dir)
 
     def on_viewer_size(self):
         """The viewer_size ratios have been changed.
@@ -449,10 +521,9 @@ class App(tk.Frame):
                 self.playback_index += 1
                 if action[0] == 'V':
                     if self.data.replay_visible:
+                        self.set_visible_state(action)
                         # perform the visibility action
-                        match = self.viewer.re_visible.match(action)
-                        assert match is not None
-                        self.execute_action(match.group(1), match.group(2), playback=True)
+                        self.visibility_playback(action)
                 else:
                     self.viewer.take_action(action, playback=True)
             else:
@@ -476,8 +547,19 @@ class App(tk.Frame):
                 # It's a regular action. Enable the replay button
                 # (it would have been disabled if the queue were formerly empty)
                 self.set_replay_button(ENABLED)
+
+                # certain actions need special treatment
+                callbacks = {\
+                    'show_faces': self.on_faces,
+                    'depth': self.on_depth,
+                    'angle': self.on_angle,
+                    'auto_scale': self.on_auto_scale,
+                    'replay_visible': utils.nothing,
+                }
+                self.set_visible_state(action)
                 # execute the action
                 self.viewer.take_action(action)
+
                 if not self.actionQ:
                     # if there are no more actions queued, it makes no sense
                     # to offer a "Stop" action, so disable the button
@@ -513,6 +595,32 @@ class App(tk.Frame):
         self.stop_button.configure(state = states[state],
                                    bg=color[state])
 
+    def set_visible_state(self, action):
+        if action[0] != 'V':
+            return
+        match = self.viewer.re_visible.match(action)
+        if not match:
+            print(f'visibility_action FAIL: {action=}')
+            return
+        data_name = match.group(1)
+        value = match.group(2)
+        # convert the type of the action value, initially a string, to one
+        # that matches the data type, and update the data with it
+        if value.isdigit():
+            value = int(value)
+        elif value == "True":
+            value = True
+        elif value == "False":
+            value = False
+        else:
+            try:
+                value = float(value)
+            except:
+                pass
+        old_data = getattr(self.data, data_name)
+        assert type(value) is type(old_data)
+        setattr(self.data, data_name, value)
+
     def set_widget_state(self, control, state):
         """Set the control as active or disabled."""
         states = (tk.DISABLED, tk.NORMAL)
@@ -523,6 +631,45 @@ class App(tk.Frame):
         x, y = self.data.get_viewer_size()
         self.canvas.config(width=x, height=y)
         self.reset()
+
+    def visibility_action(self, data_name):
+        """Execute a visibility action."""
+        print(f'visibility_action: {data_name}')
+        # get the control associated with the data_name and the present value
+        control = self.controls[data_name]
+        c_value = control.get()
+
+        # convert the control value to the correct type
+        old_data = getattr(self.data, data_name)
+        value = type(old_data)(c_value)
+
+        action = f'V{data_name}:{value}'
+        # self.viewer.take_action(action)
+        self.queue_action(action)
+
+
+    def visibility_playback(self, action):
+        """Execute a visibility playback action."""
+        match = self.viewer.re_visible.match(action)
+        if not match:
+            print(f'visibility_playback FAIL: {action=}')
+            return
+        data_name = match.group(1)
+        value = match.group(2)
+
+        if data_name == 'replay_visible':
+            # special case: don't bother
+            pass
+
+        # get the control associated with the data_name
+        # and change its state to match the action value
+        control = self.controls[data_name]
+        control.set(value)
+
+        # ??? needed ???
+        control.ctl.update_idletasks()
+
+        self.viewer.take_action(action, playback=True)
 
 
 if __name__ == '__main__':
