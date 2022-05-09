@@ -16,7 +16,6 @@ class Control:
         self.callback = None
 
     def action(self):
-        print('Control.action', self.dataname)
         self.callback(self.dataname)
 
     def get(self):
@@ -45,9 +44,9 @@ class CheckControl(Control):
     def __init__(self, label):
         super().__init__(label)
 
-    def add_control(self, frame, row, col):
+    def add_control(self, frame, row, col, padx=0):
         self.ctl = ttk.Checkbutton(frame, text=self.label, variable=self.var, command=self.action)
-        self.ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, padx=padx)
 
     def set(self, value):
         if isinstance(value, str):
@@ -63,7 +62,7 @@ class ComboControl(Control):
         self.values = values
         super().__init__(label)
 
-    def add_control(self, frame, row, col):
+    def add_control(self, frame, row, col, padx=0):
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
         self.ctl = ttk.Combobox(frame,
@@ -71,7 +70,7 @@ class ComboControl(Control):
                            width=4,
                            values=self.values,
                           )
-        self.ctl.grid(row=row, column=1, sticky=tk.W, pady=0)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, padx=padx)
         self.ctl.bind('<<ComboboxSelected>>', self.action)
 
 
@@ -85,14 +84,14 @@ class SlideControl(Control):
 
     def add_control(self, frame, row, col):
         ctl = tk.Label(frame, text=self.label)
-        ctl.grid(row=row, column=0, sticky=tk.SW)
+        ctl.grid(row=row, column=col-1, sticky=tk.SW)
         self.ctl = tk.Scale(frame,
                        from_=self.fr,
                        to=self.to,
                        resolution=self.res,
                        orient=tk.HORIZONTAL,
                        command=self.action)
-        self.ctl.grid(row=row, column=col, sticky=tk.W, pady=0)
+        self.ctl.grid(row=row, column=col, sticky=tk.W)
 
     def action(self, x):
         print('SlideControl.action', self.dataname, x)
