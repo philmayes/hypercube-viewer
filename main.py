@@ -229,11 +229,22 @@ class App(tk.Frame):
         ctrl.add_control(frame, row, 1)
         row += 1
 
-        self.rec_buttons = controls.ButtonPair(frame, ['Start recording', 'Stop recording'], self.viewer.record, row=row)
+        self.recording = False
+        self.rec_start = tk.Button(frame, text="Start recording", command=partial(self.set_record_state, True))
+        self.rec_start.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
+        self.rec_stop = tk.Button(frame, text="Stop recording", command=partial(self.set_record_state, False))
+        self.rec_stop.grid(row=row, column=1, sticky=tk.E, padx=2, pady=2)
+        self.set_record_state(False)
         row += 1
         ctl = tk.Button(frame, text='View Recording Folder', command=self.on_view_files)
         ctl.grid(row=row, column=0, columnspan=2, pady=2)
         row += 1
+
+    def set_record_state(self, state: bool):
+        self.recording = state
+        self.set_widget_state(self.rec_start, not state)
+        self.set_widget_state(self.rec_stop, state, "red")
+        self.viewer.record(state)
 
     def add_rotation_controls(self, parent_frame, row, col):
         """Add rotation controls to the window."""
@@ -320,6 +331,9 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         row = 0
+        ctl = tk.Label(frame, text='These controls\naffect how the\nmovement actions\nare displayed.')
+        ctl.grid(row=row, column=0, rowspan=8, sticky=tk.W, pady=2)
+
         # add controls to this frame
         for dataname in (
             'show_faces',
@@ -470,7 +484,9 @@ class App(tk.Frame):
         (Re)set all buttons to initial state.
         (Re)initialize the viewer with the current values set up in .data.
         """
-        self.rec_buttons.stop()
+        self.recording = False
+        self.set_record_state(False)
+        self.viewer.record(False)
         self.set_replay_button(DISABLED)
         self.set_stop_button(DISABLED)
         self.set_widget_state(self.clear_button, DISABLED)
@@ -596,25 +612,24 @@ class App(tk.Frame):
 
     def set_stop_button(self, state):
         """Set the Stop button as active or disabled."""
-        states = (tk.DISABLED, tk.NORMAL)
-        color = ['SystemButtonFace', 'red']
-        self.stop_button.configure(state = states[state],
-                                   bg=color[state])
+        self.set_widget_state(self.stop_button, state, "red")
 
     def set_visible_state(self, action: Action):
-        if not action.visible:
-            return
+        assert action.visible
         data_name = action.p1
         value = action.p2
-
         old_data = getattr(self.data, data_name)
         assert type(value) is type(old_data)
         setattr(self.data, data_name, value)
 
-    def set_widget_state(self, control, state):
+    def set_widget_state(self, control, state, color=None):
         """Set the control as active or disabled."""
+        state = int(state)
         states = (tk.DISABLED, tk.NORMAL)
         control.configure(state = states[state])
+        if color:
+            colors = ["SystemButtonFace", color]
+            control.configure(bg=colors[state], fg=colors[state ^ 1])
 
     def set_view_size(self):
         """Set the viewing size from the values in data."""
@@ -644,10 +659,6 @@ class App(tk.Frame):
         # and change its state to match the action value
         control = self.controls[data_name]
         control.set(value)
-
-        # ??? needed ???
-        control.ctl.update_idletasks()
-
         self.viewer.take_action(action, playback=True)
 
 
