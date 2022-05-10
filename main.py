@@ -158,18 +158,22 @@ class App(tk.Frame):
         pass
 
     def on_test3(self):
-        control = self.controls['show_faces']
-        control.set(1)
-        # Draw the wireframe onto the xy plane
-        self.viewer.draw()
-        # Show the xy plane on the tkinter canvas
-        self.viewer.show()
+        control = self.controls['ghost']
+        value = self.data.ghost + 1
+        print('set ghost to', value)
+        control.set(value)
 
     def on_test4(self):
-        pass
+        control = self.controls['angle']
+        value = self.data.angle + 1
+        print('set angle to', value)
+        control.set(value)
 
     def on_test5(self):
-        pass
+        control = self.controls['auto_scale']
+        value = self.data.auto_scale + 0.02
+        print('set auto_scale to', value)
+        control.set(value)
 
     def on_test6(self):
         pass
@@ -473,9 +477,13 @@ class App(tk.Frame):
 
     def queue_action(self, action: Action):
         """Add this action to the queue awaiting execution."""
-        self.actionQ.append(action)
-        self.set_widget_state(self.clear_button, ENABLED)
-        self.set_stop_button(ENABLED)
+        # Sometimes (why the inconsistency?) setting the value for a widget
+        # generates a callback. This doubles up the action during playback,
+        # so ignore all queue requests during playback.
+        if self.playback_index < 0:
+            self.actionQ.append(action)
+            self.set_widget_state(self.clear_button, ENABLED)
+            self.set_stop_button(ENABLED)
 
     def reset(self):
         """The dimensions,aspect or view size has changed.
