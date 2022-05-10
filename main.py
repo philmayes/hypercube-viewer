@@ -488,7 +488,7 @@ class App(tk.Frame):
             self.set_stop_button(ENABLED)
 
     def reset(self):
-        """The dimensions,aspect or view size has changed.
+        """The dimensions, aspect or view size has changed.
 
         This is called at initial start and restart, too.
         (Re)set all buttons to initial state.
@@ -510,6 +510,11 @@ class App(tk.Frame):
         """Restore the data settings in place at the beginning."""
         for attr in self.data_copy.__dict__:
             value = getattr(self.data_copy, attr)
+            if attr == "replay_visible":
+                # Keep the current replay_visible value because if it started
+                # out one way but the user flipped it, we don't want to use
+                # the original setting.
+                continue
             setattr(self.data, attr, value)
             if attr in self.controls:
                 control = self.controls[attr]
