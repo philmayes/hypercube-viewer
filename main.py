@@ -7,6 +7,7 @@ Visibility requests are controlled by actions just like wireframe actions are.
 They exist in actionQ and viewer.actions
 
 """
+import argparse
 import copy
 from functools import partial
 import os
@@ -33,10 +34,11 @@ REPLAYING = 2
 
 class App(tk.Frame):
 
-    def __init__(self, root=None):
+    def __init__(self, root, args):
         tk.Frame.__init__(self, root)
         # set up hooks for program close
         self.root = root
+        self.args = args
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind('<Escape>', lambda e: self.on_close())
 
@@ -119,11 +121,12 @@ class App(tk.Frame):
         row += 1
 
         # add test controls
-        ctl = tk.Label(frame, text='TEST', font=self.big_font)
-        ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        row += 1
-        self.add_test_controls(frame, row, 0)
-        row += 1
+        if self.args.test:
+            ctl = tk.Label(frame, text='TEST', font=self.big_font)
+            ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+            row += 1
+            self.add_test_controls(frame, row, 0)
+            row += 1
 
     def add_test_controls(self, parent_frame, row, col):
         """Add test controls to the window."""
@@ -658,6 +661,9 @@ class App(tk.Frame):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Hypercube')
+    parser.add_argument("-t", "--test", action="store_true", help="run in test mode")
+    args = parser.parse_args()
     root = tk.Tk()
-    app = App(root)
+    app = App(root, args)
     root.mainloop()
