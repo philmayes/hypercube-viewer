@@ -16,11 +16,10 @@ import tkinter as tk
 from tkinter import ttk
 
 from action import Action
-import dims
 import controls
 import data
+import dims
 import display
-import utils
 
 STR_UP = '↑'
 STR_DN = '↓'
@@ -34,12 +33,8 @@ REPLAYING = 2
 
 class App(tk.Frame):
 
-    PLAYBACK_ACTION = 'PB'
-
     def __init__(self, root=None):
         tk.Frame.__init__(self, root)
-        # set top-left position
-        root.geometry("+200+200")
         # set up hooks for program close
         self.root = root
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -53,6 +48,8 @@ class App(tk.Frame):
         self.data = data.Data()
         self.data_file = data.get_location()
         self.data.load(self.data_file)
+        # set top-left position of window
+        root.geometry(f'+{self.data.win_x}+{self.data.win_y}')
         self.actionQ = []               # queue of Action instances
         self.playback_index = -1        # if >= 0, we are replaying actionQ
 
@@ -411,6 +408,8 @@ class App(tk.Frame):
     def on_close(self):
         """App is closing."""
         data = self.data
+        data.win_x = self.root.winfo_x()
+        data.win_y = self.root.winfo_y()
         data.dims = int(self.dim_choice.get())
         data.save(self.data_file)
         self.root.destroy()
@@ -651,7 +650,6 @@ class App(tk.Frame):
 
     def visibility_action(self, data_name):
         """Execute a visibility action."""
-        print(f'visibility_action: {data_name}')
         # get the control associated with the data_name and the present value
         control = self.controls[data_name]
         control_value = control.get()
