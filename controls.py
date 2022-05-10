@@ -94,7 +94,6 @@ class SlideControl(Control):
         self.ctl.grid(row=row, column=col, sticky=tk.W)
 
     def action(self, x):
-        print('SlideControl.action', self.dataname, x)
         self.callback(self.dataname)
 
     def get(self):
