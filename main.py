@@ -529,10 +529,7 @@ class App(tk.Frame):
                         # change the visible state of the control
                         # and its value in .data
                         self.set_visible_state(action)
-                        # perform the visibility action
-                        self.visibility_playback(action)
-                else:
-                    self.viewer.take_action(action, playback=True)
+                self.viewer.take_action(action, playback=True)
             else:
                 # we've played back all the actions, so cancel playback
                 self.playback_index = -1
@@ -626,9 +623,16 @@ class App(tk.Frame):
         assert action.visible
         data_name = action.p1
         value = action.p2
+
+        # change the data value
         old_data = getattr(self.data, data_name)
         assert type(value) is type(old_data)
         setattr(self.data, data_name, value)
+
+        # get the control associated with the data_name
+        # and change its state to match the data value
+        control = self.controls[data_name]
+        control.set(value)
 
     def set_widget_state(self, control, state, color=None):
         """Set the control as active or disabled."""
@@ -653,21 +657,6 @@ class App(tk.Frame):
         control_value = control.get()
         action = Action('V', data_name, self.data.coerce(control_value, data_name))
         self.queue_action(action)
-
-    def visibility_playback(self, action: Action):
-        """Execute a visibility playback action."""
-        data_name = action.p1
-        value = action.p2
-
-        if data_name == 'replay_visible':
-            # special case: don't bother
-            pass
-
-        # get the control associated with the data_name
-        # and change its state to match the action value
-        control = self.controls[data_name]
-        control.set(value)
-        self.viewer.take_action(action, playback=True)
 
 
 if __name__ == '__main__':
