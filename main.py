@@ -371,8 +371,6 @@ class App(tk.Frame):
 
     def make_controls(self):
         """Construct controls in a dictionary."""
-        # set parameter that applies for all controls as class-global
-        controls.Control.callback = self.visibility_action
         self.controls = {
             'show_faces': controls.CheckControl('Show faces'),
             'show_edges': controls.CheckControl('Show edges'),
@@ -517,6 +515,9 @@ class App(tk.Frame):
                 # Keep the current replay_visible value because if it started
                 # out one way but the user flipped it, we don't want to use
                 # the original setting.
+                continue
+            if attr == "frame_rate":
+                # Similar reasoning applies to frame_rate
                 continue
             setattr(self.data, attr, value)
             if attr in self.controls:
