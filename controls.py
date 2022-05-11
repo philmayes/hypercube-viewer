@@ -44,9 +44,9 @@ class CheckControl(Control):
     def __init__(self, label):
         super().__init__(label)
 
-    def add_control(self, frame, row, col, padx=0):
+    def add_control(self, frame, row, col, **kwargs):
         self.ctl = ttk.Checkbutton(frame, text=self.label, variable=self.var, command=self.action)
-        self.ctl.grid(row=row, column=col, sticky=tk.W, padx=padx)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
 
     def set(self, value):
         if isinstance(value, str):
@@ -62,7 +62,7 @@ class ComboControl(Control):
         self.values = values
         super().__init__(label)
 
-    def add_control(self, frame, row, col, padx=0):
+    def add_control(self, frame, row, col, **kwargs):
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
         self.ctl = ttk.Combobox(frame,
@@ -70,7 +70,7 @@ class ComboControl(Control):
                            width=4,
                            values=self.values,
                           )
-        self.ctl.grid(row=row, column=col, sticky=tk.W, padx=padx)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
         self.ctl.bind('<<ComboboxSelected>>', self.action)
 
     def get(self):
@@ -85,7 +85,7 @@ class SlideControl(Control):
         self.res = res
         super().__init__(label)
 
-    def add_control(self, frame, row, col):
+    def add_control(self, frame, row, col, **kwargs):
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=col-1, sticky=tk.SW)
         self.ctl = tk.Scale(frame,
@@ -94,7 +94,7 @@ class SlideControl(Control):
                        resolution=self.res,
                        orient=tk.HORIZONTAL,
                        command=self.action)
-        self.ctl.grid(row=row, column=col, sticky=tk.W)
+        self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
 
     def get(self):
         return self.ctl.get()

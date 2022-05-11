@@ -1,4 +1,4 @@
-#! python3.10
+#! python3
 # -*- coding: utf-8 -*-
 """
 All activity takes place via Action objects. They are pushed onto a queue
@@ -31,7 +31,6 @@ import copy
 from functools import partial
 import os
 import random
-import sys
 import tkinter as tk
 from tkinter import ttk
 
@@ -304,7 +303,7 @@ class App(tk.Frame):
 
         # add a checkbox for whether replay tracks the visible settings
         ctl = self.controls['replay_visible']
-        ctl.add_control(frame, row, 2)
+        ctl.add_control(frame, row, 2, **{"padx":(12,0), "columnspan":2})
         row += 1
 
     def add_setup_controls(self, parent_frame, row, col):
