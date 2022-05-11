@@ -1,12 +1,13 @@
 import json
 import os
 import re
-import sys
 
-def get_location():
+import utils
+
+def get_location(rel_dir):
     """Get the location of the data file."""
-    rel_dir = os.path.dirname(sys.argv[0])
-    return os.path.join(rel_dir, r'settings\values.json')
+    location = utils.make_dir(rel_dir)
+    return os.path.join(location, 'values.json')
 
 class Data:
     """A class to hold persistent data.
@@ -25,7 +26,7 @@ class Data:
         # settings for how the wireframe is constructed
         self.dims = 4
         self.aspects = '1:1'
-        self.viewer_size = '800x600'
+        self.viewer_size = '1000x1000'
 
         # settings for how the wireframe is displayed
         self.show_faces = False

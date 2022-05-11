@@ -52,11 +52,12 @@ class Viewer:
         10: 1.0,
     }
 
-    def __init__(self, data, output_dir, canvas):
+    def __init__(self, data, canvas):
         self.data = data
-        self.output_dir = output_dir
+        # make a directory to hold video output
+        self.output_dir = utils.make_dir('output')
         # fraction of screen that the wireframe should occupy
-        self.screen_fraction = 0.7
+        self.screen_fraction = 0.6
         self.canvas = canvas
         self.actions = []
 

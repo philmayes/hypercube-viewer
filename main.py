@@ -1,11 +1,30 @@
 #! python3.10
 # -*- coding: utf-8 -*-
 """
-Visibility Management
-=====================
-Visibility requests are controlled by actions just like wireframe actions are.
-They exist in actionQ and viewer.actions
+All activity takes place via Action objects. They are pushed onto a queue
+(actionQ) which is emptied by run(), which pauses after each event to allow
+tkinter to update the user interface and keep the program responsive.
+(In addition, long-running drawing actions in display.py that would otherwise
+make user requests wait can be terminated by setting a flag.)
 
+Activities are of two sorts: visibility changes and movement changes.
+Movement actions control the orientation of the hypercube; visibility actions
+control how it is displayed, e.g. whether faces, edges or corners are shown;
+the perspective; the amount of rotation; etc.
+
+A history of actions is kept, and it is possible to replay these. The program
+updates the user interface to correspond with the original actions. This
+requires the program to know what control corresponds to which action, and to
+update it; this needs a 3-way relationship between the control, the action and
+the state. This is done by having Control classes encapsulate widgets (this
+also hides the differences in the way widgets operate), holding them as values
+in a dictionary whose keys are the action types, and placing callback info in
+the class instances.
+
+When the actions are originally carried out, triggered by the user clicking
+controls, the run loop updates the state and changes the wireframe and display.
+When the actions are replayed, the run loop leaves the state untouched and
+updates the control, wireframe and display.
 """
 import argparse
 import copy
@@ -48,7 +67,7 @@ class App(tk.Frame):
         # This is the canonical version of the persistent data. It is passed
         # into display.Viewer so that App and Viewer share the data.
         self.data = data.Data()
-        self.data_file = data.get_location()
+        self.data_file = data.get_location('settings')
         self.data.load(self.data_file)
         # set top-left position of window
         root.geometry(f'+{self.data.win_x}+{self.data.win_y}')
@@ -68,15 +87,13 @@ class App(tk.Frame):
         self.canvas = tk.Canvas(self.right_frame, highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
 
-        # calculate the directory for output data
-        working = os.path.dirname(sys.argv[0])
-        output = os.path.join(working, r'output')
-        self.viewer = display.Viewer(self.data, output, self.canvas)
-        self.make_controls()
+        # construct the viewer and the wireframe
+        self.viewer = display.Viewer(self.data, self.canvas)
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
         self.left_frame.grid(row=0, column=0, sticky=tk.NW)
+        self.make_controls()
         self.add_controls(self.left_frame, 0, 0)
 
         self.load_settings()
