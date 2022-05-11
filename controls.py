@@ -15,7 +15,7 @@ class Control:
         self.label = label
         self.callback = None
 
-    def action(self):
+    def action(self, x=None):
         self.callback(self.dataname)
 
     def get(self):
@@ -73,6 +73,9 @@ class ComboControl(Control):
         self.ctl.grid(row=row, column=col, sticky=tk.W, padx=padx)
         self.ctl.bind('<<ComboboxSelected>>', self.action)
 
+    def get(self):
+        return self.ctl.get()
+
 
 class SlideControl(Control):
     """Class to manage a tk.Scale widget."""
@@ -92,9 +95,6 @@ class SlideControl(Control):
                        orient=tk.HORIZONTAL,
                        command=self.action)
         self.ctl.grid(row=row, column=col, sticky=tk.W)
-
-    def action(self, x):
-        self.callback(self.dataname)
 
     def get(self):
         return self.ctl.get()
