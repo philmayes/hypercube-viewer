@@ -176,7 +176,10 @@ class App(tk.Frame):
         control.set(value)
 
     def on_test6(self):
-        pass
+        control = self.controls['show_faces']
+        value = self.data.show_faces ^ True
+        print('set show_faces to', value)
+        control.set(value)
 
     def add_aspect_control(self, parent_frame, row, col):
         """Add view size control to the window."""
@@ -533,8 +536,9 @@ class App(tk.Frame):
                 self.playback_index += 1
                 if action.visible:
                     if self.data.replay_visible:
-                        # change the visible state of the control
-                        # and its value in .data
+                        # change the value in .data
+                        # and the visible state of the control
+                        self.set_data_value(action)
                         self.set_visible_state(action)
                 self.viewer.take_action(action, playback=True)
             else:
@@ -565,9 +569,8 @@ class App(tk.Frame):
                 need_action = True
                 real_ghost = 0
                 if action.visible:
-                    # change the visible state of the control
-                    # and its value in .data
-                    self.set_visible_state(action)
+                    # change the value in .data
+                    self.set_data_value(action)
                     # certain actions need special treatment
                     vis = action.p1
                     if vis == 'show_faces':
@@ -602,6 +605,16 @@ class App(tk.Frame):
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
 
+    def set_data_value(self, action: Action):
+        assert action.visible
+        data_name = action.p1
+        value = action.p2
+
+        # change the data value
+        old_data = getattr(self.data, data_name)
+        assert type(value) is type(old_data)
+        setattr(self.data, data_name, value)
+
     def set_dim(self, old_count):
         """Set the number of dimensions to use and adjust the controls."""
         dim_count = self.data.dims
@@ -630,11 +643,6 @@ class App(tk.Frame):
         assert action.visible
         data_name = action.p1
         value = action.p2
-
-        # change the data value
-        old_data = getattr(self.data, data_name)
-        assert type(value) is type(old_data)
-        setattr(self.data, data_name, value)
 
         # get the control associated with the data_name
         # and change its state to match the data value
