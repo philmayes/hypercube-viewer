@@ -47,7 +47,7 @@ class Data:
         self.frame_rate = 30
 
         # settings for playback
-        self.replay_visible = False
+        self.replay_visible = True
 
         # window position
         self.win_x = 100
