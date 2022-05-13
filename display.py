@@ -1,12 +1,12 @@
 #!/bin/env python
 """
 There are four primitive actions:
-    plot    calculate new positions of nodes etc.
-    draw    project nodes onto an xy plane
-    show    show the xy plane on a window
-    write   write the xy plane to video
+    plot        calculate new positions of nodes etc.
+    draw        project nodes onto an xy plane
+    show        show the xy plane on a window
+    video_write write the xy plane to video
 
-    display()   executes draw, show, write
+    display()   executes draw, show, video_write
 
 """
 
@@ -26,18 +26,10 @@ import utils
 import wireframe as wf
 
 X, Y, Z = range(3)          # syntactic sugar for the first three dimensions
-SCALE = 1.1                 # fraction by which to zoom in/out
-TRANSLATE = 40              # amount in pixels to move up/down/left/right
-direction_to_values = {
-    'l': (X, -TRANSLATE),
-    'r': (X, TRANSLATE),
-    'u': (Y, -TRANSLATE),
-    'd': (Y, TRANSLATE),
-    }
-
 class Viewer:
     """Display hypercube objects on a tkinter canvas."""
 
+    # map the slider values to the amount of ghosting
     ghost_to_factor = {
         0: 0.0,
         1: 0.6,
@@ -51,6 +43,14 @@ class Viewer:
         9: 0.99,
         10: 1.0,
     }
+    SCALE = 1.1                 # fraction by which to zoom in/out
+    TRANSLATE = 40              # amount in pixels to move up/down/left/right
+    direction_to_values = {
+        'l': (X, -TRANSLATE),
+        'r': (X, TRANSLATE),
+        'u': (Y, -TRANSLATE),
+        'd': (Y, TRANSLATE),
+        }
 
     def __init__(self, data, canvas):
         self.data = data
@@ -118,16 +118,11 @@ class Viewer:
         t1 = time.process_time()
         self.draw()
         self.show()
-        self.write()
-        t2 = time.process_time()
-##        print('display took %0.3f ms' % ((t2-t1)*1000.0))
-        # wait for the time a video frame would take to play back
+        self.video_write()
+        # wait for the remaining duration of a video frame
         # (although writing a frame often takes longer than this),
         # thus emulating what a video would look like
-        frame_time = 1 / self.data.frame_rate
-        pause = frame_time - t2 + t1
-        if pause > 0.0:
-            time.sleep(pause)
+        self.wait_for_frame(t1)
 
     def draw(self):
         """Draw the wireframe onto the xy plane."""
@@ -365,9 +360,9 @@ class Viewer:
             acted = True
         elif cmd == 'Z':
             if action.p1 == '+':
-                self.scale_all(SCALE)
+                self.scale_all(Viewer.SCALE)
             else:
-                self.scale_all(1 / SCALE)
+                self.scale_all(1 / Viewer.SCALE)
         elif cmd == 'M':
             dim, amount = direction_to_values[action.p1]
             self.translate_all(dim, amount)
@@ -387,7 +382,7 @@ class Viewer:
             # Show the xy plane on the tkinter canvas
             self.show()
             # Write to video if needed
-            self.write()
+            self.video_write()
             # Save the action for possible playback
             # We /don't/ keep history when the history is being played back
             if not playback:
@@ -427,7 +422,7 @@ class Viewer:
             self.make_normalize_translations()
             self.display()
 
-    def write(self):
+    def video_write(self):
         """Write the current xy plane to a video file.
 
         Takes about 80ms.
@@ -439,3 +434,12 @@ class Viewer:
             if not self.video:
                 self.start_video()
             self.video.write(self.img)
+
+    def wait_for_frame(self, t1):
+        """Wait out the remaining duration (if any) of a video frame."""
+        t2 = time.perf_counter()
+        # print('frame took %0.3f ms' % ((t2-t1)*1000.0))
+        frame_time = 1 / self.data.frame_rate
+        pause = frame_time - t2 + t1
+        if pause > 0.0:
+            time.sleep(pause)
