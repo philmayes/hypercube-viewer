@@ -109,13 +109,18 @@ class Viewer:
             self.actions = []
             self.recording = False
             self.playing_back = False
-            self.video = None
+            self.video_writer = None
 
         # remove any previous drawing
         cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
 
+        # prime the canvas
+        image = Image.fromarray(self.img)
+        self.image = ImageTk.PhotoImage(image)
+        self.canvas_id = self.canvas.create_image(0, 0, anchor='nw', image=self.image)
+
     def display(self):
-        t1 = time.process_time()
+        t1 = time.perf_counter()
         self.draw()
         self.show()
         self.video_write()
@@ -236,11 +241,11 @@ class Viewer:
 
     def record(self, state):
         if state:
-            assert not self.video
+            assert not self.video_writer
             assert not self.recording
             self.recording = True
         else:
-            self.video = None
+            self.video_writer = None
             self.recording = False
 
     def repeat_frame(self, count):
@@ -329,20 +334,10 @@ class Viewer:
 
     def show(self):
         """Display the xy plane on the tkinter canvas."""
-        image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
-        image = Image.fromarray(image)
-        self.image = ImageTk.PhotoImage(image)
-        self.canvas.create_image(0, 0, anchor='nw', image=self.image)
+        rgb_image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+        self.image = ImageTk.PhotoImage(Image.fromarray(rgb_image))
+        self.canvas.itemconfig(self.canvas_id, image=self.image)
         self.canvas.update()
-
-    # Action regexes are class-global. Placing them here makes take_action()
-    # easier to follow.
-    # As an aside, https://regex101.com/ is a great way to test them.
-    re_dim = re.compile(r'D([3-9])')
-    re_move = re.compile(r'M([udlr])')
-    re_rotate = re.compile(r'R(\d)(\d)(\d)?(\+|-)')
-    re_visible = re.compile(r'V(\w+?):(.+)')
-    re_zoom = re.compile(r'Z(\+|-)')
 
     def take_action(self, action: Action, playback=False):
         """Perform and display the supplied action."""
@@ -357,22 +352,19 @@ class Viewer:
             # This is a visibility action like showing faces, etc.
             # It does not make any changes to the wireframe model, but we need
             # the wireframe to be drawn with the changed visibility setting.
-            acted = True
+            pass
         elif cmd == 'Z':
             if action.p1 == '+':
                 self.scale_all(Viewer.SCALE)
             else:
                 self.scale_all(1 / Viewer.SCALE)
         elif cmd == 'M':
-            dim, amount = direction_to_values[action.p1]
+            dim, amount = Viewer.direction_to_values[action.p1]
             self.translate_all(dim, amount)
         elif cmd == 'D':
             assert isinstance(action.p1, int)
             self.data.dims = action.p1
             self.init()
-        elif cmd == '!!!':
-            self.video(action.p1)
-            acted = False
         else:
             acted = False
 
@@ -389,13 +381,13 @@ class Viewer:
                 self.actions.append(action)
 
     def start_video(self):
-        if not self.video:
+        if not self.video_writer:
             types = (('mp4', 'mp4v'), ('avi', 'XVID'))
             ext, codec = types[0]
-            assert not self.video
+            assert not self.video_writer
             fname = utils.make_filename('video', ext)
             output = os.path.join(self.output_dir, fname)
-            self.video = cv2.VideoWriter(output,
+            self.video_writer = cv2.VideoWriter(output,
                                          cv2.VideoWriter_fourcc(*codec),
                                          self.data.frame_rate,
                                          (self.width, self.height))
@@ -431,9 +423,9 @@ class Viewer:
             # By deferring file creation until an actual write is issued,
             # we avoid creating an empty video file when the user starts
             # and then stops video recording.
-            if not self.video:
+            if not self.video_writer:
                 self.start_video()
-            self.video.write(self.img)
+            self.video_writer.write(self.img)
 
     def wait_for_frame(self, t1):
         """Wait out the remaining duration (if any) of a video frame."""
