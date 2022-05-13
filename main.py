@@ -39,6 +39,7 @@ import controls
 import data
 import dims
 import display
+import utils
 
 STR_UP = '↑'
 STR_DN = '↓'
@@ -227,7 +228,7 @@ class App(tk.Frame):
         # add a "Replay" control
         spacer1 = tk.Label(frame, text="")
         spacer1.grid(row=row, column=3, padx=20)
-        self.replay_button = tk.Button(frame, text="Replay", font=self.big_font, width=12, command=partial(self.queue_action, PB))
+        self.replay_button = tk.Button(frame, text="Play Recording", font=self.big_font, width=12, command=partial(self.queue_action, PB))
         self.replay_button.grid(row=row, column=4, columnspan=2, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
         ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, Ml))
@@ -253,21 +254,19 @@ class App(tk.Frame):
         row += 1
 
         self.recording = False
-        self.rec_start = tk.Button(frame, text="Start recording", command=partial(self.set_record_state, True))
-        self.rec_start.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
-        self.rec_stop = tk.Button(frame, text="Stop recording", command=partial(self.set_record_state, False))
-        self.rec_stop.grid(row=row, column=1, sticky=tk.E, padx=2, pady=2)
+        w = 16
+        self.rec_start = tk.Button(frame, text="Start recording", width=w, command=partial(self.set_record_state, True))
+        self.rec_start.grid(row=row, column=0, padx=2, pady=2)
+        self.rec_stop = tk.Button(frame, text="Stop recording", width=w, command=partial(self.set_record_state, False))
+        self.rec_stop.grid(row=row, column=1, padx=2, pady=2)
         self.set_record_state(False)
         row += 1
-        ctl = tk.Button(frame, text='View Recording Folder', command=self.on_view_files)
-        ctl.grid(row=row, column=0, columnspan=2, pady=2)
+        self.rec_view = tk.Button(frame, text='View Recording', width=w, command=self.on_view_video)
+        self.rec_view.grid(row=row, column=0, pady=2)
+        # self.set_widget_state(self.rec_view, DISABLED)
+        ctl = tk.Button(frame, text='View Folder', width=w, command=self.on_view_files)
+        ctl.grid(row=row, column=1, pady=2)
         row += 1
-
-    def set_record_state(self, state: bool):
-        self.recording = state
-        self.set_widget_state(self.rec_start, not state)
-        self.set_widget_state(self.rec_stop, state, "red")
-        self.viewer.record(state)
 
     def add_rotation_controls(self, parent_frame, row, col):
         """Add rotation controls to the window."""
@@ -480,6 +479,21 @@ class App(tk.Frame):
         """Show the folder where video output is saved."""
         os.startfile(self.viewer.output_dir)
 
+    def on_view_video(self):
+        """Show the last video recorded."""
+        play_file = None
+        if self.viewer.video_reader:
+            self.viewer.stop = True
+            text = "Play Recording"
+            color = "SystemButtonFace"
+        else:
+            play_file = utils.find_latest_file(self.viewer.output_dir)
+            text = "Stop Playing"
+            color = "red"
+        self.rec_view.configure(text=text, bg=color)
+        if play_file:
+            self.viewer.video_play(play_file)
+
     def on_viewer_size(self):
         """The viewer_size ratios have been changed.
         
@@ -644,6 +658,12 @@ class App(tk.Frame):
             for dim in range(dim_count, old_count):
                 self.dim_controls[dim].delete_controls()
         self.reset()
+
+    def set_record_state(self, state: bool):
+        self.recording = state
+        self.set_widget_state(self.rec_start, not state)
+        self.set_widget_state(self.rec_stop, state, "red")
+        self.viewer.record(state)
 
     def set_replay_button(self, state):
         """Set the Replay button as disabled, ready or replaying."""

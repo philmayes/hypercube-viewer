@@ -110,6 +110,7 @@ class Viewer:
             self.recording = False
             self.playing_back = False
             self.video_writer = None
+            self.video_reader = None
 
         # remove any previous drawing
         cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
@@ -413,6 +414,23 @@ class Viewer:
             wireframe.center[dim] += delta
             self.make_normalize_translations()
             self.display()
+
+    def video_play(self, video_file):
+        try:
+            self.video_reader = cv2.VideoCapture(video_file)
+            print(self.video_reader, self.video_reader.isOpened())
+            if self.video_reader.isOpened():
+                while not self.stop:
+                    t1 = time.process_time()
+                    ret, frame = self.video_reader.read()
+                    if not ret:
+                        break
+                    self.img = frame
+                    self.show()
+                    self.wait_for_frame(t1)
+        except:
+            pass
+        self.video_reader = None
 
     def video_write(self):
         """Write the current xy plane to a video file.
