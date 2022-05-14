@@ -47,11 +47,6 @@ STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
 
-# Names for the states of buttons. Values are indices into lists.
-DISABLED = 0
-ENABLED = 1
-REPLAYING = 2
-
 class App(tk.Frame):
 
     def __init__(self, root, args):
@@ -491,7 +486,7 @@ class App(tk.Frame):
         # stop any playback
         self.playback_index = -1
         # adjust button states
-        self.set_replay_button(ENABLED)
+        self.set_replay_button(controls.ENABLED)
         self.stop_button.state = controls.DISABLED
 
     def on_view_files(self):
@@ -529,9 +524,9 @@ class App(tk.Frame):
         (Re)set all buttons to initial state.
         (Re)initialize the viewer with the current values set up in .data.
         """
-        self.set_record_state(ENABLED)
+        self.set_record_state(controls.ENABLED)
         self.viewer.record(False)
-        self.set_replay_button(DISABLED)
+        self.set_replay_button(controls.DISABLED)
         self.stop_button.state = controls.DISABLED
         self.clear_button.state = controls.DISABLED
 
@@ -578,7 +573,7 @@ class App(tk.Frame):
             else:
                 # we've played back all the actions, so cancel playback
                 self.playback_index = -1
-                self.set_replay_button(ENABLED)
+                self.set_replay_button(controls.ENABLED)
                 self.stop_button.state = controls.DISABLED
 
         elif self.actionQ:
@@ -588,7 +583,7 @@ class App(tk.Frame):
             del self.actionQ[0]
             if action.cmd == 'P':
                 # the action is to play back all the actions up until now,
-                self.set_replay_button(REPLAYING)
+                self.set_replay_button(controls.ACTIVE)
                 self.playback_index = 0
                 if self.data.replay_visible:
                     # restore the data settings in place at the beginning
@@ -598,7 +593,7 @@ class App(tk.Frame):
             else:
                 # It's a regular action. Enable the replay button
                 # (it would have been disabled if the queue were formerly empty)
-                self.set_replay_button(ENABLED)
+                self.set_replay_button(controls.ENABLED)
 
                 need_action = True
                 real_ghost = 0

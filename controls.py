@@ -28,8 +28,8 @@ class Button(tk.Button):
 
         # user can supply a custom color for ENABLED and/or ACTIVE states
         colors = None
-        color1 = kwargs.pop('color1', [])
-        color2 = kwargs.pop('color2', [])
+        color1 = kwargs.pop('color1', None)
+        color2 = kwargs.pop('color2', None)
         if color1 or color2:
             colors = ["SystemButtonFace"] * 3
             if color1:
@@ -49,7 +49,6 @@ class Button(tk.Button):
     def state(self, state):
         assert isinstance(state, int)
         if state != self._state:
-            print('setting state', self, state, self._state)
             self._state = state
             kwargs = {'state': Button.tk_states[state]}
             if self.colors:
