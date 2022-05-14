@@ -7,6 +7,59 @@ from tkinter import ttk
 import colors
 import dims
 
+# Names for the states of buttons. Values are indices into lists.
+DISABLED = 0
+ENABLED = 1
+ACTIVE = 2
+
+class Button(tk.Button):
+    """Class to implement a 3-state button."""
+
+    tk_states = (tk.DISABLED, tk.NORMAL, tk.NORMAL)
+
+    def __init__(self, parent, **kwargs):
+        # User can supply a list of texts for the 3 states.
+        # If this is supplied, there is no need to supply the standard text
+        self.texts = kwargs.pop('texts', [])
+        if self.texts:
+            kwargs['text'] = self.texts[1]
+        else:
+            self.texts = None
+
+        # user can supply a custom color for ENABLED and/or ACTIVE states
+        colors = None
+        color1 = kwargs.pop('color1', [])
+        color2 = kwargs.pop('color2', [])
+        if color1 or color2:
+            colors = ["SystemButtonFace"] * 3
+            if color1:
+                colors[ENABLED] = color1
+            if color2:
+                colors[ACTIVE] = color2
+        self.colors = colors
+
+        super().__init__(parent, **kwargs)
+        self._state = ENABLED
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, state):
+        assert isinstance(state, int)
+        if state != self._state:
+            print('setting state', self, state, self._state)
+            self._state = state
+            kwargs = {'state': Button.tk_states[state]}
+            if self.colors:
+                kwargs['bg'] = self.colors[state]
+            if self.texts:
+                kwargs['text'] = self.texts[state]
+            self.configure(**kwargs)
+
+
+
 class Control:
     """Abstract base class for widgets."""
 

@@ -60,6 +60,9 @@ class Viewer:
         self.screen_fraction = 0.6
         self.canvas = canvas
         self.actions = []
+        self.video_reader = None
+        self.video_writer = None
+        self.recording = False
 
         # visibility settings...
         self.node_radius = 4
