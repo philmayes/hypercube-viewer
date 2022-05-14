@@ -22,6 +22,7 @@ from PIL import ImageTk
 
 from action import Action
 import colors
+import pubsub
 import utils
 import wireframe as wf
 
@@ -403,18 +404,6 @@ class Viewer:
             self.make_normalize_translations()
             self.display()
 
-    def video_start(self):
-        assert not self.video_writer
-        types = (('mp4', 'mp4v'), ('avi', 'XVID'))
-        ext, codec = types[0]
-        assert not self.video_writer
-        fname = utils.make_filename('video', ext)
-        output = os.path.join(self.output_dir, fname)
-        self.video_writer = cv2.VideoWriter(output,
-                                            cv2.VideoWriter_fourcc(*codec),
-                                            self.data.frame_rate,
-                                            (self.width, self.height))
-
     def video_play(self, video_file):
         try:
             self.video_reader = cv2.VideoCapture(video_file)
@@ -431,6 +420,19 @@ class Viewer:
         except:
             pass
         self.video_reader = None
+        pubsub.publish('vplay', False)
+
+    def video_start(self):
+        assert not self.video_writer
+        types = (('mp4', 'mp4v'), ('avi', 'XVID'))
+        ext, codec = types[0]
+        assert not self.video_writer
+        fname = utils.make_filename('video', ext)
+        output = os.path.join(self.output_dir, fname)
+        self.video_writer = cv2.VideoWriter(output,
+                                            cv2.VideoWriter_fourcc(*codec),
+                                            self.data.frame_rate,
+                                            (self.width, self.height))
 
     def video_write(self):
         """Write the current xy plane to a video file.

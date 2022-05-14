@@ -39,6 +39,7 @@ import controls
 import data
 import dims
 import display
+import pubsub
 import utils
 
 STR_UP = '↑'
@@ -98,6 +99,7 @@ class App(tk.Frame):
 
         self.load_settings()
         self.set_view_size()
+        pubsub.subscribe('vplay', self.on_play_end)
         self.run()
 
     def add_controls(self, parent_frame, row, col):
@@ -440,6 +442,10 @@ class App(tk.Frame):
 
     def on_frame_rate(self, param):
         self.data.frame_rate = int(param.widget.get())
+
+    def on_play_end(self, state):
+        assert state is False
+        self.play.state = controls.ENABLED
 
     def on_play_video(self):
         """Show the last video recorded."""
