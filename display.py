@@ -384,21 +384,6 @@ class Viewer:
             if not playback:
                 self.actions.append(action)
 
-    def start_video(self):
-        if not self.video_writer:
-            types = (('mp4', 'mp4v'), ('avi', 'XVID'))
-            ext, codec = types[0]
-            assert not self.video_writer
-            fname = utils.make_filename('video', ext)
-            output = os.path.join(self.output_dir, fname)
-            self.video_writer = cv2.VideoWriter(output,
-                                         cv2.VideoWriter_fourcc(*codec),
-                                         self.data.frame_rate,
-                                         (self.width, self.height))
-        else:
-            # I /think/ start_video is only called when there isn't one
-            assert 0
-
     def translate_all(self, dim, amount):
         """Translate (move) the wireframe along a given axis by a certain amount.
 
@@ -417,6 +402,18 @@ class Viewer:
             wireframe.center[dim] += delta
             self.make_normalize_translations()
             self.display()
+
+    def video_start(self):
+        assert not self.video_writer
+        types = (('mp4', 'mp4v'), ('avi', 'XVID'))
+        ext, codec = types[0]
+        assert not self.video_writer
+        fname = utils.make_filename('video', ext)
+        output = os.path.join(self.output_dir, fname)
+        self.video_writer = cv2.VideoWriter(output,
+                                            cv2.VideoWriter_fourcc(*codec),
+                                            self.data.frame_rate,
+                                            (self.width, self.height))
 
     def video_play(self, video_file):
         try:
@@ -445,7 +442,7 @@ class Viewer:
             # we avoid creating an empty video file when the user starts
             # and then stops video recording.
             if not self.video_writer:
-                self.start_video()
+                self.video_start()
             self.video_writer.write(self.img)
 
     def wait_for_frame(self, t1):
