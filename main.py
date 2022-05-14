@@ -36,6 +36,7 @@ from tkinter import ttk
 
 from action import Action
 import controls
+from controls import DISABLED, ENABLED, ACTIVE
 import data
 import dims
 import display
@@ -46,6 +47,28 @@ STR_UP = '↑'
 STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
+
+# app states
+# The app can be in any of these 4 states:
+IDLE, REPLAYING, RECORDING, PLAYING = range(4)
+"""
+This table describes the button that is pressed to enter the state
+and the action that is triggered.
+   state       button          action
+-----------|---------------|----------------
+IDLE        stop_button     on_stop
+REPLAYING   replay_button   queue_action(PB)
+RECORDING   record_button   set_record_state
+PLAYING     play_button     on_play_video
+"""
+unchanged = 3
+button_states = (
+#    replay    stop      record    play           state
+    (ENABLED,  ENABLED,  ENABLED,  ENABLED),    # IDLE
+    (ACTIVE,   ACTIVE,   unchanged,DISABLED),   # REPLAYING
+    (ENABLED,  ENABLED,  ACTIVE,   DISABLED),   # RECORDING
+    (DISABLED, DISABLED, DISABLED, ACTIVE),     # PLAYING
+)
 
 class App(tk.Frame):
 
@@ -69,6 +92,7 @@ class App(tk.Frame):
         root.geometry(f'+{self.data.win_x}+{self.data.win_y}')
         self.actionQ = []               # queue of Action instances
         self.playback_index = -1        # if >= 0, we are replaying actionQ
+        self.state = IDLE
 
         self.dim_controls = []
         self.grid(sticky=tk.NSEW)
@@ -91,11 +115,24 @@ class App(tk.Frame):
         self.left_frame.grid(row=0, column=0, sticky=tk.NW)
         self.make_controls()
         self.add_controls(self.left_frame, 0, 0)
+        self.buttons = (self.replay_button, self.stop_button, self.record_button, self.play_button)
 
         self.load_settings()
         self.set_view_size()
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
+
+    def set_state(self, new_state):
+        """Set the app state."""
+        values = button_states[new_state]
+        for index, btn_state in enumerate(values):
+            if btn_state == unchanged:
+                continue
+            # special case that the lookup table can't handle easily
+            if index == 2 and self.state == REPLAYING:
+                continue
+            self.buttons[index].state = btn_state
+        self.state = new_state
 
     def add_controls(self, parent_frame, row, col):
         """Add user controls to the window."""
@@ -255,10 +292,10 @@ class App(tk.Frame):
         row += 1
 
         w = 16
-        self.record = controls.Button(frame, texts=["Record", "Record", "Stop"], color2="red", width=w, command=self.set_record_state)
-        self.record.grid(row=row, column=0, padx=2, pady=2)
-        self.play = controls.Button(frame, texts=["Play", "Play", "Stop"], color2="red", width=w, command=self.on_play_video)
-        self.play.grid(row=row, column=1, pady=2)
+        self.record_button = controls.Button(frame, texts=["Record", "Record", "Stop"], color2="red", width=w, command=self.set_record_state)
+        self.record_button.grid(row=row, column=0, padx=2, pady=2)
+        self.play_button = controls.Button(frame, texts=["Play", "Play", "Stop"], color2="red", width=w, command=self.on_play_video)
+        self.play_button.grid(row=row, column=1, pady=2)
         row += 1
         ctl = tk.Button(frame, text='View Folder', width=w, command=self.on_view_files)
         ctl.grid(row=row, column=1, pady=2)
@@ -440,20 +477,17 @@ class App(tk.Frame):
 
     def on_play_end(self, state):
         assert state is False
-        self.play.state = controls.ENABLED
+        self.set_state(IDLE)
 
     def on_play_video(self):
         """Show the last video recorded."""
         play_file = None
-        state = controls.ENABLED
         if self.viewer.video_reader:
             self.viewer.stop = True
         else:
             play_file = utils.find_latest_file(self.viewer.output_dir)
-            if play_file:
-                state = controls.ACTIVE
-        self.play.state = state
         if play_file:
+            self.set_state(PLAYING)
             self.viewer.video_play(play_file)
 
     def on_random(self, direction):
@@ -486,8 +520,7 @@ class App(tk.Frame):
         # stop any playback
         self.playback_index = -1
         # adjust button states
-        self.set_replay_button(controls.ENABLED)
-        self.stop_button.state = controls.DISABLED
+        self.set_state(IDLE)
 
     def on_view_files(self):
         """Show the folder where video output is saved."""
@@ -514,8 +547,8 @@ class App(tk.Frame):
         # so ignore all queue requests during playback.
         if self.playback_index < 0:
             self.actionQ.append(action)
-            self.clear_button.state = controls.ENABLED
-            self.stop_button.state = controls.DISABLED
+            self.clear_button.state = ENABLED
+            self.stop_button.state = DISABLED
 
     def reset(self):
         """The dimensions, aspect or view size has changed.
@@ -524,11 +557,12 @@ class App(tk.Frame):
         (Re)set all buttons to initial state.
         (Re)initialize the viewer with the current values set up in .data.
         """
-        self.set_record_state(controls.ENABLED)
-        self.viewer.record(False)
-        self.set_replay_button(controls.DISABLED)
-        self.stop_button.state = controls.DISABLED
-        self.clear_button.state = controls.DISABLED
+        self.set_state(IDLE)
+        # self.set_record_state(False)
+        # self.viewer.record(False)
+        # self.set_replay_button(DISABLED)
+        # self.stop_button.state = DISABLED
+        # self.clear_button.state = DISABLED
 
         # make a copy of the data for when we replay with visibility
         self.data_copy = copy.copy(self.data)
@@ -573,8 +607,7 @@ class App(tk.Frame):
             else:
                 # we've played back all the actions, so cancel playback
                 self.playback_index = -1
-                self.set_replay_button(controls.ENABLED)
-                self.stop_button.state = controls.DISABLED
+                self.set_state(IDLE)
 
         elif self.actionQ:
             # the user has initiated an action like rotate, zoom, etc.
@@ -583,8 +616,9 @@ class App(tk.Frame):
             del self.actionQ[0]
             if action.cmd == 'P':
                 # the action is to play back all the actions up until now,
-                self.set_replay_button(controls.ACTIVE)
+                self.set_replay_button(ACTIVE)
                 self.playback_index = 0
+                self.set_state(REPLAYING)
                 if self.data.replay_visible:
                     # restore the data settings in place at the beginning
                     self.restore_data()
@@ -593,7 +627,7 @@ class App(tk.Frame):
             else:
                 # It's a regular action. Enable the replay button
                 # (it would have been disabled if the queue were formerly empty)
-                self.set_replay_button(controls.ENABLED)
+                self.set_replay_button(ENABLED)
 
                 need_action = True
                 real_ghost = 0
@@ -629,7 +663,7 @@ class App(tk.Frame):
                 if not self.actionQ:
                     # if there are no more actions queued, it makes no sense
                     # to offer a "Stop" action, so disable the button
-                    self.stop_button.state = controls.DISABLED
+                    self.stop_button.state = DISABLED
 
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
@@ -657,18 +691,16 @@ class App(tk.Frame):
                 self.dim_controls[dim].delete_controls()
         self.reset()
 
-    def set_record_state(self, state=None):
+    def set_record_state(self, active=None):
         """Set OR xor the record button.
 
-        state == None to xor the state
-        else state = required button state
+        active == None:     xor the recording state
+        active == boolean:  recording [not] wanted
         """
-        if state is None:
-            state = controls.ENABLED if self.viewer.recording else controls.ACTIVE
-        self.record.state = state
-        # 1st approximation here! ************************************
-        self.play.state = controls.ENABLED
-        self.viewer.record(state == controls.ACTIVE)
+        if active is None:
+            active = not self.viewer.recording
+        self.set_state(RECORDING if active else IDLE)
+        self.viewer.record(active)
 
     def set_replay_button(self, state):
         """Set the Replay button as disabled, ready or replaying."""
