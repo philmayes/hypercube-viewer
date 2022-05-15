@@ -297,17 +297,16 @@ class App(tk.Frame):
 
         # add choice of frame rate
         ctrl = self.controls['frame_rate']
-        ctrl.add_control(frame, row, 1)
+        ctrl.add_control(frame, row, 1, **{"columnspan": 3})
         row += 1
 
-        w = 16
+        w = 10
         self.record_button = controls.Button(frame, texts=["Record", "Record", "Stop"], color2="red", width=w, command=self.set_record_state)
-        self.record_button.grid(row=row, column=0, padx=2, pady=2)
+        self.record_button.grid(row=row, column=0, sticky=tk.E, pady=2)
         self.play_button = controls.Button(frame, texts=["Play", "Play", "Stop"], color2="red", width=w, command=self.on_play_video)
         self.play_button.grid(row=row, column=1, pady=2)
-        row += 1
         ctl = tk.Button(frame, text='View Folder', width=w, command=self.on_view_files)
-        ctl.grid(row=row, column=1, pady=2)
+        ctl.grid(row=row, column=2, pady=2)
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
