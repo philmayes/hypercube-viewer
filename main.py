@@ -48,28 +48,37 @@ STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
 
-# app states
-# The app can be in any of these 4 states:
-IDLE, REPLAYING, RECORDING, PLAYING = range(4)
-"""
-This table describes the button that is pressed to enter the state
-and the action that is triggered.
-   state       button          action
------------|---------------|----------------
-IDLE        stop_button     on_stop
-REPLAYING   replay_button   queue_action(PB)
-RECORDING   record_button   set_record_state
-PLAYING     play_button     on_play_video
-"""
-unchanged = 3
-button_states = (
+# The application can be in any these of 3 states. DO NOT CONFUSE PLAYING
+# with REPLAYING. PLAYING is the playbackback of a previously-recorded video
+# while REPLAYING is playing back all the commands like move and rotate that
+# have been issued.
+IDLE, REPLAYING, PLAYING = range(3)
+
+# An additional state that exists alongside the above three is whether we are
+# recording to video or not. This state is held in Viewer.recording.
+# This table gives the button that is pressed to enter the state
+# and the action that is triggered.
+#      state       button          action
+#   -----------|----------------|-----------------
+#   IDLE        .stop_button     .on_stop
+#   REPLAYING   .replay_button   .queue_action(PB)
+#   PLAYING     .play_button     .on_play_video
+#   RECORDING   .record_button   .set_record_state
+
+# These lists give the states of the above 4 buttons for each of the 3
+# application states for each of the 2 record states.
+button_states_normal = (
 #    replay    stop      record    play           state
     (ENABLED,  ENABLED,  ENABLED,  ENABLED),    # IDLE
-    (ACTIVE,   ACTIVE,   unchanged,DISABLED),   # REPLAYING
-    (ENABLED,  ENABLED,  ACTIVE,   DISABLED),   # RECORDING
+    (ACTIVE,   ACTIVE,   ENABLED,  DISABLED),   # REPLAYING
     (DISABLED, DISABLED, DISABLED, ACTIVE),     # PLAYING
 )
-
+button_states_recording = (
+#    replay    stop      record    play           state
+    (ENABLED,  ENABLED,  ACTIVE,   DISABLED),   # IDLE
+    (ACTIVE,   ACTIVE,   ACTIVE,   DISABLED),   # REPLAYING
+    (DISABLED, DISABLED, DISABLED, DISABLED),   # PLAYING
+)
 class App(tk.Frame):
 
     def __init__(self, root, args):
@@ -122,16 +131,17 @@ class App(tk.Frame):
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
 
-    def set_state(self, new_state):
-        """Set the app state."""
+    def set_state(self, new_state: int, force: bool=False):
+        """Set the new app state and adjust button states to match."""
+        if not force and new_state == self.state:
+            print(f'state change {self.state} unchanged')
+            return
+        button_states = button_states_recording if self.viewer.recording\
+                   else button_states_normal
         values = button_states[new_state]
         for index, btn_state in enumerate(values):
-            if btn_state == unchanged:
-                continue
-            # special case that the lookup table can't handle easily
-            if index == 2 and self.state == REPLAYING:
-                continue
             self.buttons[index].state = btn_state
+            print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
         self.state = new_state
 
     def add_controls(self, parent_frame, row, col):
@@ -482,13 +492,15 @@ class App(tk.Frame):
     def on_play_video(self):
         """Show the last video recorded."""
         play_file = None
-        if self.viewer.video_reader:
-            self.viewer.stop = True
-        else:
+        playing = self.viewer.video_reader is not None
+        self.viewer.stop = playing
+        if not playing:
             play_file = utils.find_latest_file(self.viewer.output_dir)
         if play_file:
             self.set_state(PLAYING)
             self.viewer.video_play(play_file)
+        else:
+            self.set_state(IDLE)
 
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
@@ -557,8 +569,8 @@ class App(tk.Frame):
         (Re)set all buttons to initial state.
         (Re)initialize the viewer with the current values set up in .data.
         """
+        self.set_record_state(False)
         self.set_state(IDLE)
-        # self.set_record_state(False)
         # self.viewer.record(False)
         # self.set_replay_button(DISABLED)
         # self.stop_button.state = DISABLED
@@ -616,7 +628,7 @@ class App(tk.Frame):
             del self.actionQ[0]
             if action.cmd == 'P':
                 # the action is to play back all the actions up until now,
-                self.set_replay_button(ACTIVE)
+                # self.set_replay_button(ACTIVE)
                 self.playback_index = 0
                 self.set_state(REPLAYING)
                 if self.data.replay_visible:
@@ -692,15 +704,15 @@ class App(tk.Frame):
         self.reset()
 
     def set_record_state(self, active=None):
-        """Set OR xor the record button.
+        """Set or Xor the record button.
 
         active == None:     xor the recording state
         active == boolean:  recording [not] wanted
         """
         if active is None:
             active = not self.viewer.recording
-        self.set_state(RECORDING if active else IDLE)
-        self.viewer.record(active)
+        self.viewer.video_record(active)
+        self.set_state(self.state, force=True)
 
     def set_replay_button(self, state):
         """Set the Replay button as disabled, ready or replaying."""

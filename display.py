@@ -61,9 +61,9 @@ class Viewer:
         self.screen_fraction = 0.6
         self.canvas = canvas
         self.actions = []
+        self.recording = False
         self.video_reader = None
         self.video_writer = None
-        self.recording = False
 
         # visibility settings...
         self.node_radius = 4
@@ -112,7 +112,6 @@ class Viewer:
         if not playback:
             self.actions = []
             self.recording = False
-            self.playing_back = False
             self.video_writer = None
             self.video_reader = None
 
@@ -243,15 +242,6 @@ class Viewer:
         normalize = [-x for x in wireframe.center]
         self.norm_matrix = wireframe.get_translation_matrix(normalize)
         self.denorm_matrix = wireframe.get_translation_matrix(wireframe.center)
-
-    def record(self, state):
-        if state:
-            assert not self.video_writer
-            assert not self.recording
-            self.recording = True
-        else:
-            self.video_writer = None
-            self.recording = False
 
     def repeat_frame(self, count):
         """Wait for <count> frames."""
@@ -422,7 +412,18 @@ class Viewer:
         self.video_reader = None
         pubsub.publish('vplay', False)
 
+    def video_record(self, state):
+        """Start recording video. See note in .video_write about file creation."""
+        if state:
+            assert not self.video_writer
+            assert not self.recording
+            self.recording = True
+        else:
+            self.video_writer = None
+            self.recording = False
+
     def video_start(self):
+        """Create a video file to write to."""
         assert not self.video_writer
         types = (('mp4', 'mp4v'), ('avi', 'XVID'))
         ext, codec = types[0]
