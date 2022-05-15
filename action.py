@@ -1,4 +1,3 @@
-
 class Action:
     """Class to hold an action request.
 
@@ -22,14 +21,14 @@ class Action:
 
     @property
     def visible(self):
-        return self.cmd == 'V'
+        return self.cmd == "V"
 
     def __str__(self):
-        s = f'{self.cmd}:{self.p1}'
+        s = f"{self.cmd}:{self.p1}"
         if self.p2 is not None:
-            s += f',{self.p2}'
+            s += f",{self.p2}"
         if self.p3 is not None:
-            s += f',{self.p3}'
+            s += f",{self.p3}"
         if self.p4 is not None:
-            s += f',{self.p4}'
+            s += f",{self.p4}"
         return s

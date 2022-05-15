@@ -38,30 +38,30 @@ def unsubscribe(topic, consumer):
 
 
 def test():
-
     def callback1(data):
-        print('callback1', data)
+        print("callback1", data)
 
     def callback2(data, d2):
-        print('callback2', data, d2)
+        print("callback2", data, d2)
 
     def callback3(*args, **kwargs):
-        print('callback3', args, kwargs)
+        print("callback3", args, kwargs)
 
     # subscribe the above callbacks to various topics
-    subscribe('alpha', callback1)
-    subscribe('beta', callback2)
-    subscribe('beta', callback3)
-    subscribe('unpublished', callback3)
+    subscribe("alpha", callback1)
+    subscribe("beta", callback2)
+    subscribe("beta", callback3)
+    subscribe("unpublished", callback3)
 
     # publish various topics
-    publish('alpha', 111)
-    publish('beta', [12, 23, 34], 'string!')
-    publish('gamma', 'three')
+    publish("alpha", 111)
+    publish("beta", [12, 23, 34], "string!")
+    publish("gamma", "three")
 
     print(topics)
-    unsubscribe('beta', callback3)
+    unsubscribe("beta", callback3)
     print(topics)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

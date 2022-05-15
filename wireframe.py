@@ -14,10 +14,10 @@ two axes of the plane.
 """
 
 import copy
-
 import numpy as np
 
 import colors
+
 
 def add_face_color(face, nodes):
     """Add a color to a face instance.
@@ -45,8 +45,8 @@ def add_face_color(face, nodes):
             break
     face.append(colors.face(changes))
 
-class Wireframe:
 
+class Wireframe:
     def __init__(self, dims):
         self.dims = dims
         # create a NumPy array with 0 rows, 1 col per dim, 1 for scale
@@ -63,7 +63,7 @@ class Wireframe:
         self.edges += edgeList
 
     def add_shape_sizes(self, orgx=50, orgy=50, sizes=[200]):
-        """ Create a shape and set up its nodes and edges."""
+        """Create a shape and set up its nodes and edges."""
 
         orgs = [0] * self.dims
         orgs[0] = orgx
@@ -142,14 +142,14 @@ class Wireframe:
         # color the faces
         for face in faces:
             add_face_color(face, nodes)
-                
+
         self.add_nodes(nodes)
         self.add_edges(edges)
         self.faces = faces
         self.center = center
 
     def get_rotate_matrix(self, dim1, dim2, radians, a=None):
-        """ Return matrix for rotating about the x-axis by 'radians' radians """
+        """Return matrix for rotating about the x-axis by 'radians' radians"""
 
         if a is None:
             a = np.eye(self.dims + 1)
@@ -162,7 +162,7 @@ class Wireframe:
         return a
 
     def get_scale_matrix(self, scale):
-        """ Return matrix for scaling equally along all axes.
+        """Return matrix for scaling equally along all axes.
 
         return np.array([[s, 0, 0, 0],
                          [0, s, 0, 0],
@@ -176,7 +176,7 @@ class Wireframe:
         return a
 
     def get_translation_matrix(self, vector):
-        """ Return matrix for translation along vector (dx, dy, dz).
+        """Return matrix for translation along vector (dx, dy, dz).
 
         return np.array([[1, 0, 0, 0],
                          [0, 1, 0, 0],
@@ -188,13 +188,13 @@ class Wireframe:
         a = np.eye(dims + 1)
         a[dims][:dims] = vector
         return a
-    
+
     def output_nodes(self):
         print("\n --- Nodes --- ")
         for i, node in enumerate(self.nodes):
-            print(f'{i:3}: ', end='')
+            print(f"{i:3}: ", end="")
             for j in node[:-1]:
-                print(f'{j:>-7}, ', end='')
+                print(f"{j:>-7}, ", end="")
             print()
 
     def output_edges(self):
@@ -218,6 +218,7 @@ class Wireframe:
         midpoint of the edge for this (except there's no need to divide
         by 2 for each edge)
         """
+
         def get_key(edge):
             return self.nodes[edge[0]][2] + self.nodes[edge[1]][2]
 
@@ -225,15 +226,18 @@ class Wireframe:
 
     def sort_faces(self):
         """See explanation for sort_edges()."""
+
         def get_key(face):
-            return self.nodes[face[0]][2] +\
-                   self.nodes[face[1]][2] +\
-                   self.nodes[face[2]][2] +\
-                   self.nodes[face[3]][2]
+            return (
+                self.nodes[face[0]][2]
+                + self.nodes[face[1]][2]
+                + self.nodes[face[2]][2]
+                + self.nodes[face[3]][2]
+            )
 
         self.faces.sort(key=get_key, reverse=True)
 
     def transform(self, matrix):
-        """ Apply a transformation defined by a given matrix. """
-    
+        """Apply a transformation defined by a given matrix."""
+
         self.nodes = np.dot(self.nodes, matrix)

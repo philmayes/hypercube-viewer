@@ -3,6 +3,7 @@ import os
 import sys
 import tkinter as tk
 
+
 def find_latest_file(path):
     latest = None
     tm = 0.0
@@ -13,6 +14,7 @@ def find_latest_file(path):
             tm = stat_info.st_mtime
             latest = full
     return latest
+
 
 def make_dir(rel_dir):
     """Get the location of the data file."""
@@ -26,5 +28,4 @@ def make_dir(rel_dir):
 def make_filename(prefix: str, ext: str):
     """Create a filename that includes date and time."""
     now = datetime.datetime.now()
-    return f'{prefix}-{now:%y%m%d-%H%M%S}.{ext}'
-
+    return f"{prefix}-{now:%y%m%d-%H%M%S}.{ext}"

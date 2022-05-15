@@ -26,7 +26,9 @@ import pubsub
 import utils
 import wireframe as wf
 
-X, Y, Z = range(3)          # syntactic sugar for the first three dimensions
+X, Y, Z = range(3)  # syntactic sugar for the first three dimensions
+
+
 class Viewer:
     """Display hypercube objects on a tkinter canvas."""
 
@@ -44,19 +46,19 @@ class Viewer:
         9: 0.99,
         10: 1.0,
     }
-    SCALE = 1.1                 # fraction by which to zoom in/out
-    TRANSLATE = 40              # amount in pixels to move up/down/left/right
+    SCALE = 1.1  # fraction by which to zoom in/out
+    TRANSLATE = 40  # amount in pixels to move up/down/left/right
     direction_to_values = {
-        'l': (X, -TRANSLATE),
-        'r': (X, TRANSLATE),
-        'u': (Y, -TRANSLATE),
-        'd': (Y, TRANSLATE),
-        }
+        "l": (X, -TRANSLATE),
+        "r": (X, TRANSLATE),
+        "u": (Y, -TRANSLATE),
+        "d": (Y, TRANSLATE),
+    }
 
     def __init__(self, data, canvas):
         self.data = data
         # make a directory to hold video output
-        self.output_dir = utils.make_dir('output')
+        self.output_dir = utils.make_dir("output")
         # fraction of screen that the wireframe should occupy
         self.screen_fraction = 0.6
         self.canvas = canvas
@@ -76,12 +78,14 @@ class Viewer:
         self.img = np.zeros((self.height, self.width, 3), np.uint8)
         # set the vanishing point in the middle of the screen
         # and somewhere along the z-axis
-        self.vp = [int(round(self.width/2)),
-                   int(round(self.height/2)),
-                   int(round(self.width * self.data.depth))]
+        self.vp = [
+            int(round(self.width / 2)),
+            int(round(self.height / 2)),
+            int(round(self.width * self.data.depth)),
+        ]
         # calculate the pixel sizes for all dimensions:
         # get the aspect ratios for all dimensions and the largest ratio
-        ratios = [int(r) for r in self.data.aspects.split(':')]
+        ratios = [int(r) for r in self.data.aspects.split(":")]
         max_r = max(ratios)
         # calculate the size of the largest dimension in pixels
         screen_size = min(self.width, self.height) * self.screen_fraction
@@ -121,7 +125,7 @@ class Viewer:
         # prime the canvas
         image = Image.fromarray(self.img)
         self.image = ImageTk.PhotoImage(image)
-        self.canvas_id = self.canvas.create_image(0, 0, anchor='nw', image=self.image)
+        self.canvas_id = self.canvas.create_image(0, 0, anchor="nw", image=self.image)
 
     def display(self):
         t1 = time.perf_counter()
@@ -139,25 +143,25 @@ class Viewer:
         if self.data.ghost:
             # leave a shadow of the previous frame
             factor = Viewer.ghost_to_factor[self.data.ghost]
-            np.multiply(self.img, factor, out=self.img, casting='unsafe')
+            np.multiply(self.img, factor, out=self.img, casting="unsafe")
         else:
             # clear the previous frame
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
 
         wireframe = self.wireframe
         if self.data.show_vp and self.data.show_perspective:
-            cv2.circle(self.img,
-                       (self.vp[X], self.vp[Y]),
-                       self.vp_radius,
-                       colors.vp,
-                       -1)
+            cv2.circle(
+                self.img, (self.vp[X], self.vp[Y]), self.vp_radius, colors.vp, -1
+            )
 
         if self.data.show_center:
-            cv2.circle(self.img,
-                       (self.get_xy(wireframe.center)),
-                       self.center_radius,
-                       colors.center,
-                       -1)
+            cv2.circle(
+                self.img,
+                (self.get_xy(wireframe.center)),
+                self.center_radius,
+                colors.center,
+                -1,
+            )
 
         if self.data.show_edges:
             # If needed (because the wireframe has been rotated), the edges
@@ -169,11 +173,7 @@ class Viewer:
             for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
-                cv2.line(self.img,
-                        self.get_xy(node1),
-                        self.get_xy(node2),
-                        color,
-                        3)
+                cv2.line(self.img, self.get_xy(node1), self.get_xy(node2), color, 3)
 
         if self.data.show_faces:
             # see the sort explanation for edges
@@ -181,10 +181,12 @@ class Viewer:
                 wireframe.sort_faces()
                 self.sort_faces = False
             for n1, n2, n3, n4, color in wireframe.faces:
-                pts = [self.get_xy(wireframe.nodes[n1]),
-                       self.get_xy(wireframe.nodes[n2]),
-                       self.get_xy(wireframe.nodes[n3]),
-                       self.get_xy(wireframe.nodes[n4])]
+                pts = [
+                    self.get_xy(wireframe.nodes[n1]),
+                    self.get_xy(wireframe.nodes[n2]),
+                    self.get_xy(wireframe.nodes[n3]),
+                    self.get_xy(wireframe.nodes[n4]),
+                ]
                 shape = np.array(pts)
                 cv2.fillConvexPoly(self.img, shape, color)
 
@@ -192,16 +194,14 @@ class Viewer:
             for node in wireframe.nodes:
                 xy = self.get_xy(node)
                 if self.data.show_nodes:
-                    cv2.circle(self.img,
-                            xy,
-                            self.node_radius,
-                            colors.node,
-                            -1)
+                    cv2.circle(self.img, xy, self.node_radius, colors.node, -1)
                 if self.data.show_coords:
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     values = [int(round(v)) for v in node[:-1]]
                     text = str(values)
-                    cv2.putText(self.img, text, (xy[X] + 5, xy[Y] + 3), font, 0.5, colors.text)
+                    cv2.putText(
+                        self.img, text, (xy[X] + 5, xy[Y] + 3), font, 0.5, colors.text
+                    )
 
     def get_xy(self, node):
         """Given a node, return orthogonal or perspective x,y
@@ -238,7 +238,7 @@ class Viewer:
 
     def make_normalize_translations(self):
         """Make 2 matrices for moving to (0,0,0,...) and back."""
-        wireframe = self.wireframe        
+        wireframe = self.wireframe
         normalize = [-x for x in wireframe.center]
         self.norm_matrix = wireframe.get_translation_matrix(normalize)
         self.denorm_matrix = wireframe.get_translation_matrix(wireframe.center)
@@ -250,7 +250,7 @@ class Viewer:
 
     def rotate_all(self, dim1, dim2, theta, dim3=None):
         """Rotate all wireframes about their center, around one or two planes
-            by a given angle."""
+        by a given angle."""
         wireframe = self.wireframe
         assert dim1 < wireframe.dims and dim2 < wireframe.dims
         if dim3 is not None:
@@ -339,24 +339,24 @@ class Viewer:
         acted = True
         self.stop = False
         cmd = action.cmd
-        if cmd == 'R':
+        if cmd == "R":
             # The 3rd dimension is optional
-            rotation = self.rotation if action.p4 == '+' else -self.rotation
+            rotation = self.rotation if action.p4 == "+" else -self.rotation
             self.rotate_all(action.p1, action.p2, rotation, action.p3)
-        elif cmd == 'V':
+        elif cmd == "V":
             # This is a visibility action like showing faces, etc.
             # It does not make any changes to the wireframe model, but we need
             # the wireframe to be drawn with the changed visibility setting.
             pass
-        elif cmd == 'Z':
-            if action.p1 == '+':
+        elif cmd == "Z":
+            if action.p1 == "+":
                 self.scale_all(Viewer.SCALE)
             else:
                 self.scale_all(1 / Viewer.SCALE)
-        elif cmd == 'M':
+        elif cmd == "M":
             dim, amount = Viewer.direction_to_values[action.p1]
             self.translate_all(dim, amount)
-        elif cmd == 'D':
+        elif cmd == "D":
             assert isinstance(action.p1, int)
             self.data.dims = action.p1
             self.init()
@@ -410,7 +410,7 @@ class Viewer:
         except:
             pass
         self.video_reader = None
-        pubsub.publish('vplay', False)
+        pubsub.publish("vplay", False)
 
     def video_record(self, state):
         """Start recording video. See note in .video_write about file creation."""
@@ -425,15 +425,17 @@ class Viewer:
     def video_start(self):
         """Create a video file to write to."""
         assert not self.video_writer
-        types = (('mp4', 'mp4v'), ('avi', 'XVID'))
+        types = (("mp4", "mp4v"), ("avi", "XVID"))
         ext, codec = types[0]
         assert not self.video_writer
-        fname = utils.make_filename('video', ext)
+        fname = utils.make_filename("video", ext)
         output = os.path.join(self.output_dir, fname)
-        self.video_writer = cv2.VideoWriter(output,
-                                            cv2.VideoWriter_fourcc(*codec),
-                                            self.data.frame_rate,
-                                            (self.width, self.height))
+        self.video_writer = cv2.VideoWriter(
+            output,
+            cv2.VideoWriter_fourcc(*codec),
+            self.data.frame_rate,
+            (self.width, self.height),
+        )
 
     def video_write(self):
         """Write the current xy plane to a video file.

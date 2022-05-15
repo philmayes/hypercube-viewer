@@ -4,10 +4,12 @@ import re
 
 import utils
 
+
 def get_location(rel_dir):
     """Get the location of the data file."""
     location = utils.make_dir(rel_dir)
-    return os.path.join(location, 'values.json')
+    return os.path.join(location, "values.json")
+
 
 class Data:
     """A class to hold persistent data.
@@ -15,18 +17,18 @@ class Data:
     If new values are needed, just add them as class attributes.
     """
 
-    MISSING = 'attribute is missing'
+    MISSING = "attribute is missing"
     MIN_SIZE = 100
     MAX_SIZE = 4096
-    re_aspects = re.compile(r'\d\d?(:\d\d?)+$')
-    re_view = re.compile(r'\s*(\d+)\s*[xX:]\s*(\d+)\s*$')
+    re_aspects = re.compile(r"\d\d?(:\d\d?)+$")
+    re_view = re.compile(r"\s*(\d+)\s*[xX:]\s*(\d+)\s*$")
 
     def __init__(self):
         """Factory settings."""
         # settings for how the wireframe is constructed
         self.dims = 4
-        self.aspects = '1:1'
-        self.viewer_size = '1000x1000'
+        self.aspects = "1:1"
+        self.viewer_size = "1000x1000"
 
         # settings for how the wireframe is displayed
         self.show_faces = False
@@ -70,8 +72,10 @@ class Data:
         if match:
             x = int(match.group(1))
             y = int(match.group(2))
-            if  Data.MIN_SIZE <= x <= Data.MAX_SIZE\
-            and Data.MIN_SIZE <= y <= Data.MAX_SIZE:
+            if (
+                Data.MIN_SIZE <= x <= Data.MAX_SIZE
+            and Data.MIN_SIZE <= y <= Data.MAX_SIZE
+            ):
                 return x, y
 
     def load(self, fname):
@@ -85,20 +89,20 @@ class Data:
                     if existing is Data.MISSING:
                         # if it doesn't, it's an attribute we no longer use
                         # OR the json has been hacked, so ignore it
-                        print('Bad json: data not recognized:', key, value)
+                        print("Bad json: data not recognized:", key, value)
                         continue
                     # if it does exist, check that the type is correct;
                     # if it doesn't, we've changed the type of the attribute
                     # OR the json has been hacked, so ignore it
                     if type(value) is not type(existing):
-                        print('Bad json: type is wrong:', key, value)
+                        print("Bad json: type is wrong:", key, value)
                         continue
                     # perform additional validation on certain values
-                    if key == 'aspects' and not self.validate_aspects(value):
-                        print('Bad json: format is wrong:', key, value)
+                    if key == "aspects" and not self.validate_aspects(value):
+                        print("Bad json: format is wrong:", key, value)
                         continue
-                    if key == 'viewer_size' and not self.validate_viewer_size(value):
-                        print('Bad json: format is wrong:', key, value)
+                    if key == "viewer_size" and not self.validate_viewer_size(value):
+                        print("Bad json: format is wrong:", key, value)
                         continue
                     # everything looks good; use the json value
                     setattr(self, key, value)

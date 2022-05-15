@@ -12,6 +12,7 @@ DISABLED = 0
 ENABLED = 1
 ACTIVE = 2
 
+
 class Button(tk.Button):
     """Class to implement a 3-state button."""
 
@@ -20,16 +21,16 @@ class Button(tk.Button):
     def __init__(self, parent, **kwargs):
         # User can supply a list of texts for the 3 states.
         # If this is supplied, there is no need to supply the standard text
-        self.texts = kwargs.pop('texts', [])
+        self.texts = kwargs.pop("texts", [])
         if self.texts:
-            kwargs['text'] = self.texts[1]
+            kwargs["text"] = self.texts[1]
         else:
             self.texts = None
 
         # user can supply a custom color for ENABLED and/or ACTIVE states
         colors = None
-        color1 = kwargs.pop('color1', None)
-        color2 = kwargs.pop('color2', None)
+        color1 = kwargs.pop("color1", None)
+        color2 = kwargs.pop("color2", None)
         if color1 or color2:
             colors = ["SystemButtonFace"] * 3
             if color1:
@@ -50,19 +51,19 @@ class Button(tk.Button):
         assert isinstance(state, int)
         if state != self._state:
             self._state = state
-            kwargs = {'state': Button.tk_states[state]}
+            kwargs = {"state": Button.tk_states[state]}
             if self.colors:
-                kwargs['bg'] = self.colors[state]
+                kwargs["bg"] = self.colors[state]
             if self.texts:
-                kwargs['text'] = self.texts[state]
+                kwargs["text"] = self.texts[state]
             self.configure(**kwargs)
-
 
 
 class Control:
     """Abstract base class for widgets."""
 
     """Base class for customized widgets."""
+
     def __init__(self, label):
         self.label = label
         self.callback = None
@@ -93,16 +94,19 @@ class Control:
 
 class CheckControl(Control):
     """Class to manage a ttk.CheckButton widget."""
+
     def __init__(self, label):
         super().__init__(label)
 
     def add_control(self, frame, row, col, **kwargs):
-        self.ctl = ttk.Checkbutton(frame, text=self.label, variable=self.var, command=self.action)
+        self.ctl = ttk.Checkbutton(
+            frame, text=self.label, variable=self.var, command=self.action
+        )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
 
     def set(self, value):
         if isinstance(value, str):
-            value = 1 if value == 'True' else 0
+            value = 1 if value == "True" else 0
         else:
             value = int(value)
         self.var.set(value)
@@ -110,6 +114,7 @@ class CheckControl(Control):
 
 class ComboControl(Control):
     """Class to manage a ttk.Combobox widget."""
+
     def __init__(self, label, values):
         self.values = values
         super().__init__(label)
@@ -117,13 +122,14 @@ class ComboControl(Control):
     def add_control(self, frame, row, col, **kwargs):
         ctl = tk.Label(frame, text=self.label)
         ctl.grid(row=row, column=0, sticky=tk.SW)
-        self.ctl = ttk.Combobox(frame,
-                           state='readonly',
-                           width=4,
-                           values=self.values,
-                          )
+        self.ctl = ttk.Combobox(
+            frame,
+            state="readonly",
+            width=4,
+            values=self.values,
+        )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
-        self.ctl.bind('<<ComboboxSelected>>', self.action)
+        self.ctl.bind("<<ComboboxSelected>>", self.action)
 
     def get(self):
         return self.ctl.get()
@@ -131,6 +137,7 @@ class ComboControl(Control):
 
 class SlideControl(Control):
     """Class to manage a tk.Scale widget."""
+
     def __init__(self, label, from_, to, res):
         self.fr = from_
         self.to = to
@@ -139,17 +146,20 @@ class SlideControl(Control):
 
     def add_control(self, frame, row, col, **kwargs):
         ctl = tk.Label(frame, text=self.label)
-        ctl.grid(row=row, column=col-1, sticky=tk.SW)
-        self.ctl = tk.Scale(frame,
-                       from_=self.fr,
-                       to=self.to,
-                       resolution=self.res,
-                       orient=tk.HORIZONTAL,
-                       command=self.action)
+        ctl.grid(row=row, column=col - 1, sticky=tk.SW)
+        self.ctl = tk.Scale(
+            frame,
+            from_=self.fr,
+            to=self.to,
+            resolution=self.res,
+            orient=tk.HORIZONTAL,
+            command=self.action,
+        )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
 
     def get(self):
         return self.ctl.get()
+
 
 class PlaneControl:
     """A class to manage tkinter controls for a single plane."""
@@ -166,7 +176,7 @@ class PlaneControl:
         dim2str = dims.labels[self.dim2]
         color1 = colors.html[self.dim1]
         color2 = colors.html[self.dim2]
-        text = f'{dim1str}-{dim2str}'
+        text = f"{dim1str}-{dim2str}"
         self.planes = tk.Label(self.frame, text=text)
         self.planes.grid(row=self.row, column=0, sticky=tk.EW, padx=2, pady=2)
 
@@ -175,15 +185,23 @@ class PlaneControl:
         self.rot_frame.grid(row=self.row, column=1)
 
         # insert rotation controls
-        self.rotate1 = tk.Button(self.rot_frame, text=' < ', command=partial(self.app.on_rotate, '+', self))
+        self.rotate1 = tk.Button(
+            self.rot_frame, text=" < ", command=partial(self.app.on_rotate, "+", self)
+        )
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate2 = tk.Button(self.rot_frame, text=' > ', command=partial(self.app.on_rotate, '-', self))
+        self.rotate2 = tk.Button(
+            self.rot_frame, text=" > ", command=partial(self.app.on_rotate, "-", self)
+        )
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
 
         # insert information about colors of dimensions
-        self.swatch1 = tk.Label(self.frame, text=f'{dim1str}: ████', bg='black', fg=color1)
+        self.swatch1 = tk.Label(
+            self.frame, text=f"{dim1str}: ████", bg="black", fg=color1
+        )
         self.swatch1.grid(row=self.row, column=2, sticky=tk.NSEW)
-        self.swatch2 = tk.Label(self.frame, text=f'{dim2str}: ████', bg='black', fg=color2)
+        self.swatch2 = tk.Label(
+            self.frame, text=f"{dim2str}: ████", bg="black", fg=color2
+        )
         self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
 
     def delete_controls(self):
@@ -193,4 +211,3 @@ class PlaneControl:
         self.rotate2.destroy()
         self.swatch1.destroy()
         self.swatch2.destroy()
-
