@@ -48,18 +48,16 @@ STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
 
-# The application can be in any these of 4 states. DO NOT CONFUSE PLAYING
-# with REPLAYING. PLAYING is the playbackback of a previously-recorded video
-# while REPLAYING is playing back all the commands like move and rotate that
-# have been issued.
-
-# The application can be in any these of 4 states.
+# The application can be in any of these 5 states. These states maintain
+# buttons in appropriate states -- disabled, enabled and/or active.
 # CLEAN is the state when no actions have been issued, so the Play and Stop
 # buttons should be disabled.
-# DO NOT CONFUSE PLAYING with REPLAYING. PLAYING is the playback of a
-# previously-recorded video, while REPLAYING is playing back all the commands
-# like move and rotate that have been issued.
-CLEAN, IDLE, REPLAYING, PLAYING = range(4)
+# IDLE is when nothing is happening.
+# RUNNING is when user-issued actions are being executed.
+# DO NOT CONFUSE REPLAYING and PLAYING. REPLAYING is playing back all the
+# commands like move and rotate that have been issued, while PLAYING is the
+# playback of a previously-recorded video.
+CLEAN, IDLE, RUNNING, REPLAYING, PLAYING = range(5)
 
 # An additional state that exists alongside the above three is whether we are
 # recording to video or not. This state is held in Viewer.recording.
@@ -69,23 +67,26 @@ CLEAN, IDLE, REPLAYING, PLAYING = range(4)
 #   -----------|----------------|-----------------
 #   CLEAN       .restart_button  .restart
 #   IDLE        .stop_button     .on_stop
-#   REPLAYING   .replay_button   .queue_action(PB)
+#   RUNNING     movement buttons .queue_action(Action)
 #   PLAYING     .play_button     .on_play_video
+#   REPLAYING   .replay_button   .queue_action(PB)
 #   RECORDING   .record_button   .set_record_state
 
-# These lists give the states of the above 4 buttons for each of the 4
+# These lists give the states of the above 5 buttons for each of the 5
 # application states for each of the 2 record states.
 button_states_normal = (
 #    replay_button  stop_button  record_button  play_button    state
     (DISABLED,      DISABLED,    ENABLED,       ENABLED),    # CLEAN
-    (ENABLED,       ENABLED,     ENABLED,       ENABLED),    # IDLE
+    (ENABLED,       DISABLED,    ENABLED,       ENABLED),    # IDLE
+    (ENABLED,       ACTIVE,      ENABLED,       ENABLED),    # RUNNING
     (ACTIVE,        ACTIVE,      ENABLED,       DISABLED),   # REPLAYING
     (DISABLED,      DISABLED,    DISABLED,      ACTIVE),     # PLAYING
 )
 button_states_recording = (
 #    replay_button  stop_button  record_button  play_button    state
     (DISABLED,      DISABLED,    ACTIVE,        ENABLED),    # CLEAN
-    (ENABLED,       ENABLED,     ACTIVE,        DISABLED),   # IDLE
+    (ENABLED,       DISABLED,    ACTIVE,        DISABLED),   # IDLE
+    (ENABLED,       ACTIVE,      ACTIVE,        ENABLED),    # RUNNING
     (ACTIVE,        ACTIVE,      ACTIVE,        DISABLED),   # REPLAYING
     (DISABLED,      DISABLED,    DISABLED,      DISABLED),   # PLAYING
 )
@@ -140,19 +141,6 @@ class App(tk.Frame):
         self.set_view_size()
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
-
-    def set_state(self, new_state: int, force: bool=False):
-        """Set the new app state and adjust button states to match."""
-        if not force and new_state == self.state:
-            print(f'state change {self.state} unchanged')
-            return
-        button_states = button_states_recording if self.viewer.recording\
-                   else button_states_normal
-        values = button_states[new_state]
-        for index, btn_state in enumerate(values):
-            self.buttons[index].state = btn_state
-        print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
-        self.state = new_state
 
     def add_controls(self, parent_frame, row, col):
         """Add user controls to the window."""
@@ -575,9 +563,7 @@ class App(tk.Frame):
         # so ignore all queue requests during playback.
         if self.playback_index < 0:
             self.actionQ.append(action)
-            self.set_state(IDLE)
             self.restart_button.state = ENABLED
-            # self.stop_button.state = DISABLED
 
     def restart(self):
         """The dimensions, aspect or view size has changed.
@@ -656,7 +642,7 @@ class App(tk.Frame):
             else:
                 # It's a regular action. Enable the replay button
                 # (it would have been disabled if the queue were formerly empty)
-                self.set_replay_button(ENABLED)
+                self.set_state(RUNNING)
 
                 need_action = True
                 real_ghost = 0
@@ -692,7 +678,7 @@ class App(tk.Frame):
                 if not self.actionQ:
                     # if there are no more actions queued, it makes no sense
                     # to offer a "Stop" action, so disable the button
-                    self.stop_button.state = DISABLED
+                    self.set_state(IDLE)
 
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
@@ -735,7 +721,22 @@ class App(tk.Frame):
         """Set the Replay button as disabled, ready or replaying."""
         self.replay_button.state = state
 
+    def set_state(self, new_state: int, force: bool=False):
+        """Set the new app state and adjust button states to match."""
+        combined = self.state * 10 + new_state
+        if not force and new_state == self.state:
+            print(f'state change {self.state} unchanged')
+            return
+        button_states = button_states_recording if self.viewer.recording\
+                   else button_states_normal
+        values = button_states[new_state]
+        for index, btn_state in enumerate(values):
+            self.buttons[index].state = btn_state
+        print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
+        self.state = new_state
+
     def set_visible_state(self, action: Action):
+        """Set the visible state of the control associated with the action."""
         assert action.visible
         data_name = action.p1
         value = action.p2
