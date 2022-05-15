@@ -48,11 +48,18 @@ STR_DN = '↓'
 STR_LEFT = '←'
 STR_RIGHT = '→'
 
-# The application can be in any these of 3 states. DO NOT CONFUSE PLAYING
+# The application can be in any these of 4 states. DO NOT CONFUSE PLAYING
 # with REPLAYING. PLAYING is the playbackback of a previously-recorded video
 # while REPLAYING is playing back all the commands like move and rotate that
 # have been issued.
-IDLE, REPLAYING, PLAYING = range(3)
+
+# The application can be in any these of 4 states.
+# CLEAN is the state when no actions have been issued, so the Play and Stop
+# buttons should be disabled.
+# DO NOT CONFUSE PLAYING with REPLAYING. PLAYING is the playback of a
+# previously-recorded video, while REPLAYING is playing back all the commands
+# like move and rotate that have been issued.
+CLEAN, IDLE, REPLAYING, PLAYING = range(4)
 
 # An additional state that exists alongside the above three is whether we are
 # recording to video or not. This state is held in Viewer.recording.
@@ -60,24 +67,27 @@ IDLE, REPLAYING, PLAYING = range(3)
 # and the action that is triggered.
 #      state       button          action
 #   -----------|----------------|-----------------
+#   CLEAN       .restart_button  .restart
 #   IDLE        .stop_button     .on_stop
 #   REPLAYING   .replay_button   .queue_action(PB)
 #   PLAYING     .play_button     .on_play_video
 #   RECORDING   .record_button   .set_record_state
 
-# These lists give the states of the above 4 buttons for each of the 3
+# These lists give the states of the above 4 buttons for each of the 4
 # application states for each of the 2 record states.
 button_states_normal = (
-#    replay    stop      record    play           state
-    (ENABLED,  ENABLED,  ENABLED,  ENABLED),    # IDLE
-    (ACTIVE,   ACTIVE,   ENABLED,  DISABLED),   # REPLAYING
-    (DISABLED, DISABLED, DISABLED, ACTIVE),     # PLAYING
+#    replay_button  stop_button  record_button  play_button    state
+    (DISABLED,      DISABLED,    ENABLED,       ENABLED),    # CLEAN
+    (ENABLED,       ENABLED,     ENABLED,       ENABLED),    # IDLE
+    (ACTIVE,        ACTIVE,      ENABLED,       DISABLED),   # REPLAYING
+    (DISABLED,      DISABLED,    DISABLED,      ACTIVE),     # PLAYING
 )
 button_states_recording = (
-#    replay    stop      record    play           state
-    (ENABLED,  ENABLED,  ACTIVE,   DISABLED),   # IDLE
-    (ACTIVE,   ACTIVE,   ACTIVE,   DISABLED),   # REPLAYING
-    (DISABLED, DISABLED, DISABLED, DISABLED),   # PLAYING
+#    replay_button  stop_button  record_button  play_button    state
+    (DISABLED,      DISABLED,    ACTIVE,        ENABLED),    # CLEAN
+    (ENABLED,       ENABLED,     ACTIVE,        DISABLED),   # IDLE
+    (ACTIVE,        ACTIVE,      ACTIVE,        DISABLED),   # REPLAYING
+    (DISABLED,      DISABLED,    DISABLED,      DISABLED),   # PLAYING
 )
 class App(tk.Frame):
 
@@ -101,7 +111,7 @@ class App(tk.Frame):
         root.geometry(f'+{self.data.win_x}+{self.data.win_y}')
         self.actionQ = []               # queue of Action instances
         self.playback_index = -1        # if >= 0, we are replaying actionQ
-        self.state = IDLE
+        self.state = CLEAN
 
         self.dim_controls = []
         self.grid(sticky=tk.NSEW)
@@ -141,7 +151,7 @@ class App(tk.Frame):
         values = button_states[new_state]
         for index, btn_state in enumerate(values):
             self.buttons[index].state = btn_state
-            print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
+        print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
         self.state = new_state
 
     def add_controls(self, parent_frame, row, col):
@@ -150,23 +160,24 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, padx=2)
         row = 0
+        color = "red3"
 
         # add setup controls
-        ctl = tk.Label(frame, text='SETUP', font=self.big_font)
+        ctl = tk.Label(frame, text='SETUP', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
         row += 1
         self.add_setup_controls(frame, row, 0)
         row += 1
 
         # add visibility controls
-        ctl = tk.Label(frame, text='VISIBILITY', font=self.big_font)
+        ctl = tk.Label(frame, text='VISIBILITY', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
         row += 1
         self.add_visibility_controls(frame, row, 0)
         row += 1
 
         # add movement controls
-        ctl = tk.Label(frame, text='MOVEMENT', font=self.big_font)
+        ctl = tk.Label(frame, text='MOVEMENT', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
         self.add_rotation_controls(frame, row, 0)
@@ -175,7 +186,7 @@ class App(tk.Frame):
         row += 1
 
         # add recording controls
-        ctl = tk.Label(frame, text='RECORDING', font=self.big_font)
+        ctl = tk.Label(frame, text='RECORDING', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
         self.add_recording_controls(frame, row, 0)
@@ -183,7 +194,7 @@ class App(tk.Frame):
 
         # add test controls
         if self.args.test:
-            ctl = tk.Label(frame, text='TEST', font=self.big_font)
+            ctl = tk.Label(frame, text='TEST', font=self.big_font, fg=color)
             ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
             row += 1
             self.add_test_controls(frame, row, 0)
@@ -378,8 +389,8 @@ class App(tk.Frame):
         row += 1
 
         # add a "Restart" control
-        self.clear_button = controls.Button(frame, text="Restart", command=self.reset)
-        self.clear_button.grid(row=row, column=1, sticky=tk.NSEW, padx=2, pady=8)
+        self.restart_button = controls.Button(frame, text="Restart", command=self.restart)
+        self.restart_button.grid(row=row, column=1, sticky=tk.NSEW, padx=2, pady=8)
         row += 1
 
     def add_viewer_size_control(self, parent_frame, row, col):
@@ -426,6 +437,11 @@ class App(tk.Frame):
             value = getattr(self.data, dataname)
             control.set(value)
         self.set_dim(0)
+        # For reasons I do not understand, the controls "ghost" and "angle"
+        # trigger callbacks when their value is set. (Peculiarly, this does
+        # not happen for "auto_scale".) Flush the spurious actions.
+        self.actionQ = []
+        self.set_state(CLEAN, force=True)
 
     def make_controls(self):
         """Construct controls in a dictionary."""
@@ -463,7 +479,7 @@ class App(tk.Frame):
         if self.data.validate_aspects(aspects):
             self.data.aspects = aspects
             self.aspect.configure(bg='white')
-            self.reset()
+            self.restart()
         else:
             self.aspect.configure(bg='yellow')
 
@@ -559,10 +575,11 @@ class App(tk.Frame):
         # so ignore all queue requests during playback.
         if self.playback_index < 0:
             self.actionQ.append(action)
-            self.clear_button.state = ENABLED
-            self.stop_button.state = DISABLED
+            self.set_state(IDLE)
+            self.restart_button.state = ENABLED
+            # self.stop_button.state = DISABLED
 
-    def reset(self):
+    def restart(self):
         """The dimensions, aspect or view size has changed.
 
         This is called at initial start and restart, too.
@@ -570,11 +587,11 @@ class App(tk.Frame):
         (Re)initialize the viewer with the current values set up in .data.
         """
         self.set_record_state(False)
-        self.set_state(IDLE)
+        self.set_state(CLEAN)
         # self.viewer.record(False)
         # self.set_replay_button(DISABLED)
         # self.stop_button.state = DISABLED
-        # self.clear_button.state = DISABLED
+        self.restart_button.state = DISABLED
 
         # make a copy of the data for when we replay with visibility
         self.data_copy = copy.copy(self.data)
@@ -701,7 +718,7 @@ class App(tk.Frame):
         else:
             for dim in range(dim_count, old_count):
                 self.dim_controls[dim].delete_controls()
-        self.reset()
+        self.restart()
 
     def set_record_state(self, active=None):
         """Set or Xor the record button.
@@ -741,7 +758,7 @@ class App(tk.Frame):
         """Set the viewing size from the values in data."""
         x, y = self.data.get_viewer_size()
         self.canvas.config(width=x, height=y)
-        self.reset()
+        self.restart()
 
     def visibility_action(self, data_name):
         """Execute a visibility action."""
