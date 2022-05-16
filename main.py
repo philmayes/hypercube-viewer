@@ -497,9 +497,6 @@ class App(tk.Frame):
         self.data.dims = int(param.widget.get())
         self.set_dim(old)
 
-    def on_frame_rate(self, param):
-        self.data.frame_rate = int(param.widget.get())
-
     def on_play_end(self, state):
         assert state is False
         self.set_state(IDLE)
@@ -532,11 +529,6 @@ class App(tk.Frame):
         """Rotate the wireframe."""
         action = Action('R', dim_control.dim1, dim_control.dim2, None, direction)
         self.queue_action(action)
-
-    def on_steps(self):
-        """The "show intermediate steps" checkbox has been clicked."""
-        self.data.show_steps = bool(self.show_steps.get())
-        self.viewer.display()
 
     def on_stop(self):
         """User has asked for the current and pending actions to be stopped."""
@@ -756,15 +748,6 @@ class App(tk.Frame):
         # and change its state to match the data value
         control = self.controls[data_name]
         control.set(value)
-
-    def set_widget_state(self, control, state, color=None):
-        """Set the control as active or disabled."""
-        state = int(state)
-        states = (tk.DISABLED, tk.NORMAL)
-        control.configure(state = states[state])
-        if color:
-            colors = ["SystemButtonFace", color]
-            control.configure(bg=colors[state], fg=colors[state ^ 1])
 
     def set_view_size(self):
         """Set the viewing size from the values in data."""
