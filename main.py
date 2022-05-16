@@ -457,7 +457,7 @@ class App(tk.Frame):
             'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
             'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
             'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
-            'replay_visible': controls.CheckControl('Replay uses\nvisibility settings'),
+            'replay_visible': controls.CheckControl('Replay uses original\nvisibility settings'),
             'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
         }
 
@@ -577,9 +577,6 @@ class App(tk.Frame):
         """
         self.set_record_state(False)
         self.set_state(CLEAN)
-        # self.viewer.record(False)
-        # self.set_replay_button(DISABLED)
-        # self.stop_button.state = DISABLED
         self.restart_button.state = DISABLED
 
         # make a copy of the data for when we replay with visibility
@@ -707,7 +704,10 @@ class App(tk.Frame):
         else:
             for dim in range(dim_count, old_count):
                 self.dim_controls[dim].delete_controls()
-        self.restart()
+        # If old_count==0, we are being called from .__init__ and .set_view_size
+        # will subsequently call .restart, so there is no need to do it here.
+        if old_count != 0:
+            self.restart()
 
     def set_record_state(self, active=None):
         """Set or Xor the record button.
