@@ -156,12 +156,18 @@ class App(tk.Frame):
         row += 1
         self.add_setup_controls(frame, row, 0)
         row += 1
+        w = ttk.Separator(frame, orient=tk.HORIZONTAL)
+        w.grid(row=row, column=0, sticky=tk.EW, pady=(2,0))
+        row += 1
 
         # add visibility controls
         ctl = tk.Label(frame, text='VISIBILITY', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
         row += 1
         self.add_visibility_controls(frame, row, 0)
+        row += 1
+        w = ttk.Separator(frame, orient=tk.HORIZONTAL)
+        w.grid(row=row, column=0, sticky=tk.EW, pady=(6,0))
         row += 1
 
         # add movement controls
@@ -172,12 +178,18 @@ class App(tk.Frame):
         row += 1
         self.add_movement_controls(frame, row, 0)
         row += 1
+        w = ttk.Separator(frame, orient=tk.HORIZONTAL)
+        w.grid(row=row, column=0, sticky=tk.EW, pady=(10,0))
+        row += 1
 
         # add recording controls
         ctl = tk.Label(frame, text='RECORDING', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
         self.add_recording_controls(frame, row, 0)
+        row += 1
+        w = ttk.Separator(frame, orient=tk.HORIZONTAL)
+        w.grid(row=row, column=0, sticky=tk.EW, pady=(10,0))
         row += 1
 
         # add test controls
