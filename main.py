@@ -43,13 +43,14 @@ import display
 import pubsub
 import utils
 
-STR_UP = '↑'
-STR_DN = '↓'
-STR_LEFT = '←'
-STR_RIGHT = '→'
+STR_UP = "↑"
+STR_DN = "↓"
+STR_LEFT = "←"
+STR_RIGHT = "→"
 
 # The application can be in any of these 5 states. These states maintain
-# buttons in appropriate states -- disabled, enabled and/or active.
+# buttons in the appropriate state. (Buttons have 3 states: disabled, enabled,
+# and active. This allows for text and color changes.)
 # CLEAN is the state when no actions have been issued, so the Play and Stop
 # buttons should be disabled.
 # IDLE is when nothing is happening.
@@ -59,7 +60,7 @@ STR_RIGHT = '→'
 # playback of a previously-recorded video.
 CLEAN, IDLE, RUNNING, REPLAYING, PLAYING = range(5)
 
-# An additional state that exists alongside the above three is whether we are
+# An additional state that exists alongside the above five is whether we are
 # recording to video or not. This state is held in Viewer.recording.
 # This table gives the button that is pressed to enter the state
 # and the action that is triggered.
@@ -139,6 +140,13 @@ class App(tk.Frame):
 
         self.load_settings()
         self.set_view_size()
+        # For reasons I do not understand, the controls "ghost" and "angle"
+        # trigger callbacks when their value is set. Flush the spurious
+        # actions and disable the "Begin Again" button which got enabled. 
+        self.actionQ = []
+        self.restart_button.state = DISABLED
+        self.set_state(CLEAN, force=True)
+
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
 
@@ -157,7 +165,7 @@ class App(tk.Frame):
         self.add_setup_controls(frame, row, 0)
         row += 1
         w = ttk.Separator(frame, orient=tk.HORIZONTAL)
-        w.grid(row=row, column=0, sticky=tk.EW, pady=(2,0))
+        w.grid(row=row, column=0, sticky=tk.EW, pady=(8,0))
         row += 1
 
         # add visibility controls
@@ -183,7 +191,7 @@ class App(tk.Frame):
         row += 1
 
         # add recording controls
-        ctl = tk.Label(frame, text='RECORDING', font=self.big_font, fg=color)
+        ctl = tk.Label(frame, text='RECORDING TO VIDEO', font=self.big_font, fg=color)
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
         row += 1
         self.add_recording_controls(frame, row, 0)
@@ -226,8 +234,10 @@ class App(tk.Frame):
             print(a, end='; ')
         print()
 
+    ttt = ""
     def on_test2(self):
-        pass
+        App.ttt += "A rose by any other name\nwould still be\na rose.\n"
+        self.viewer.show_text(App.ttt)
 
     def on_test3(self):
         control = self.controls['ghost']
@@ -300,6 +310,11 @@ class App(tk.Frame):
         self.stop_button = controls.Button(frame, text="Stop", color2="red", font=self.big_font, width=12, command=self.on_stop)
         self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
+        # add a "Restart" control
+        self.restart_button = controls.Button(frame, text="Begin Again", command=self.restart)
+        self.restart_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        row += 1
+
 
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
@@ -387,11 +402,6 @@ class App(tk.Frame):
         self.add_viewer_size_control(frame, row, 1)
         row += 1
 
-        # add a "Restart" control
-        self.restart_button = controls.Button(frame, text="Restart", command=self.restart)
-        self.restart_button.grid(row=row, column=1, sticky=tk.NSEW, padx=2, pady=8)
-        row += 1
-
     def add_viewer_size_control(self, parent_frame, row, col):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
@@ -436,11 +446,6 @@ class App(tk.Frame):
             value = getattr(self.data, dataname)
             control.set(value)
         self.set_dim(0)
-        # For reasons I do not understand, the controls "ghost" and "angle"
-        # trigger callbacks when their value is set. (Peculiarly, this does
-        # not happen for "auto_scale".) Flush the spurious actions.
-        self.actionQ = []
-        self.set_state(CLEAN, force=True)
 
     def make_controls(self):
         """Construct controls in a dictionary."""
@@ -561,6 +566,7 @@ class App(tk.Frame):
 
     def queue_action(self, action: Action):
         """Add this action to the queue awaiting execution."""
+        print('Q', str(action))
         # Sometimes (why the inconsistency?) setting the value for a widget
         # generates a callback. This doubles up the action during playback,
         # so ignore all queue requests during playback.
@@ -726,7 +732,7 @@ class App(tk.Frame):
 
     def set_state(self, new_state: int, force: bool=False):
         """Set the new app state and adjust button states to match."""
-        combined = self.state * 10 + new_state
+        combined = self.state * 10 + new_state # useful for debug breakpoints
         if not force and new_state == self.state:
             print(f'state change {self.state} unchanged')
             return
@@ -735,7 +741,7 @@ class App(tk.Frame):
         values = button_states[new_state]
         for index, btn_state in enumerate(values):
             self.buttons[index].state = btn_state
-        print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
+        # print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
         self.state = new_state
 
     def set_visible_state(self, action: Action):
