@@ -473,7 +473,7 @@ class App(tk.Frame):
             control.callback = callback
             # If this control is a slider, tell the action queue so it is able
             # to merge successive values together
-            if isinstance(control, controls.SlideControl):
+            if isinstance(control, controls.SlideControl | controls.ComboControl):
                 ActionQueue.sliders.append(dataname)
 
     def on_aspect(self):
