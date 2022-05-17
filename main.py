@@ -34,7 +34,7 @@ import random
 import tkinter as tk
 from tkinter import ttk
 
-from action import Action
+from action import Action, ActionQueue
 import controls
 from controls import DISABLED, ENABLED, ACTIVE
 import data
@@ -91,6 +91,8 @@ button_states_recording = (
     (ACTIVE,        ACTIVE,      ACTIVE,        DISABLED),   # REPLAYING
     (DISABLED,      DISABLED,    DISABLED,      DISABLED),   # PLAYING
 )
+
+
 class App(tk.Frame):
 
     def __init__(self, root, args):
@@ -111,7 +113,7 @@ class App(tk.Frame):
         self.data.load(self.data_file)
         # set top-left position of window
         root.geometry(f'+{self.data.win_x}+{self.data.win_y}')
-        self.actionQ = []               # queue of Action instances
+        self.actionQ = ActionQueue()    # queue of Action instances
         self.playback_index = -1        # if >= 0, we are replaying actionQ
         self.state = CLEAN
 
@@ -143,7 +145,7 @@ class App(tk.Frame):
         # For reasons I do not understand, the controls "ghost" and "angle"
         # trigger callbacks when their value is set. Flush the spurious
         # actions and disable the "Begin Again" button which got enabled. 
-        self.actionQ = []
+        self.actionQ.clear()
         self.restart_button.state = DISABLED
         self.set_state(CLEAN, force=True)
 
@@ -229,10 +231,7 @@ class App(tk.Frame):
         row += 1
 
     def on_test1(self):
-        print('Actions: ', end='')
-        for a in self.viewer.actions:
-            print(a, end='; ')
-        print()
+        print(self.viewer.actions)
 
     ttt = ""
     def on_test2(self):
@@ -472,6 +471,10 @@ class App(tk.Frame):
         for dataname, control in self.controls.items():
             control.set_data(dataname, self.data)
             control.callback = callback
+            # If this control is a slider, tell the action queue so it is able
+            # to merge successive values together
+            if isinstance(control, controls.SlideControl):
+                ActionQueue.sliders.append(dataname)
 
     def on_aspect(self):
         """The aspect ratios have been changed.
@@ -540,7 +543,7 @@ class App(tk.Frame):
         # ask the viewer to stop ASAP
         self.viewer.stop = True
         # discard all actions in the pending queue
-        self.actionQ = []
+        self.actionQ.clear()
         # stop any playback
         self.playback_index = -1
         # adjust button states
@@ -566,7 +569,6 @@ class App(tk.Frame):
 
     def queue_action(self, action: Action):
         """Add this action to the queue awaiting execution."""
-        print('Q', str(action))
         # Sometimes (why the inconsistency?) setting the value for a widget
         # generates a callback. This doubles up the action during playback,
         # so ignore all queue requests during playback.

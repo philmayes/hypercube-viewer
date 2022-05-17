@@ -20,7 +20,7 @@ import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
-from action import Action
+from action import Action, ActionQueue
 import colors
 import pubsub
 import utils
@@ -62,7 +62,7 @@ class Viewer:
         # fraction of screen that the wireframe should occupy
         self.screen_fraction = 0.6
         self.canvas = canvas
-        self.actions = []
+        self.actions = ActionQueue()
         self.recording = False
         self.video_reader = None
         self.video_writer = None
@@ -114,7 +114,7 @@ class Viewer:
         # * skip clearing the list of actions;
         # * continue to let video recording run;
         if not playback:
-            self.actions = []
+            self.actions.clear()
             self.recording = False
             self.video_writer = None
             self.video_reader = None
@@ -157,7 +157,7 @@ class Viewer:
             cv2.rectangle(self.img, (0, 0), (self.width, self.height), colors.bg, -1)
 
         wireframe = self.wireframe
-        if self.data.show_vp and self.data.show_perspective:
+        if self.data.show_vp:
             cv2.circle(
                 self.img, (self.vp[X], self.vp[Y]), self.vp_radius, colors.vp, -1
             )

@@ -32,3 +32,35 @@ class Action:
         if self.p4 is not None:
             s += f",{self.p4}"
         return s
+
+class ActionQueue(list):
+    """Class to hold a queue of Action items.
+    
+    The reason for this class is to merge successive SlideControl
+    actions into a single change.
+    """
+
+    merging = True # merge successive slider values into a single action
+    # A list of slider datanames that is constructed by App.make_controls()
+    sliders = []
+
+    def append(self, item):
+        assert isinstance(item, Action)
+        if ActionQueue.merging:
+            if super().__len__():
+                prev = super().__getitem__(-1)
+                if prev.cmd == "V" and\
+                item.cmd == "V" and\
+                prev.p1 == item.p1 and\
+                item.p1 in ActionQueue.sliders:
+                    prev.p2 = item.p2
+                    return
+        super().append(item)
+    
+    def __str__(self):
+        s = "Actions: "
+        for n in range(super().__len__()):
+            item = super().__getitem__(n)
+            s += str(item)
+            s += "; "
+        return s
