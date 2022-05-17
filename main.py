@@ -32,7 +32,7 @@ from functools import partial
 import os
 import random
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from action import Action, ActionQueue
 import controls
@@ -93,6 +93,12 @@ button_states_recording = (
 )
 
 
+def about():
+    messagebox.showinfo('Hypercube', 'Version 0.0.1')
+
+def preferences():
+    messagebox.showinfo('Hypercube', 'Not yet implemented')
+
 class App(tk.Frame):
 
     def __init__(self, root, args):
@@ -102,6 +108,7 @@ class App(tk.Frame):
         self.args = args
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind('<Escape>', lambda e: self.on_close())
+        self.add_menu()
 
         # create an instance for loading and saving data and get the filename
         # of the json file that holds data (.load_settings() and
@@ -270,6 +277,26 @@ class App(tk.Frame):
         self.aspect.grid(row=0, column=0, sticky=tk.W)
         ctl = tk.Button(frame, text="Apply", command=self.on_aspect)
         ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
+
+    def add_menu(self):
+        menubar = tk.Menu(self.root, background='#ff8000', foreground='black', activebackground='white', activeforeground='black')
+        file = tk.Menu(menubar, tearoff=0)
+        # file.add_command(label="New")
+        # file.add_command(label="Open")
+        # file.add_command(label="Save")
+        # file.add_command(label="Save as")
+        # file.add_separator()
+        file.add_command(label="Exit", command=self.on_close)
+        menubar.add_cascade(label="File", menu=file)
+
+        edit = tk.Menu(menubar, tearoff=0)
+        edit.add_command(label="Preferences...", command=preferences)
+        menubar.add_cascade(label="Edit", menu=edit)
+
+        help = tk.Menu(menubar, tearoff=0)
+        help.add_command(label="About", command=about)
+        menubar.add_cascade(label="Help", menu=help)
+        self.root.config(menu=menubar)
 
     def add_movement_controls(self, parent_frame, row, col):
         """Add up/down/left/right controls to the window."""
@@ -736,7 +763,7 @@ class App(tk.Frame):
         """Set the new app state and adjust button states to match."""
         combined = self.state * 10 + new_state # useful for debug breakpoints
         if not force and new_state == self.state:
-            print(f'state change {self.state} unchanged')
+            # print(f'state change {self.state} unchanged')
             return
         button_states = button_states_recording if self.viewer.recording\
                    else button_states_normal
