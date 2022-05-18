@@ -125,7 +125,7 @@ class Viewer:
         # prime the canvas
         image = Image.fromarray(self.img)
         self.image = ImageTk.PhotoImage(image)
-        self.id_canvas = self.canvas.create_image(0, 0, anchor="nw", image=self.image)
+        self.id_image = self.canvas.create_image(0, 0, anchor="nw", image=self.image)
         self.id_rect = None
         self.id_text = None
 
@@ -339,15 +339,14 @@ class Viewer:
         """Display the xy plane on the tkinter canvas."""
         rgb_image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
         self.image = ImageTk.PhotoImage(Image.fromarray(rgb_image))
-        self.canvas.itemconfig(self.id_canvas, image=self.image)
+        self.canvas.itemconfig(self.id_image, image=self.image)
         self.canvas.update()
 
     def show_text(self, text):
-        # unused for now
         if not self.id_rect:
             # construct background and text widgets
             self.id_rect = self.canvas.create_rectangle((0,0,0,0), fill="white")
-            self.id_text = self.canvas.create_text(50, 50, anchor="nw", font="Arial 12", fill="black")
+            self.id_text = self.canvas.create_text(10, 10, anchor="nw", font="Arial 12", fill="black")
         # put the text into the canvas widget
         self.canvas.itemconfig(self.id_text, text=text)
         # get the bounding box for that text

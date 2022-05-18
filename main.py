@@ -40,6 +40,7 @@ from controls import DISABLED, ENABLED, ACTIVE
 import data
 import dims
 import display
+from hints import Hints
 import pubsub
 import utils
 
@@ -139,6 +140,7 @@ class App(tk.Frame):
 
         # construct the viewer and the wireframe
         self.viewer = display.Viewer(self.data, self.canvas)
+        self.hints = Hints(self.viewer)
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
@@ -463,6 +465,9 @@ class App(tk.Frame):
             control = self.controls[dataname]
             control.add_control(frame, row, 1)
             row += 1
+        control = self.controls['show_hints']
+        control.add_control(frame, row, 0)
+        row += 1
 
     def load_settings(self):
         """Load initial settings."""
@@ -490,6 +495,7 @@ class App(tk.Frame):
             'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
             'replay_visible': controls.CheckControl('Replay uses original\nvisibility settings'),
             'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
+            'show_hints': controls.CheckControl('Show hints'),
         }
 
         # set up a sleazy but convenient way of associating the control
@@ -498,6 +504,8 @@ class App(tk.Frame):
         for dataname, control in self.controls.items():
             control.set_data(dataname, self.data)
             control.callback = callback
+            if dataname == "show_hints":
+                control.callback = self.on_hints
             # If this control is a slider, tell the action queue so it is able
             # to merge successive values together
             if isinstance(control, controls.SlideControl | controls.ComboControl):
@@ -531,6 +539,12 @@ class App(tk.Frame):
         old = self.data.dims
         self.data.dims = int(param.widget.get())
         self.set_dim(old)
+
+    def on_hints(self, dataname):
+        """User has toggled whether hints are to be shown."""
+        control = self.controls[dataname]
+        value = control.get()
+        self.hints.visible(value)
 
     def on_play_end(self, state):
         assert state is False
@@ -602,6 +616,7 @@ class App(tk.Frame):
         if self.playback_index < 0:
             self.actionQ.append(action)
             self.restart_button.state = ENABLED
+            self.hints.show(action)
 
     def restart(self):
         """The dimensions, aspect or view size has changed.

@@ -56,6 +56,9 @@ class Data:
         self.win_x = 100
         self.win_y = 100
 
+        # miscellaneous
+        self.show_hints = True
+
     def get_viewer_size(self):
         """Test whether supplied string is valid for self.viewer_size."""
         match = Data.re_view.match(self.viewer_size)
