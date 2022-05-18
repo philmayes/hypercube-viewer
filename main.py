@@ -326,6 +326,7 @@ class App(tk.Frame):
                                              font=self.big_font,
                                              width=12,
                                              command=partial(self.queue_action, PB))
+        controls.map_to_hint(self.replay_button, "Replay")
         self.replay_button.grid(row=row, column=4, columnspan=2, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
         ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, Ml))
@@ -337,10 +338,12 @@ class App(tk.Frame):
         # add a "Stop" control
         self.stop_button = controls.Button(frame, text="Stop", color2="red", font=self.big_font, width=12, command=self.on_stop)
         self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        controls.map_to_hint(self.stop_button, "Stop")
         row += 1
         # add a "Restart" control
         self.restart_button = controls.Button(frame, text="Begin Again", command=self.restart)
         self.restart_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        controls.map_to_hint(self.restart_button, "Restart")
         row += 1
 
 
@@ -351,8 +354,8 @@ class App(tk.Frame):
         row = 0
 
         # add choice of frame rate
-        ctrl = self.controls['frame_rate']
-        ctrl.add_control(frame, row, 1, **{"columnspan": 3})
+        control = self.controls['frame_rate']
+        control.add_control(frame, row, 1, **{"columnspan": 3})
         row += 1
 
         w = 10
@@ -416,6 +419,7 @@ class App(tk.Frame):
                           )
         self.dim_choice.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
+        controls.map_to_hint(self.dim_choice, "Dims")
         row += 1
 
         # add control of aspect ratios
@@ -616,7 +620,6 @@ class App(tk.Frame):
         if self.playback_index < 0:
             self.actionQ.append(action)
             self.restart_button.state = ENABLED
-            self.hints.show(action)
 
     def restart(self):
         """The dimensions, aspect or view size has changed.
@@ -729,9 +732,19 @@ class App(tk.Frame):
                     # if there are no more actions queued, it makes no sense
                     # to offer a "Stop" action, so disable the button
                     self.set_state(IDLE)
+        else:
+            self.hint_manager()
 
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
+
+    def hint_manager(self):
+        # get the widget under the cursor
+        if widget := self.winfo_containing(*self.winfo_pointerxy()):
+            # get possible hint id for this control...
+            hint_id = controls.widget_map.get(widget.winfo_name(), None)
+            # ...and show it (or clear any existing one)
+            self.hints.show(hint_id)
 
     def set_data_value(self, action: Action):
         assert action.visible

@@ -53,6 +53,10 @@ lookup = {
     "R": hint_rotate,
     "Z": hint_zoom,
     "D": hint_dimensions,
+    "Restart": "the restart button",
+    "Replay": "the replay button",
+    "Stop": "the stop button",
+    "Dims": "the # dims",
 }
 # cache the amount of time the hint is shown.
 # Longer descriptions are given more time.
@@ -64,34 +68,34 @@ class Hints:
     def __init__(self, viewer):
         self.viewer = viewer
         self.active = True
-        self.timer_count = 0
+        self.showing = None
 
     def visible(self, active: int):
         """Set whether hints are to show or not."""
         self.active = active
 
-    def cancel(self):
-        print('Cancelling hint', self.timer_count)
-        self.timer_count -= 1
-        if not self.timer_count:
-            self.viewer.clear_text()
-
-    def get_hint_id(action):
-        if action.cmd == 'V':
-            return action.p1
-        return action.cmd
-
-    def show(self, action):
+    def show(self, hint_id):
+        """Show a hint.
+                                            hint
+        old state   new state   old==new    exists  action
+            none        none        y         -       -
+            none        hint        n         y     show
+            none        hint        n         n       -
+            hint        none        n         -     clear
+            hint        hint        y         -       -
+            hint        hint        n         y     show
+            hint        hint        n         n     clear
+        """
         if self.active:
-            hint_id = Hints.get_hint_id(action)
-            if hint_id in lookup:
-                text = lookup[hint_id]
-                if hint_id in durations:
-                    duration = durations[hint_id]
+            if hint_id is None:
+                if self.showing is not None:
+                    self.viewer.clear_text()
+                    self.showing = hint_id
+            elif hint_id != self.showing:
+                if hint_id in lookup:
+                    text = lookup[hint_id]
+                    self.viewer.show_text(text)
+                    self.showing = hint_id
                 else:
-                    duration = len(text.split()) * MS_PER_WORD + 1000
-                    durations[hint_id] = duration
-                print(f'Showing {hint_id} hint for {duration} ms')
-                self.viewer.show_text(text)
-                self.timer_count += 1
-                self.viewer.canvas.after(duration, self.cancel)
+                    self.viewer.clear_text()
+                    self.showing = None
