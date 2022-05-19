@@ -1,3 +1,7 @@
+hint_about = """\
+Hypercube
+
+Version 0.0.1"""
 hint_angle = """\
 Set the amount by which
 the movement controls
@@ -31,6 +35,8 @@ Amount of ghost image left behnd
 as the object is rotated.
 0   = no ghosting;
 10 = no fading out."""
+hint_help = """\
+This will be the help hint"""
 hint_move = "Move the object up, down, left or right."
 hint_play = "Play back what was previously\nrecorded to video"
 hint_random = "Rotate the object randomly\naround 3 dimensions"
@@ -60,6 +66,7 @@ hint_zoom_m = "Shrink the size of the object"
 hint_zoom_p = "Expand the size of the object"
 
 lookup = {
+    "about": hint_about,
     "angle": hint_angle,
     "aspect": hint_aspect,
     "auto_scale": hint_auto_scale,
@@ -68,6 +75,7 @@ lookup = {
     "folder": hint_folder,
     "frame_rate": hint_frame_rate,
     "ghost": hint_ghost,
+    "help": hint_help,
     "move": hint_move,
     "play": hint_play,
     "random": hint_random,
@@ -89,10 +97,6 @@ lookup = {
     "zoom_m": hint_zoom_m,
     "zoom_p": hint_zoom_p,
 }
-# cache the amount of time the hint is shown.
-# Longer descriptions are given more time.
-durations = {}
-MS_PER_WORD = 250  # reading rate
 
 
 class Hints:
@@ -100,33 +104,64 @@ class Hints:
         self.viewer = viewer
         self.active = True
         self.showing = None
+        self.static = False
 
-    def visible(self, active: int):
+    def visible(self, active: bool):
         """Set whether hints are to show or not."""
         self.active = active
 
     def show(self, hint_id):
         """Show a hint.
-                                            hint
+
+        State table:                        hint
         old state   new state   old==new    exists  action
             none        none        y         -       -
             none        hint        n         y     show
             none        hint        n         n       -
             hint        none        n         -     clear
+            static      none        n         -       -
             hint        hint        y         -       -
             hint        hint        n         y     show
             hint        hint        n         n     clear
+        Notes:
+            * The hint should always exist. The "hint exists"
+              column is just a precaution.
+            * The table does not cover static hints, though the code does.
+              See the docstring for show_static for details.
         """
         if self.active:
             if hint_id is None:
-                if self.showing is not None:
+                if self.showing is not None and not self.static:
                     self.viewer.clear_text()
-                    self.showing = hint_id
+                    self.showing = None
             elif hint_id != self.showing:
                 if hint_id in lookup:
                     text = lookup[hint_id]
                     self.viewer.show_text(text)
                     self.showing = hint_id
+                    self.static = False
                 else:
                     self.viewer.clear_text()
                     self.showing = None
+
+    def show_static(self, hint_id):
+        """Show a static hint.
+
+        For example, help or about. This hint:
+            * is shown regardless of the active state
+            * is not canceled by show(None), aka ordinary mouse movement
+            * is removed by a left-click on the canvas
+        """
+        old_active = self.active
+        # Temporarily force active so that the hint will be shown.
+        self.active = True
+        self.show(hint_id)
+        # Set the static flag AFTER calling show() because that call clears it
+        self.static = True
+        self.active = old_active
+
+    def stop_static(self):
+        """Cancel a static hint."""
+        self.static = False
+        self.viewer.clear_text()
+        self.showing = None

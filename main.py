@@ -94,9 +94,6 @@ button_states_recording = (
 )
 
 
-def about():
-    messagebox.showinfo('Hypercube', 'Version 0.0.1')
-
 def preferences():
     messagebox.showinfo('Hypercube', 'Not yet implemented')
 
@@ -109,7 +106,6 @@ class App(tk.Frame):
         self.args = args
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         root.bind('<Escape>', lambda e: self.on_close())
-        self.add_menu()
 
         # create an instance for loading and saving data and get the filename
         # of the json file that holds data (.load_settings() and
@@ -137,6 +133,7 @@ class App(tk.Frame):
         self.right_frame.grid(row=0, column=1, sticky=tk.NE)
         self.canvas = tk.Canvas(self.right_frame, highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
+        self.canvas.bind("<Button-1>", self.on_canvas)
 
         # construct the viewer and the wireframe
         self.viewer = display.Viewer(self.data, self.canvas)
@@ -149,7 +146,9 @@ class App(tk.Frame):
         self.add_controls(self.left_frame, 0, 0)
         self.buttons = (self.replay_button, self.stop_button, self.record_button, self.play_button)
 
+        self.add_menu()
         self.load_settings()
+        self.hints.visible(self.data.show_hints)
         self.set_view_size()
         # For reasons I do not understand, the controls "ghost" and "angle"
         # trigger callbacks when their value is set. Flush the spurious
@@ -297,7 +296,8 @@ class App(tk.Frame):
         menubar.add_cascade(label="Edit", menu=edit)
 
         help = tk.Menu(menubar, tearoff=0)
-        help.add_command(label="About", command=about)
+        help.add_command(label="Help", command=partial(self.hints.show_static, "help"))
+        help.add_command(label="About", command=partial(self.hints.show_static, "about"))
         menubar.add_cascade(label="Help", menu=help)
         self.root.config(menu=menubar)
 
@@ -482,9 +482,26 @@ class App(tk.Frame):
             control = self.controls[dataname]
             control.add_control(frame, row, 1)
             row += 1
+        # show_hints is treated separately as it lives in a different column
         control = self.controls['show_hints']
         control.add_control(frame, row, 0)
         row += 1
+
+    def hint_manager(self):
+        try:
+            hint_id = None
+            # get the widget under the cursor
+            x, y = self.winfo_pointerxy()
+            widget = self.winfo_containing(x, y)
+            if widget:
+                # get possible hint id for this control...
+                if hasattr(widget, "hint_id"):
+                    hint_id = widget.hint_id
+            self.hints.show(hint_id)
+        except:
+            # specifically, we are catching a popdown exception in
+            # winfo_containing, but why not catch everything?
+            pass
 
     def load_settings(self):
         """Load initial settings."""
@@ -521,6 +538,7 @@ class App(tk.Frame):
         for dataname, control in self.controls.items():
             control.set_data(dataname, self.data)
             control.callback = callback
+            # show_hints uses a different callback
             if dataname == "show_hints":
                 control.callback = self.on_hints
             # If this control is a slider, tell the action queue so it is able
@@ -542,6 +560,10 @@ class App(tk.Frame):
         else:
             self.aspect.configure(bg='yellow')
 
+    def on_canvas(self, x):
+        """Left-click on canvas."""
+        self.hints.stop_static()
+
     def on_close(self):
         """App is closing."""
         data = self.data
@@ -560,7 +582,8 @@ class App(tk.Frame):
     def on_hints(self, dataname):
         """User has toggled whether hints are to be shown."""
         control = self.controls[dataname]
-        value = control.get()
+        value = bool(control.get())
+        self.data.show_hints = value
         self.hints.visible(value)
 
     def on_play_end(self, state):
@@ -750,23 +773,6 @@ class App(tk.Frame):
 
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
-
-    def hint_manager(self):
-        try:
-            # get the widget under the cursor
-            x, y = self.winfo_pointerxy()
-            widget = self.winfo_containing(x, y)
-            if widget:
-                # get possible hint id for this control...
-                if hasattr(widget, "hint_id"):
-                    hint_id = widget.hint_id
-                else:
-                    hint_id = None
-                self.hints.show(hint_id)
-        except:
-            # specificly, we are catching a popdown exception in
-            # winfo_containing, but why not catch everything?
-            pass
 
     def set_data_value(self, action: Action):
         assert action.visible
