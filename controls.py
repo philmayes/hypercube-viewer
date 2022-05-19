@@ -12,13 +12,6 @@ DISABLED = 0
 ENABLED = 1
 ACTIVE = 2
 
-widget_map = {}
-
-def map_to_hint(ctl, label):
-    widget_name = ctl.winfo_name()
-    widget_map[widget_name] = label
-    print(f"Mapped {widget_name} to {label}")
-
 
 class Button(tk.Button):
     """Class to implement a 3-state button."""
@@ -81,9 +74,6 @@ class Control:
     def get(self):
         return self.var.get()
 
-    def map_hint(self):
-        map_to_hint(self.ctl, self.dataname)
-
     def set(self, value):
         self.ctl.set(value)
 
@@ -113,7 +103,7 @@ class CheckControl(Control):
             frame, text=self.label, variable=self.var, command=self.action
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
-        self.map_hint()
+        self.ctl.hint_id = self.dataname
 
     def set(self, value):
         if isinstance(value, str):
@@ -141,7 +131,7 @@ class ComboControl(Control):
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
         self.ctl.bind("<<ComboboxSelected>>", self.action)
-        self.map_hint()
+        self.ctl.hint_id = self.dataname
 
     def get(self):
         return self.ctl.get()
@@ -168,7 +158,7 @@ class SlideControl(Control):
             command=self.action,
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
-        self.map_hint()
+        self.ctl.hint_id = self.dataname
 
     def get(self):
         return self.ctl.get()
@@ -202,12 +192,12 @@ class PlaneControl:
             self.rot_frame, text=" < ", command=partial(self.app.on_rotate, "+", self)
         )
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        map_to_hint(self.rotate1, "R")
+        self.rotate1.hint_id = "rotate"
         self.rotate2 = tk.Button(
             self.rot_frame, text=" > ", command=partial(self.app.on_rotate, "-", self)
         )
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
-        map_to_hint(self.rotate2, "R")
+        self.rotate2.hint_id = "rotate"
 
         # insert information about colors of dimensions
         self.swatch1 = tk.Label(
@@ -222,8 +212,6 @@ class PlaneControl:
     def delete_controls(self):
         self.rot_frame.destroy()
         self.planes.destroy()
-        del map_to_hint[self.rotate1.winfo_name()]
-        del map_to_hint[self.rotate2.winfo_name()]
         self.rotate1.destroy()
         self.rotate2.destroy()
         self.swatch1.destroy()

@@ -346,13 +346,13 @@ class Viewer:
         if not self.id_rect:
             # construct background and text widgets
             self.id_rect = self.canvas.create_rectangle((0,0,0,0), fill="white")
-            self.id_text = self.canvas.create_text(10, 10, anchor="nw", font="Arial 12", fill="black")
+            self.id_text = self.canvas.create_text(22, 16, anchor="nw", font="Arial 12", fill="black")
         # put the text into the canvas widget
         self.canvas.itemconfig(self.id_text, text=text)
         # get the bounding box for that text
         bbox = self.canvas.bbox(self.id_text)
         # expand it slightly so it looks less crowded
-        adjust = (-4, -2, 4, 2)
+        adjust = (-12, -6, 12, 6)
         bbox2 = tuple(bbox[n] + adjust[n] for n in range(4))
         # set the rect (the text background) to that size
         self.canvas.coords(self.id_rect, bbox2)

@@ -277,6 +277,7 @@ class App(tk.Frame):
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         self.aspect = tk.Entry(frame, width=15)
         self.aspect.grid(row=0, column=0, sticky=tk.W)
+        self.aspect.hint_id = "aspect"
         ctl = tk.Button(frame, text="Apply", command=self.on_aspect)
         ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
 
@@ -314,10 +315,13 @@ class App(tk.Frame):
         PB = Action('P')
         ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.queue_action, Zm))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
+        ctl.hint_id = "zoom_m"
         ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.queue_action, Mu))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl.hint_id = "move"
         ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.queue_action, Zp))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        ctl.hint_id = "zoom_p"
         # add a "Replay" control
         spacer1 = tk.Label(frame, text="")
         spacer1.grid(row=row, column=3, padx=20)
@@ -326,24 +330,27 @@ class App(tk.Frame):
                                              font=self.big_font,
                                              width=12,
                                              command=partial(self.queue_action, PB))
-        controls.map_to_hint(self.replay_button, "Replay")
+        self.replay_button.hint_id = "replay"
         self.replay_button.grid(row=row, column=4, columnspan=2, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
         ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, Ml))
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
+        ctl.hint_id = "move"
         ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.queue_action, Md))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ctl.hint_id = "move"
         ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.queue_action, Mr))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
+        ctl.hint_id = "move"
         # add a "Stop" control
         self.stop_button = controls.Button(frame, text="Stop", color2="red", font=self.big_font, width=12, command=self.on_stop)
         self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
-        controls.map_to_hint(self.stop_button, "Stop")
+        self.stop_button.hint_id = "stop"
         row += 1
         # add a "Restart" control
         self.restart_button = controls.Button(frame, text="Begin Again", command=self.restart)
         self.restart_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
-        controls.map_to_hint(self.restart_button, "Restart")
+        self.restart_button.hint_id = "restart"
         row += 1
 
 
@@ -361,10 +368,13 @@ class App(tk.Frame):
         w = 10
         self.record_button = controls.Button(frame, texts=["Record", "Record", "Stop"], color2="red", width=w, command=self.set_record_state)
         self.record_button.grid(row=row, column=0, sticky=tk.E, pady=2)
+        self.record_button.hint_id = "record"
         self.play_button = controls.Button(frame, texts=["Play", "Play", "Stop"], color2="red", width=w, command=self.on_play_video)
         self.play_button.grid(row=row, column=1, pady=2)
+        self.play_button.hint_id = "play"
         ctl = tk.Button(frame, text='View Folder', width=w, command=self.on_view_files)
         ctl.grid(row=row, column=2, pady=2)
+        ctl.hint_id = "folder"
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
@@ -396,8 +406,10 @@ class App(tk.Frame):
         rot_frame.grid(row=row, column=1)
         btn = tk.Button(rot_frame, text=' < ', command=partial(self.on_random, '-'))
         btn.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
+        btn.hint_id = "random"
         btn = tk.Button(rot_frame, text=' > ', command=partial(self.on_random, '+'))
         btn.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
+        btn.hint_id = "random"
 
         # add a checkbox for whether replay tracks the visible settings
         ctl = self.controls['replay_visible']
@@ -419,7 +431,7 @@ class App(tk.Frame):
                           )
         self.dim_choice.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
-        controls.map_to_hint(self.dim_choice, "Dims")
+        self.dim_choice.hint_id = "dims"
         row += 1
 
         # add control of aspect ratios
@@ -440,6 +452,7 @@ class App(tk.Frame):
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
         self.viewer_size = tk.Entry(frame, width=15)
         self.viewer_size.grid(row=0, column=0, sticky=tk.W)
+        self.viewer_size.hint_id = "viewsize"
         ctl = tk.Button(frame, text="Apply", command=self.on_viewer_size)
         ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
 
@@ -739,12 +752,21 @@ class App(tk.Frame):
         self.root.after(10, self.run)
 
     def hint_manager(self):
-        # get the widget under the cursor
-        if widget := self.winfo_containing(*self.winfo_pointerxy()):
-            # get possible hint id for this control...
-            hint_id = controls.widget_map.get(widget.winfo_name(), None)
-            # ...and show it (or clear any existing one)
-            self.hints.show(hint_id)
+        try:
+            # get the widget under the cursor
+            x, y = self.winfo_pointerxy()
+            widget = self.winfo_containing(x, y)
+            if widget:
+                # get possible hint id for this control...
+                if hasattr(widget, "hint_id"):
+                    hint_id = widget.hint_id
+                else:
+                    hint_id = None
+                self.hints.show(hint_id)
+        except:
+            # specificly, we are catching a popdown exception in
+            # winfo_containing, but why not catch everything?
+            pass
 
     def set_data_value(self, action: Action):
         assert action.visible
