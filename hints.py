@@ -1,5 +1,5 @@
 hint_about = """\
-Hypercube
+Hypercube viewer
 
 Version 0.0.1"""
 hint_angle = """\
@@ -16,11 +16,17 @@ Additional dimensions take the last-
 specified value, e.g. the 4th dimension
 would also be 2 units."""
 hint_auto_scale = """\
-Resize the object by this amount
-during each step of movement.
+Resize the object by this amount during
+each step of movement.
 1.00 means no resizing.
 
-WARNING: Resizing is a slow operation.
+WARNING:
+The rotation is slower because of this.
+Note that when intermediate steps are
+shown, a fraction of the scaling takes
+place for every step, making it much slower.
+When there are a large number of dimensions,
+the speed is even worse.
 To see it at the correct speed,
 record the movements to video."""
 hint_depth = """\
@@ -31,20 +37,21 @@ hint_dims = "Choose how many dimensions for the hypercube"
 hint_folder = "Open the folder where videos are saved"
 hint_frame_rate = "Choose the frame rate of the video file."
 hint_ghost = """\
-Amount of ghost image left behnd
-as the object is rotated.
+As the hypercube is moved, the program can leave
+a ghost image that fades out. The amount of ghost
+image left behind as the object is rotated is:
 0   = no ghosting;
 10 = no fading out."""
-hint_help = """\
-This will be the help hint"""
 hint_move = "Move the object up, down, left or right."
-hint_play = "Play back what was previously\nrecorded to video"
+hint_play = "Play back the last recorded video file"
 hint_random = "Rotate the object randomly\naround 3 dimensions"
 hint_record = "Record all movement to a video file"
 hint_replay = "Play back all the movement\nthat you have done so far."
 hint_replay_visible = """\
-Oh, this is hard to explain.
-Replay uses original\nvisibility settings."""
+Choose whether replay includes all changes
+to visibility settings that were made.
+When it is unchecked, replay takes place
+using the current visibility settings.."""
 hint_restart = "Forget all movement\nthat you have done\nand start again"
 hint_rotate = "Rotate the object around the given plane"
 hint_show_center = "Show the center point of the object"
@@ -56,7 +63,10 @@ hint_show_edges = "Show the edges of the object"
 hint_show_faces = "Show the faces of the object"
 hint_show_nodes = "Show the corners of the object"
 hint_show_perspective = "Show the object in perspective view"
-hint_show_steps = "Show intermediate steps during rotation"
+hint_show_steps = """\
+Draw the intermediate steps of moves and rotations.
+Note that this may slow the operation, especially
+when the hypercube has a large number of dimensions."""
 hint_show_vp = "Show the vanishing point of the perspective view"
 hint_stop = "Stop the Replay"
 hint_viewsize = """\
@@ -75,7 +85,6 @@ lookup = {
     "folder": hint_folder,
     "frame_rate": hint_frame_rate,
     "ghost": hint_ghost,
-    "help": hint_help,
     "move": hint_move,
     "play": hint_play,
     "random": hint_random,
@@ -147,7 +156,7 @@ class Hints:
     def show_static(self, hint_id):
         """Show a static hint.
 
-        For example, help or about. This hint:
+        For example, about. This hint:
             * is shown regardless of the active state
             * is not canceled by show(None), aka ordinary mouse movement
             * is removed by a left-click on the canvas

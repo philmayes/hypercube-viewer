@@ -66,6 +66,9 @@ class Viewer:
         self.recording = False
         self.video_reader = None
         self.video_writer = None
+        self.id_rect = None
+        self.id_text = None
+        self.id_window = None
 
         # visibility settings...
         self.node_radius = 4
@@ -126,14 +129,18 @@ class Viewer:
         image = Image.fromarray(self.img)
         self.image = ImageTk.PhotoImage(image)
         self.id_image = self.canvas.create_image(0, 0, anchor="nw", image=self.image)
-        self.id_rect = None
-        self.id_text = None
+        self.clear_text()
+        self.clear_window()
 
     def clear_text(self):
         self.canvas.delete(self.id_rect)
         self.canvas.delete(self.id_text)
         self.id_rect = None
         self.id_text = None
+
+    def clear_window(self):
+        self.canvas.delete(self.id_window)
+        self.id_window = None
 
     def display(self):
         t1 = time.perf_counter()
@@ -356,6 +363,10 @@ class Viewer:
         bbox2 = tuple(bbox[n] + adjust[n] for n in range(4))
         # set the rect (the text background) to that size
         self.canvas.coords(self.id_rect, bbox2)
+
+    def show_window(self, widget):
+        if not self.id_window:
+            self.id_window = self.canvas.create_window(10, 10, anchor="nw", window=widget)
 
     def take_action(self, action: Action, playback=False):
         """Perform and display the supplied action."""

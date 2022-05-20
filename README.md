@@ -25,7 +25,7 @@ The points, edges and/or faces are projected onto a plane surface (the x-y plane
 
 ## How is the hypercube rotated?
 
-In the real world, we think of rotation as about an axis. A square on your screen being rotated clockwise is though of as rotating around the z-axis that projects perpendicularly from the screen, but what is actually changing are the x- and y-coordinates of the 4 corners. Similarly, rotation around the x-axis is donw by rotating the y-z plane. For a higher dimension D, the only rotations visible on the screen (the x-y surface) are rotations in the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate in both directions around these higher planes.
+In the real world, we think of rotation as about an axis. A square on your screen being rotated clockwise is though of as rotating around the z-axis that projects perpendicularly from the screen, but what is actually changing are the x- and y-coordinates of the 4 corners. Similarly, rotation around the x-axis is done by rotating the y-z plane. For a higher dimension D, the only rotations visible on the screen (the x-y surface) are rotations in the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate in both directions around these higher planes.
 
 ## Available controls
 
@@ -38,12 +38,28 @@ In the real world, we think of rotation as about an axis. A square on your scree
 ### Visibility
 
 * **Show faces, edges, corners:** Control what is drawn.
-* **Show coordinates:** Show the coordinates of every point. Points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
-* **Show intermediate steps:** 
+* **Show coordinates:** Show the coordinates of every point. The points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
+* **Show intermediate steps:** Draw the intermediate steps of moves and rotations. Note that this may slow the operation, especially when the hypercube has a large number of dimensions.
 * **Show center:** Show the centerpoint of the hypercube.
 * **Perspective view:** Choose whether the hypercube is projected as a perspective or orthographic view.
 * **Show vanishing point:** When perspective view is selected, show the vanishing point.
 * **Depth of perspective:** Controls the amount of perspective. The vanishing point is placed at this value times the screen width.
-* **Amount of ghosting:** As the hypercube moves, the program can leave a ghost image that fades out. 0 indicates no ghosting, and with 10, no fading takes place.
+* **Amount of ghosting:** As the hypercube is moved, the program can leave a ghost image that fades out. 0 indicates no ghosting, and with 10, no fading takes place.
+* **Rotation per click:** The rotation in degrees per click.
+* **Resizing during rotation:** The program can resize the object during rotation. This gives the amount by which the object is scaled. The rotation is slower because of this. Note that when intermediate steps are shown, a fraction of the scaling takes place for every step, making it much slower. When there are a large number of dimensions, the speed is even worse. This speed slowdown does not show in recorded videos.
 
+### Movement
 
+* The object can be rotated around various planes, moved, zoomed and shrunk.
+
+* **Replay** This button will replay all the movement and visibility actions from the beginning.
+* **Stop** This button will stop replay and also long movement operations.
+* **Begin Again** This button will forget all movement that you have done and start again.
+* **Replay uses original visibility settings** This checkbox chooses whether replay includes all changes to visibility settings that were made. When it is unchecked, replay takes place using the current visibility settings.
+
+### Recording to Video
+
+* **Frame rate of videos** Choose the frame rate which which videos are created.
+* **Record** Start recording to a video file whose name is time-stamped.
+* **Play** Play back the last recorded video file.
+* **View Folder** Open the folder where the video files are saved.

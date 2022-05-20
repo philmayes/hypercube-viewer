@@ -34,6 +34,8 @@ import random
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from tkhtmlview import HTMLScrolledText
+ 
 from action import Action, ActionQueue
 import controls
 from controls import DISABLED, ENABLED, ACTIVE
@@ -41,6 +43,7 @@ import data
 import dims
 import display
 from hints import Hints
+import help
 import pubsub
 import utils
 
@@ -104,8 +107,9 @@ class App(tk.Frame):
         # set up hooks for program close
         self.root = root
         self.args = args
-        root.protocol("WM_DELETE_WINDOW", self.on_close)
-        root.bind('<Escape>', lambda e: self.on_close())
+        root.protocol("WM_DELETE_WINDOW", self.on_escape)
+        root.bind('<Escape>', lambda e: self.on_escape())
+        root.bind('<F1>', lambda e: self.on_help())
 
         # create an instance for loading and saving data and get the filename
         # of the json file that holds data (.load_settings() and
@@ -288,7 +292,7 @@ class App(tk.Frame):
         # file.add_command(label="Save")
         # file.add_command(label="Save as")
         # file.add_separator()
-        file.add_command(label="Exit", command=self.on_close)
+        file.add_command(label="Exit", command=self.on_escape)
         menubar.add_cascade(label="File", menu=file)
 
         edit = tk.Menu(menubar, tearoff=0)
@@ -296,7 +300,7 @@ class App(tk.Frame):
         menubar.add_cascade(label="Edit", menu=edit)
 
         help = tk.Menu(menubar, tearoff=0)
-        help.add_command(label="Help", command=partial(self.hints.show_static, "help"))
+        help.add_command(label="Help", command=self.on_help)
         help.add_command(label="About", command=partial(self.hints.show_static, "about"))
         menubar.add_cascade(label="Help", menu=help)
         self.root.config(menu=menubar)
@@ -564,8 +568,23 @@ class App(tk.Frame):
         """Left-click on canvas."""
         self.hints.stop_static()
 
-    def on_close(self):
-        """App is closing."""
+    def on_dim(self, param):
+        """User has selected the number of dimensions via the combo box."""
+        old = self.data.dims
+        self.data.dims = int(param.widget.get())
+        self.set_dim(old)
+
+    def on_escape(self):
+        """User has hit ESC key."""
+        if self.viewer.id_window:
+            # help is active; cancel it
+            self.viewer.clear_window()
+            return
+        if self.hints.static:
+            # a static hint is active; cancel it
+            self.hints.stop_static()
+            return
+        # close the app
         data = self.data
         data.win_x = self.root.winfo_x()
         data.win_y = self.root.winfo_y()
@@ -573,11 +592,11 @@ class App(tk.Frame):
         data.save(self.data_file)
         self.root.destroy()
 
-    def on_dim(self, param):
-        """User has selected the number of dimensions via the combo box."""
-        old = self.data.dims
-        self.data.dims = int(param.widget.get())
-        self.set_dim(old)
+    def on_help(self):
+        if self.viewer.id_window:
+            self.viewer.clear_window()
+        else:
+            self.show_html(help.htm)
 
     def on_hints(self, dataname):
         """User has toggled whether hints are to be shown."""
@@ -845,6 +864,27 @@ class App(tk.Frame):
         x, y = self.data.get_viewer_size()
         self.canvas.config(width=x, height=y)
         self.restart()
+
+    def show_html(self, htm):
+        frame = tk.Frame(self.root)
+        window = HTMLScrolledText(frame, html=htm, padx=10)
+        window.grid(row=0, column=0, padx=4, pady=4, sticky=tk.NW)
+        vx, vy = self.data.get_viewer_size()
+        # From measurement, the width and height settings for HTMLScrolledtext
+        # (which is derived from tk.Text) are 16 and 8 pixels, so here we turn
+        # the viewer size into character counts, allowing for the scroolbar
+        # and button row.
+        vx -= 64
+        vy -= 80
+        vx //= 8
+        vy //= 16
+        # Make it at least 30 high and nor more than 100 wide
+        vx = min(100, vx)
+        vy = max(30, vy)
+        window.config(width=vx, height=vy)
+        ctl = tk.Button(frame, text="Close", command=self.viewer.clear_window)
+        ctl.grid(row=1, column=0, sticky=tk.E, padx=10, pady=4)
+        self.viewer.show_window(frame)
 
     def visibility_action(self, data_name):
         """Execute a visibility action."""
