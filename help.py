@@ -22,7 +22,17 @@ original cube being extended. This object is called a tesseract.
 </p>
 <p>We can continue this process without end. A 5-cube has 32 points, etc. 
 Each value in this table comes from doubling the value above and adding 
-the value above and in the previous column.
+the value above and in the previous column.</p>
+
+<code>| # Dims | Points | Edges | Faces | Cubes |
+|--------|--------|-------|-------|-------|
+|      0 |      1 |       |       |       |
+|      1 |      2 |     1 |       |       |
+|      2 |      4 |     4 |     1 |       |
+|      3 |      8 |    12 |     6 |     1 |
+|      4 |     16 |    32 |    24 |     8 |
+|      5 |     32 |    80 |    80 |    50 |
+</code>
 
 <h3>Drawing the hypercube</h3>
 
