@@ -173,6 +173,7 @@ class PlaneControl:
         self.dim1 = dim1
         self.dim2 = dim2
         self.app = app
+        self.active = False
 
     def add_controls(self):
         dim1str = dims.labels[self.dim1]
@@ -208,6 +209,7 @@ class PlaneControl:
             self.frame, text=f"{dim2str}: ████", bg="black", fg=color2
         )
         self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
+        self.active = True
 
     def delete_controls(self):
         self.rot_frame.destroy()
@@ -216,3 +218,4 @@ class PlaneControl:
         self.rotate2.destroy()
         self.swatch1.destroy()
         self.swatch2.destroy()
+        self.active = False
