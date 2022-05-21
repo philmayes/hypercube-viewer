@@ -100,6 +100,15 @@ button_states_recording = (
 def preferences():
     messagebox.showinfo('Hypercube', 'Not yet implemented')
 
+import enum
+class Reset(enum.IntFlag):
+    FACTORY = 1 # restore factory settings
+    DATA = 2    # restore settings at beginning
+    DIM = 4     # change the number of dimensions
+    ASPECT = 8  # change the aspect ratios
+    VIEW = 16   # change the viewer size
+
+
 class App(tk.Frame):
 
     def __init__(self, root, args):
@@ -152,15 +161,9 @@ class App(tk.Frame):
 
         self.add_menu()
         self.load_settings()
-        self.hints.visible(self.data.show_hints)
-        self.set_view_size()
-        # For reasons I do not understand, the controls "ghost" and "angle"
-        # trigger callbacks when their value is set. Flush the spurious
-        # actions and disable the "Begin Again" button which got enabled. 
-        self.actionQ.clear()
-        self.restart_button.state = DISABLED
-        self.set_state(CLEAN, force=True)
+        self.reset(Reset.DIM | Reset.ASPECT | Reset.VIEW)
 
+        pubsub.subscribe('reset', self.reset)
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
 
@@ -296,6 +299,7 @@ class App(tk.Frame):
         menubar.add_cascade(label="File", menu=file)
 
         edit = tk.Menu(menubar, tearoff=0)
+        edit.add_command(label="Factory reset", command=self.on_factory_reset)
         edit.add_command(label="Preferences...", command=preferences)
         menubar.add_cascade(label="Edit", menu=edit)
 
@@ -352,7 +356,7 @@ class App(tk.Frame):
         self.stop_button.hint_id = "stop"
         row += 1
         # add a "Restart" control
-        self.restart_button = controls.Button(frame, text="Begin Again", command=self.restart)
+        self.restart_button = controls.Button(frame, text="Begin Again", command=self.on_restart)
         self.restart_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
         self.restart_button.hint_id = "restart"
         row += 1
@@ -515,7 +519,6 @@ class App(tk.Frame):
         for dataname, control in self.controls.items():
             value = getattr(self.data, dataname)
             control.set(value)
-        self.set_dim(0)
 
     def make_controls(self):
         """Construct controls in a dictionary."""
@@ -561,7 +564,8 @@ class App(tk.Frame):
         if self.data.validate_aspects(aspects):
             self.data.aspects = aspects
             self.aspect.configure(bg='white')
-            self.restart()
+            self.stop()
+            self.queue_action(Action("X", Reset.ASPECT))
         else:
             self.aspect.configure(bg='yellow')
 
@@ -571,9 +575,9 @@ class App(tk.Frame):
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
-        old = self.data.dims
         self.data.dims = int(param.widget.get())
-        self.set_dim(old)
+        self.stop()
+        self.queue_action(Action("X", Reset.DIM))
 
     def on_escape(self):
         """User has hit ESC key."""
@@ -592,6 +596,10 @@ class App(tk.Frame):
         data.dims = int(self.dim_choice.get())
         data.save(self.data_file)
         self.root.destroy()
+
+    def on_factory_reset(self):
+        self.stop()
+        self.queue_action(Action("X", Reset.FACTORY | Reset.DIM | Reset.VIEW))
 
     def on_help(self):
         if self.viewer.id_window:
@@ -634,6 +642,10 @@ class App(tk.Frame):
         action = Action('R', dim1, dim2, dim3, direction)
         self.queue_action(action)
 
+    def on_restart(self):
+        self.stop()
+        self.queue_action(Action("X", Reset.DATA))
+
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
         action = Action('R', dim_control.dim1, dim_control.dim2, None, direction)
@@ -641,14 +653,7 @@ class App(tk.Frame):
 
     def on_stop(self):
         """User has asked for the current and pending actions to be stopped."""
-        # ask the viewer to stop ASAP
-        self.viewer.stop = True
-        # discard all actions in the pending queue
-        self.actionQ.clear()
-        # stop any playback
-        self.playback_index = -1
-        # adjust button states
-        self.set_state(IDLE)
+        self.stop()
 
     def on_view_files(self):
         """Show the folder where video output is saved."""
@@ -664,7 +669,8 @@ class App(tk.Frame):
         if self.data.validate_viewer_size(viewer_size):
             self.data.viewer_size = viewer_size
             self.viewer_size.configure(bg='white')
-            self.set_view_size()
+            self.stop()
+            self.queue_action(Action("X", Reset.VIEW))
         else:
             self.viewer_size.configure(bg='yellow')
 
@@ -677,13 +683,56 @@ class App(tk.Frame):
             self.actionQ.append(action)
             self.restart_button.state = ENABLED
 
-    def restart(self):
-        """The dimensions, aspect or view size has changed.
+    def reset(self, flags: Reset):
+        """Reset the program in various ways.
 
-        This is called at initial start and restart, too.
-        (Re)set all buttons to initial state.
-        (Re)initialize the viewer with the current values set up in .data.
+        It is called:
+            at initial start
+            at restart
+            when the dimensions, aspect or view size has changed
+        The flags parameter indicates what actions to take.
+
+        NOTE: this must not be called directly except at initial start
+        because there may be an action in progress that is relying on old
+        values and will crash. This is weird: flushing actionQ and forcing
+        stop does not solve the problem. The fix is that reset calls must
+        be made via the actionQ. In this way, the prior action will have
+        completed.
         """
+        if flags & Reset.FACTORY:
+            self.restore_data(data.Data())
+            self.load_settings()
+
+        if flags & Reset.DATA:
+            self.restore_data(self.data_copy, skip=True)
+            self.load_settings()
+
+        if flags & Reset.DIM:
+            dim_count = self.data.dims
+            self.dim_choice.set(str(dim_count))
+            # create or destroy the dimension controls as appropriate
+            for dim, control in enumerate(self.dim_controls):
+                if dim < dim_count:
+                    if not control.active:
+                        self.dim_controls[dim].add_controls()
+                else:
+                    if control.active:
+                        self.dim_controls[dim].delete_controls()
+
+        if flags & Reset.VIEW:
+            x, y = self.data.get_viewer_size()
+            self.canvas.config(width=x, height=y)
+
+        if flags & Reset.ASPECT:
+            aspects = self.aspect.get()
+            self.data.aspects = aspects
+
+
+        self.hints.visible(self.data.show_hints)
+        # self.set_view_size()
+        self.actionQ.clear()
+
+        # picked up from restart()
         self.set_record_state(False)
         self.set_state(CLEAN, force=True)
         self.restart_button.state = DISABLED
@@ -693,17 +742,22 @@ class App(tk.Frame):
         self.viewer.init()
         self.viewer.display()
 
-    def restore_data(self):
-        """Restore the data settings in place at the beginning."""
-        for attr in self.data_copy.__dict__:
-            value = getattr(self.data_copy, attr)
-            if attr == "replay_visible":
+    def restore_data(self, from_data, skip=False):
+        """Restore the data settings in place at the beginning.
+
+        This function is used for two purposes: to reset values as they were
+        when starting, and for a full factory reset. For the 
+        This function is used for two purposes: for a full factory reset,
+        and to reset values as they were when starting. For the latter, there
+        are certain settings that the user will expect to remain the same, and
+        so skip is supplied to leave those untouched.
+        """
+        for attr in from_data.__dict__:
+            value = getattr(from_data, attr)
+            if skip and attr in ("replay_visible", "frame_rate"):
                 # Keep the current replay_visible value because if it started
                 # out one way but the user flipped it, we don't want to use
-                # the original setting.
-                continue
-            if attr == "frame_rate":
-                # Similar reasoning applies to frame_rate
+                # the original setting. Similar reasoning applies to frame_rate.
                 continue
             setattr(self.data, attr, value)
             if attr in self.controls:
@@ -740,12 +794,11 @@ class App(tk.Frame):
             del self.actionQ[0]
             if action.cmd == 'P':
                 # the action is to play back all the actions up until now,
-                # self.set_replay_button(ACTIVE)
                 self.playback_index = 0
                 self.set_state(REPLAYING)
                 if self.data.replay_visible:
-                    # restore the data settings in place at the beginning
-                    self.restore_data()
+                    # restore most data settings in place at the beginning
+                    self.restore_data(self.data_copy, skip=True)
                 self.viewer.init(playback=True)
                 self.viewer.display()
             else:
@@ -804,22 +857,6 @@ class App(tk.Frame):
         assert type(value) is type(old_data)
         setattr(self.data, data_name, value)
 
-    def set_dim(self, old_count):
-        """Set the number of dimensions to use and adjust the controls."""
-        dim_count = self.data.dims
-        self.dim_choice.set(str(dim_count))
-        # create or destroy the dimension controls as appropriate
-        if old_count < dim_count:
-            for dim in range(old_count, dim_count):
-                self.dim_controls[dim].add_controls()
-        else:
-            for dim in range(dim_count, old_count):
-                self.dim_controls[dim].delete_controls()
-        # If old_count==0, we are being called from .__init__ and .set_view_size
-        # will subsequently call .restart, so there is no need to do it here.
-        if old_count != 0:
-            self.restart()
-
     def set_record_state(self, active=None):
         """Set or Xor the record button.
 
@@ -860,12 +897,6 @@ class App(tk.Frame):
         control = self.controls[data_name]
         control.set(value)
 
-    def set_view_size(self):
-        """Set the viewing size from the values in data."""
-        x, y = self.data.get_viewer_size()
-        self.canvas.config(width=x, height=y)
-        self.restart()
-
     def show_html(self, htm):
         frame = tk.Frame(self.root)
         window = HTMLScrolledText(frame, html=htm, padx=10)
@@ -886,6 +917,17 @@ class App(tk.Frame):
         ctl = tk.Button(frame, text="Close", command=self.viewer.clear_window)
         ctl.grid(row=1, column=0, sticky=tk.E, padx=10, pady=4)
         self.viewer.show_window(frame)
+
+    def stop(self):
+        """Stop the current and pending actions."""
+        # ask the viewer to stop ASAP
+        self.viewer.stop = True
+        # discard all actions in the pending queue
+        self.actionQ.clear()
+        # stop any playback
+        self.playback_index = -1
+        # adjust button states
+        self.set_state(IDLE)
 
     def visibility_action(self, data_name):
         """Execute a visibility action."""

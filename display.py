@@ -394,6 +394,9 @@ class Viewer:
             assert isinstance(action.p1, int)
             self.data.dims = action.p1
             self.init()
+        elif cmd == "X":
+            pubsub.publish("reset", action.p1)
+            acted = False
         else:
             acted = False
 

@@ -4,6 +4,7 @@ class Action:
     The meanings of the parameters are:
     Action          cmd         p1          p2          p3          p4
     ---------------+-----------+-----------+-----------+-----------+-------------
+    Reset           X           Reset flags
     Playback        P
     Move            M           u,d,l,r
     Rotate          R           1st dim     2nd dim     [3rd dim]   direction
