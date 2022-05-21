@@ -278,11 +278,11 @@ class App(tk.Frame):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        self.aspect = tk.Entry(frame, width=15)
+        self.aspect = tk.Entry(frame, width=12)
         self.aspect.grid(row=0, column=0, sticky=tk.W)
+        self.aspect.bind('<FocusOut>', self.on_aspect)
+        self.aspect.bind('<Return>', self.on_aspect)
         self.aspect.hint_id = "aspect"
-        ctl = tk.Button(frame, text="Apply", command=self.on_aspect)
-        ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
 
     def add_menu(self):
         menubar = tk.Menu(self.root, background='#ff8000', foreground='black', activebackground='white', activeforeground='black')
@@ -356,7 +356,6 @@ class App(tk.Frame):
         self.restart_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
         self.restart_button.hint_id = "restart"
         row += 1
-
 
     def add_recording_controls(self, parent_frame, row, col):
         """Add recording controls to the window."""
@@ -454,11 +453,11 @@ class App(tk.Frame):
         """Add view size control to the window."""
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=2)
-        self.viewer_size = tk.Entry(frame, width=15)
+        self.viewer_size = tk.Entry(frame, width=12)
         self.viewer_size.grid(row=0, column=0, sticky=tk.W)
+        self.viewer_size.bind('<FocusOut>', self.on_viewer_size)
+        self.viewer_size.bind('<Return>', self.on_viewer_size)
         self.viewer_size.hint_id = "viewsize"
-        ctl = tk.Button(frame, text="Apply", command=self.on_viewer_size)
-        ctl.grid(row=0, column=1, sticky=tk.E, padx=4)
 
     def add_visibility_controls(self, parent_frame, row, col):
         """Add controls for what to display to the window."""
@@ -509,7 +508,9 @@ class App(tk.Frame):
 
     def load_settings(self):
         """Load initial settings."""
+        self.aspect.delete(0,999)
         self.aspect.insert(0, self.data.aspects)
+        self.viewer_size.delete(0,999)
         self.viewer_size.insert(0, self.data.viewer_size)
         for dataname, control in self.controls.items():
             value = getattr(self.data, dataname)
@@ -550,7 +551,7 @@ class App(tk.Frame):
             if isinstance(control, controls.SlideControl | controls.ComboControl):
                 ActionQueue.sliders.append(dataname)
 
-    def on_aspect(self):
+    def on_aspect(self, _):
         """The aspect ratios have been changed.
         
         If they're valid, save them and rebuild the viewer,
@@ -653,7 +654,7 @@ class App(tk.Frame):
         """Show the folder where video output is saved."""
         os.startfile(self.viewer.output_dir)
 
-    def on_viewer_size(self):
+    def on_viewer_size(self, _):
         """The viewer_size ratios have been changed.
         
         If they're valid, save them and rebuild the viewer,
@@ -684,7 +685,7 @@ class App(tk.Frame):
         (Re)initialize the viewer with the current values set up in .data.
         """
         self.set_record_state(False)
-        self.set_state(CLEAN)
+        self.set_state(CLEAN, force=True)
         self.restart_button.state = DISABLED
 
         # make a copy of the data for when we replay with visibility

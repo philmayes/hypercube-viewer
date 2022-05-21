@@ -9,12 +9,12 @@ rotate the object."""
 hint_aspect = """\
 A cube has all sides of equal length,
 but you can use different ratios,
-e.g. 4:3:2 would set the x-dimension
-to 4 units, the y-dimension to 3 units
-and the z-dimention to 2 units.
-Additional dimensions take the last-
-specified value, e.g. the 4th dimension
-would also be 2 units."""
+e.g. 4:3:2 would set:
+    the x-dimension to 4 units
+    the y-dimension to 3 units
+    the z-dimension to 2 units
+Extra dimensions take the last-specified value,
+e.g. the 4th dimension would also be 2 units."""
 hint_auto_scale = """\
 Resize the object by this amount during
 each step of movement.
