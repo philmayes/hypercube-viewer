@@ -36,7 +36,7 @@ from tkinter import ttk, messagebox
 
 from tkhtmlview import HTMLScrolledText
  
-from action import Action, ActionQueue
+from action import Action, ActionQueue, Cmd
 import controls
 from controls import DISABLED, ENABLED, ACTIVE
 import data
@@ -314,13 +314,13 @@ class App(tk.Frame):
         frame = tk.Frame(parent_frame)
         frame.grid(row=row, column=col, sticky=tk.W, padx=4)
         row = 0
-        Zm = Action('Z', '-')
-        Zp = Action('Z', '+')
-        Ml = Action('M', 'l')
-        Mr = Action('M', 'r')
-        Mu = Action('M', 'u')
-        Md = Action('M', 'd')
-        PB = Action('P')
+        Zm = Action(Cmd.ZOOM, '-')
+        Zp = Action(Cmd.ZOOM, '+')
+        Ml = Action(Cmd.MOVE, 'l')
+        Mr = Action(Cmd.MOVE, 'r')
+        Mu = Action(Cmd.MOVE, 'u')
+        Md = Action(Cmd.MOVE, 'd')
+        PB = Action(Cmd.PLAYBACK)
         ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.queue_action, Zm))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
         ctl.hint_id = "zoom_m"
@@ -565,7 +565,7 @@ class App(tk.Frame):
             self.data.aspects = aspects
             self.aspect.configure(bg='white')
             self.stop()
-            self.queue_action(Action("X", Reset.ASPECT))
+            self.queue_action(Action(Cmd.RESET, Reset.ASPECT))
         else:
             self.aspect.configure(bg='yellow')
 
@@ -577,7 +577,7 @@ class App(tk.Frame):
         """User has selected the number of dimensions via the combo box."""
         self.data.dims = int(param.widget.get())
         self.stop()
-        self.queue_action(Action("X", Reset.DIM))
+        self.queue_action(Action(Cmd.RESET, Reset.DIM))
 
     def on_escape(self):
         """User has hit ESC key."""
@@ -599,7 +599,7 @@ class App(tk.Frame):
 
     def on_factory_reset(self):
         self.stop()
-        self.queue_action(Action("X", Reset.FACTORY | Reset.DIM | Reset.VIEW))
+        self.queue_action(Action(Cmd.RESET, Reset.FACTORY | Reset.DIM | Reset.VIEW))
 
     def on_help(self):
         if self.viewer.id_window:
@@ -639,16 +639,16 @@ class App(tk.Frame):
         dim2 = random.choice(dims)
         dims.remove(dim2)
         dim3 = random.choice(dims)
-        action = Action('R', dim1, dim2, dim3, direction)
+        action = Action(Cmd.ROTATE, dim1, dim2, dim3, direction)
         self.queue_action(action)
 
     def on_restart(self):
         self.stop()
-        self.queue_action(Action("X", Reset.DATA))
+        self.queue_action(Action(Cmd.RESET, Reset.DATA))
 
     def on_rotate(self, direction, dim_control):
         """Rotate the wireframe."""
-        action = Action('R', dim_control.dim1, dim_control.dim2, None, direction)
+        action = Action(Cmd.ROTATE, dim_control.dim1, dim_control.dim2, None, direction)
         self.queue_action(action)
 
     def on_stop(self):
@@ -670,7 +670,7 @@ class App(tk.Frame):
             self.data.viewer_size = viewer_size
             self.viewer_size.configure(bg='white')
             self.stop()
-            self.queue_action(Action("X", Reset.VIEW))
+            self.queue_action(Action(Cmd.RESET, Reset.VIEW))
         else:
             self.viewer_size.configure(bg='yellow')
 
@@ -792,7 +792,7 @@ class App(tk.Frame):
             # and it has been placed on a queue. Take it off the queue.
             action = self.actionQ[0]
             del self.actionQ[0]
-            if action.cmd == 'P':
+            if action.cmd == Cmd.PLAYBACK:
                 # the action is to play back all the actions up until now,
                 self.playback_index = 0
                 self.set_state(REPLAYING)
@@ -934,7 +934,7 @@ class App(tk.Frame):
         # get the control associated with the data_name and the present value
         control = self.controls[data_name]
         control_value = control.get()
-        action = Action('V', data_name, self.data.coerce(control_value, data_name))
+        action = Action(Cmd.VISIBLE, data_name, self.data.coerce(control_value, data_name))
         self.queue_action(action)
 
 

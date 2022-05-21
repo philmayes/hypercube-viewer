@@ -20,7 +20,7 @@ import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
-from action import Action, ActionQueue
+from action import Action, ActionQueue, Cmd
 import colors
 import pubsub
 import utils
@@ -373,28 +373,28 @@ class Viewer:
         acted = True
         self.stop = False
         cmd = action.cmd
-        if cmd == "R":
+        if cmd == Cmd.ROTATE:
             # The 3rd dimension is optional
             rotation = self.rotation if action.p4 == "+" else -self.rotation
             self.rotate_all(action.p1, action.p2, rotation, action.p3)
-        elif cmd == "V":
+        elif cmd == Cmd.VISIBLE:
             # This is a visibility action like showing faces, etc.
             # It does not make any changes to the wireframe model, but we need
             # the wireframe to be drawn with the changed visibility setting.
             pass
-        elif cmd == "Z":
+        elif cmd == Cmd.ZOOM:
             if action.p1 == "+":
                 self.scale_all(Viewer.SCALE)
             else:
                 self.scale_all(1 / Viewer.SCALE)
-        elif cmd == "M":
+        elif cmd == Cmd.MOVE:
             dim, amount = Viewer.direction_to_values[action.p1]
             self.translate_all(dim, amount)
-        elif cmd == "D":
+        elif cmd == Cmd.DIMS:
             assert isinstance(action.p1, int)
             self.data.dims = action.p1
             self.init()
-        elif cmd == "X":
+        elif cmd == Cmd.RESET:
             pubsub.publish("reset", action.p1)
             acted = False
         else:

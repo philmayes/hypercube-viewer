@@ -1,3 +1,14 @@
+from enum import Enum, auto
+
+class Cmd(Enum):
+    RESET = auto()
+    PLAYBACK = auto()
+    MOVE = auto()
+    ROTATE = auto()
+    ZOOM = auto()
+    DIMS = auto()
+    VISIBLE = auto()
+
 class Action:
     """Class to hold an action request.
 
@@ -22,7 +33,7 @@ class Action:
 
     @property
     def visible(self):
-        return self.cmd == "V"
+        return self.cmd == Cmd.VISIBLE
 
     def __str__(self):
         s = f"{self.cmd}:{self.p1}"
@@ -50,8 +61,8 @@ class ActionQueue(list):
         if ActionQueue.merging:
             if super().__len__():
                 prev = super().__getitem__(-1)
-                if prev.cmd == "V" and\
-                item.cmd == "V" and\
+                if prev.cmd == Cmd.VISIBLE and\
+                item.cmd == Cmd.VISIBLE and\
                 prev.p1 == item.p1 and\
                 item.p1 in ActionQueue.sliders:
                     prev.p2 = item.p2
