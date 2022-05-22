@@ -15,13 +15,13 @@ class Action:
     The meanings of the parameters are:
     Action          cmd         p1          p2          p3          p4
     ---------------+-----------+-----------+-----------+-----------+-------------
-    Reset           X           Reset flags
-    Playback        P
-    Move            M           u,d,l,r
-    Rotate          R           1st dim     2nd dim     [3rd dim]   direction
-    Zoom            Z           +/-
-    Set dimensions  D           n
-    Visibility      V           data name   data value
+    Reset           RESET       Reset flags
+    Playback        PLAYBACK
+    Move            MOVE        u,d,l,r
+    Rotate          ROTATE      1st dim     2nd dim     [3rd dim]   direction
+    Zoom            ZOOM        +/-
+    Set dimensions  DIMS        n
+    Visibility      VISIBLE     data name   data value
     """
 
     def __init__(self, cmd, p1=None, p2=None, p3=None, p4=None):
