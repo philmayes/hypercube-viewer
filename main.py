@@ -562,10 +562,11 @@ class App(tk.Frame):
         """
         aspects = self.aspect.get()
         if self.data.validate_aspects(aspects):
-            self.data.aspects = aspects
             self.aspect.configure(bg='white')
-            self.stop()
-            self.queue_action(Action(Cmd.RESET, Reset.ASPECT))
+            if aspects != self.data.aspects:
+                self.data.aspects = aspects
+                self.stop()
+                self.queue_action(Action(Cmd.RESET, Reset.ASPECT))
         else:
             self.aspect.configure(bg='yellow')
 
@@ -575,9 +576,11 @@ class App(tk.Frame):
 
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
-        self.data.dims = int(param.widget.get())
-        self.stop()
-        self.queue_action(Action(Cmd.RESET, Reset.DIM))
+        dims = int(param.widget.get())
+        if dims != self.data.dims:
+            self.data.dims = dims
+            self.stop()
+            self.queue_action(Action(Cmd.RESET, Reset.DIM))
 
     def on_escape(self):
         """User has hit ESC key."""
@@ -662,15 +665,17 @@ class App(tk.Frame):
     def on_viewer_size(self, _):
         """The viewer_size ratios have been changed.
         
-        If they're valid, save them and rebuild the viewer,
+        If they're valid,
+            if they've changed, save them and rebuild the viewer,
         else highlight the edit control in yellow
         """
         viewer_size = self.viewer_size.get()
         if self.data.validate_viewer_size(viewer_size):
-            self.data.viewer_size = viewer_size
             self.viewer_size.configure(bg='white')
-            self.stop()
-            self.queue_action(Action(Cmd.RESET, Reset.VIEW))
+            if viewer_size != self.data.viewer_size:
+                self.data.viewer_size = viewer_size
+                self.stop()
+                self.queue_action(Action(Cmd.RESET, Reset.VIEW))
         else:
             self.viewer_size.configure(bg='yellow')
 
