@@ -616,7 +616,7 @@ class App(tk.Frame):
 
     def on_play_end(self, state):
         assert state is False
-        self.set_state(IDLE)
+        self.set_button_state(IDLE)
 
     def on_play_video(self):
         """Show the last video recorded."""
@@ -626,10 +626,10 @@ class App(tk.Frame):
         if not playing:
             play_file = utils.find_latest_file(self.viewer.output_dir)
         if play_file:
-            self.set_state(PLAYING)
+            self.set_button_state(PLAYING)
             self.viewer.video_play(play_file)
         else:
-            self.set_state(IDLE)
+            self.set_button_state(IDLE)
 
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
@@ -727,20 +727,19 @@ class App(tk.Frame):
             aspects = self.aspect.get()
             self.data.aspects = aspects
 
-
-        self.hints.visible(self.data.show_hints)
-        # self.set_view_size()
-        self.actionQ.clear()
-
-        # picked up from restart()
-        self.set_record_state(False)
-        self.set_state(CLEAN, force=True)
-        self.restart_button.state = DISABLED
-
         # make a copy of the data for when we replay with visibility
         self.data_copy = copy.copy(self.data)
         self.viewer.init()
         self.viewer.display()
+
+        self.hints.visible(self.data.show_hints)
+        self.set_record_state(False)
+        self.set_button_state(CLEAN, force=True)
+        self.restart_button.state = DISABLED
+
+        # For reasons I do not understand, the controls "ghost" and "angle"
+        # trigger callbacks when their value is set. Flush the spurious actions.
+        self.actionQ.clear()
 
     def restore_data(self, from_data, skip=False):
         """Restore the data settings in place at the beginning.
@@ -785,7 +784,7 @@ class App(tk.Frame):
             else:
                 # we've played back all the actions, so cancel playback
                 self.playback_index = -1
-                self.set_state(IDLE)
+                self.set_button_state(IDLE)
 
         elif self.actionQ:
             # the user has initiated an action like rotate, zoom, etc.
@@ -795,7 +794,7 @@ class App(tk.Frame):
             if action.cmd == Cmd.PLAYBACK:
                 # the action is to play back all the actions up until now,
                 self.playback_index = 0
-                self.set_state(REPLAYING)
+                self.set_button_state(REPLAYING)
                 if self.data.replay_visible:
                     # restore most data settings in place at the beginning
                     self.restore_data(self.data_copy, skip=True)
@@ -804,7 +803,7 @@ class App(tk.Frame):
             else:
                 # It's a regular action. Enable the replay button
                 # (it would have been disabled if the queue were formerly empty)
-                self.set_state(RUNNING)
+                self.set_button_state(RUNNING)
 
                 need_action = True
                 real_ghost = 0
@@ -840,12 +839,27 @@ class App(tk.Frame):
                 if not self.actionQ:
                     # if there are no more actions queued, it makes no sense
                     # to offer a "Stop" action, so disable the button
-                    self.set_state(IDLE)
+                    state = IDLE if self.viewer.actions else CLEAN
+                    self.set_button_state(state)
         else:
             self.hint_manager()
 
         # wait 10ms, which allows tk UI actions, then check again
         self.root.after(10, self.run)
+
+    def set_button_state(self, new_state: int, force: bool=False):
+        """Set the new app state and adjust button states to match."""
+        combined = self.state * 10 + new_state # useful for debug breakpoints
+        if not force and new_state == self.state:
+            # print(f'state change {self.state} unchanged')
+            return
+        button_states = button_states_recording if self.viewer.recording\
+                   else button_states_normal
+        values = button_states[new_state]
+        for index, btn_state in enumerate(values):
+            self.buttons[index].state = btn_state
+        # print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
+        self.state = new_state
 
     def set_data_value(self, action: Action):
         assert action.visible
@@ -866,25 +880,11 @@ class App(tk.Frame):
         if active is None:
             active = not self.viewer.recording
         self.viewer.video_record(active)
-        self.set_state(self.state, force=True)
+        self.set_button_state(self.state, force=True)
 
     def set_replay_button(self, state):
         """Set the Replay button as disabled, ready or replaying."""
         self.replay_button.state = state
-
-    def set_state(self, new_state: int, force: bool=False):
-        """Set the new app state and adjust button states to match."""
-        combined = self.state * 10 + new_state # useful for debug breakpoints
-        if not force and new_state == self.state:
-            # print(f'state change {self.state} unchanged')
-            return
-        button_states = button_states_recording if self.viewer.recording\
-                   else button_states_normal
-        values = button_states[new_state]
-        for index, btn_state in enumerate(values):
-            self.buttons[index].state = btn_state
-        # print(f'state change {self.state} -> {new_state}; buttons={values}; forced={force}')
-        self.state = new_state
 
     def set_visible_state(self, action: Action):
         """Set the visible state of the control associated with the action."""
@@ -927,7 +927,7 @@ class App(tk.Frame):
         # stop any playback
         self.playback_index = -1
         # adjust button states
-        self.set_state(IDLE)
+        self.set_button_state(IDLE)
 
     def visibility_action(self, data_name):
         """Execute a visibility action."""
@@ -944,4 +944,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     root = tk.Tk()
     app = App(root, args)
+    try:
+        # if compiled with pyinstaller, close any flash screen
+        import pyi_splash
+        pyi_splash.close()
+    except:
+        pass
     root.mainloop()
