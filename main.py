@@ -163,6 +163,7 @@ class App(tk.Frame):
         self.load_settings()
         self.reset(Reset.DIM | Reset.ASPECT | Reset.VIEW)
 
+        pubsub.subscribe('list', self.list)
         pubsub.subscribe('reset', self.reset)
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
@@ -357,8 +358,12 @@ class App(tk.Frame):
         row += 1
         # add a "Restart" control
         self.restart_button = controls.Button(frame, text="Begin Again", command=self.on_restart)
-        self.restart_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        self.restart_button.grid(row=row, column=0, columnspan=3, sticky=tk.NSEW, padx=2, pady=2)
         self.restart_button.hint_id = "restart"
+        # add a "Restart" control
+        ctl = controls.Button(frame, text="Show Actions", command=self.on_list)
+        ctl.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
+        ctl.hint_id = "list"
         row += 1
 
     def add_recording_controls(self, parent_frame, row, col):
@@ -510,6 +515,19 @@ class App(tk.Frame):
             # winfo_containing, but why not catch everything?
             pass
 
+    def list(self):
+        if self.viewer.id_window:
+            self.viewer.clear_window()
+        else:
+            htm = ""
+            if self.viewer.actions:
+                for action in self.viewer.actions:
+                    htm += str(action)
+                    htm += "<br>"
+            else:
+                htm = "There are no actions to list."
+            self.show_html(htm)
+
     def load_settings(self):
         """Load initial settings."""
         self.aspect.delete(0,999)
@@ -616,6 +634,10 @@ class App(tk.Frame):
         value = bool(control.get())
         self.data.show_hints = value
         self.hints.visible(value)
+
+    def on_list(self):
+        self.stop()
+        self.queue_action(Action(Cmd.LIST))
 
     def on_play_end(self, state):
         assert state is False

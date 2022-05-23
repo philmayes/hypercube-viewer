@@ -367,6 +367,8 @@ class Viewer:
     def show_window(self, widget):
         if not self.id_window:
             self.id_window = self.canvas.create_window(10, 10, anchor="nw", window=widget)
+        else:
+            self.canvas.itemconfigure (self.id_window, window=widget)
 
     def take_action(self, action: Action, playback=False):
         """Perform and display the supplied action."""
@@ -396,6 +398,9 @@ class Viewer:
             self.init()
         elif cmd == Cmd.RESET:
             pubsub.publish("reset", action.p1)
+            acted = False
+        elif cmd == Cmd.LIST:
+            pubsub.publish("list")
             acted = False
         else:
             acted = False

@@ -42,6 +42,7 @@ a ghost image that fades out. The amount of ghost
 image left behind as the object is rotated is:
 0   = no ghosting;
 10 = no fading out."""
+hint_list = "Show a list of all the actions so far"
 hint_move = "Move the object up, down, left or right."
 hint_play = "Play back the last recorded video file"
 hint_random = "Rotate the object randomly\naround 3 dimensions"
@@ -85,6 +86,7 @@ lookup = {
     "folder": hint_folder,
     "frame_rate": hint_frame_rate,
     "ghost": hint_ghost,
+    "list": hint_list,
     "move": hint_move,
     "play": hint_play,
     "random": hint_random,
