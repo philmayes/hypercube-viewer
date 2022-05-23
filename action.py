@@ -8,7 +8,6 @@ class Cmd(Enum):
     ZOOM = auto()
     DIMS = auto()
     VISIBLE = auto()
-    LIST = auto()
 
 class Action:
     """Class to hold an action request.

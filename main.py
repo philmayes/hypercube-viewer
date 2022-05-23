@@ -34,8 +34,6 @@ import random
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from tkhtmlview import HTMLScrolledText
- 
 from action import Action, ActionQueue, Cmd
 import controls
 from controls import DISABLED, ENABLED, ACTIVE
@@ -43,6 +41,7 @@ import data
 import dims
 import display
 from hints import Hints
+from html_viewer import HtmlViewer, Name
 import help
 import pubsub
 import utils
@@ -151,6 +150,7 @@ class App(tk.Frame):
         # construct the viewer and the wireframe
         self.viewer = display.Viewer(self.data, self.canvas)
         self.hints = Hints(self.viewer)
+        self.html_viewer = HtmlViewer(self.viewer)
 
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
@@ -163,7 +163,6 @@ class App(tk.Frame):
         self.load_settings()
         self.reset(Reset.DIM | Reset.ASPECT | Reset.VIEW)
 
-        pubsub.subscribe('list', self.list)
         pubsub.subscribe('reset', self.reset)
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
@@ -515,19 +514,6 @@ class App(tk.Frame):
             # winfo_containing, but why not catch everything?
             pass
 
-    def list(self):
-        if self.viewer.id_window:
-            self.viewer.clear_window()
-        else:
-            htm = ""
-            if self.viewer.actions:
-                for action in self.viewer.actions:
-                    htm += str(action)
-                    htm += "<br>"
-            else:
-                htm = "There are no actions to list."
-            self.show_html(htm)
-
     def load_settings(self):
         """Load initial settings."""
         self.aspect.delete(0,999)
@@ -553,7 +539,7 @@ class App(tk.Frame):
             'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
             'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
             'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
-            'replay_visible': controls.CheckControl('Replay uses original\nvisibility settings'),
+            'replay_visible': controls.CheckControl('Replay with original\nvisibility settings'),
             'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
             'show_hints': controls.CheckControl('Show hints'),
         }
@@ -602,9 +588,8 @@ class App(tk.Frame):
 
     def on_escape(self):
         """User has hit ESC key."""
-        if self.viewer.id_window:
-            # help is active; cancel it
-            self.viewer.clear_window()
+        if self.html_viewer.clear():
+            # an HTML window is active; cancel it
             return
         if self.hints.static:
             # a static hint is active; cancel it
@@ -623,10 +608,8 @@ class App(tk.Frame):
         self.queue_action(Action(Cmd.RESET, Reset.FACTORY | Reset.DIM | Reset.VIEW))
 
     def on_help(self):
-        if self.viewer.id_window:
-            self.viewer.clear_window()
-        else:
-            self.show_html(help.htm)
+        if not self.html_viewer.clear_if_showing(Name.HELP):
+            self.html_viewer.show(help.htm, Name.HELP)
 
     def on_hints(self, dataname):
         """User has toggled whether hints are to be shown."""
@@ -636,8 +619,15 @@ class App(tk.Frame):
         self.hints.visible(value)
 
     def on_list(self):
-        self.stop()
-        self.queue_action(Action(Cmd.LIST))
+        if not self.html_viewer.clear_if_showing(Name.ACTIONS):
+            htm = ""
+            if self.viewer.actions:
+                for action in self.viewer.actions:
+                    htm += str(action)
+                    htm += "<br>"
+            else:
+                htm = "There are no actions to list."
+            self.html_viewer.show(htm, Name.ACTIONS)
 
     def on_play_end(self, state):
         assert state is False
@@ -796,6 +786,8 @@ class App(tk.Frame):
         https://stackoverflow.com/questions/18499082/tkinter-only-calls-after-idle-once
         """
         if self.playback_index >= 0:
+            # remove any HTML window
+            self.html_viewer.clear()
             # we're playing back the actions previously taken
             if self.playback_index < len(self.viewer.actions):
                 # there are more actions to take
@@ -818,6 +810,8 @@ class App(tk.Frame):
             # and it has been placed on a queue. Take it off the queue.
             action = self.actionQ[0]
             del self.actionQ[0]
+            # remove any HTML window
+            self.html_viewer.clear()
             if action.cmd == Cmd.PLAYBACK:
                 # the action is to play back all the actions up until now,
                 self.playback_index = 0
@@ -831,7 +825,6 @@ class App(tk.Frame):
                 # It's a regular action. Enable the replay button
                 # (it would have been disabled if the queue were formerly empty)
                 self.set_button_state(RUNNING)
-
                 need_action = True
                 real_ghost = 0
                 if action.visible:
@@ -923,27 +916,6 @@ class App(tk.Frame):
         # and change its state to match the data value
         control = self.controls[data_name]
         control.set(value)
-
-    def show_html(self, htm):
-        frame = tk.Frame(self.root)
-        window = HTMLScrolledText(frame, html=htm, padx=10)
-        window.grid(row=0, column=0, padx=4, pady=4, sticky=tk.NW)
-        vx, vy = self.data.get_viewer_size()
-        # From measurement, the width and height settings for HTMLScrolledtext
-        # (which is derived from tk.Text) are 16 and 8 pixels, so here we turn
-        # the viewer size into character counts, allowing for the scroolbar
-        # and button row.
-        vx -= 64
-        vy -= 80
-        vx //= 8
-        vy //= 16
-        # Make it at least 30 high and nor more than 100 wide
-        vx = min(100, vx)
-        vy = max(30, vy)
-        window.config(width=vx, height=vy)
-        ctl = tk.Button(frame, text="Close", command=self.viewer.clear_window)
-        ctl.grid(row=1, column=0, sticky=tk.E, padx=10, pady=4)
-        self.viewer.show_window(frame)
 
     def stop(self):
         """Stop the current and pending actions."""

@@ -399,9 +399,6 @@ class Viewer:
         elif cmd == Cmd.RESET:
             pubsub.publish("reset", action.p1)
             acted = False
-        elif cmd == Cmd.LIST:
-            pubsub.publish("list")
-            acted = False
         else:
             acted = False
 
