@@ -1,6 +1,6 @@
 # Hypercube-viewer
 
-Hypercube-viewer is a program that visualizes a hypercube of 3 to 10 dimensions.
+Hypercube-viewer is a program that draws a hypercube of 3 to 10 dimensions.
 
 ## What is a hypercube?
 
@@ -11,7 +11,7 @@ Now move that cube along an orthogonal fourth dimension. You now have 8 cubes; t
 We can continue this process without end. A 5-cube has 32 points, etc. Each value in this table comes from doubling the value above and adding the value above and in the previous column.
 
 | # Dims | Points | Edges | Faces | Cubes |
-| :----: | -----: | ----: | ----: | ----: | 
+| :----: | -----: | ----: | ----: | ----: |
 |      0 |      1 |       |       |       |
 |      1 |      2 |     1 |       |       |
 |      2 |      4 |     4 |     1 |       |

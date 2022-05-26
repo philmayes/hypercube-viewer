@@ -95,12 +95,13 @@ class Control:
 class CheckControl(Control):
     """Class to manage a ttk.CheckButton widget."""
 
-    def __init__(self, label):
+    def __init__(self, label, underline=-1):
+        self.underline = underline
         super().__init__(label)
 
     def add_control(self, frame, row, col, **kwargs):
         self.ctl = ttk.Checkbutton(
-            frame, text=self.label, variable=self.var, command=self.action
+            frame, text=self.label, variable=self.var, underline=self.underline, command=self.action
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
         self.ctl.hint_id = self.dataname
@@ -111,6 +112,9 @@ class CheckControl(Control):
         else:
             value = int(value)
         self.var.set(value)
+
+    def xor(self):
+        self.var.set(self.var.get() ^ 1)
 
 
 class ComboControl(Control):
@@ -163,6 +167,9 @@ class SlideControl(Control):
     def get(self):
         return self.ctl.get()
 
+    def step(self, units):
+        """Step the number of units specified."""
+        self.ctl.set(self.ctl.get() + self.res * units)
 
 class PlaneControl:
     """A class to manage tkinter controls for a single plane."""

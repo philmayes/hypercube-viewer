@@ -1,7 +1,7 @@
-htm = """
+help = """
 <h3>Hypercube-viewer</h3>
 
-Hypercube-viewer is a program that visualizes a hypercube of 3 to 10 dimensions.
+Hypercube-viewer is a program that draws a hypercube of 3 to 10 dimensions.
 
 <h3>What is a hypercube?</h3>
 
@@ -18,7 +18,6 @@ moving the 4 lines of the square along the new dimension.
 <p>Now move that cube along an orthogonal fourth dimension. You now have 8 cubes; 
 the original; one from the original being moved; and 6 from the 6 faces of the 
 original cube being extended. This object is called a tesseract.
-
 </p>
 <p>We can continue this process without end. A 5-cube has 32 points, etc. 
 Each value in this table comes from doubling the value above and adding 
@@ -132,6 +131,37 @@ unchecked, replay takes place using the current visibility settings.
 <li><b>View Folder:</b> Open the folder where the video files are saved.
 </li>
 </ul>
+"""
 
+keys = """
+<h4>VISIBILITY</h4>
+f = Show faces<br>
+e = Show edges<br>
+c = Show corners<br>
+o = Show coordinates<br>
+i = Show intermediate steps<br>
+t = Show center<br>
+p = Perspective view<br>
+v = Show vanishing point<br>
+----<br>
+d = Depth of perspective<br>
+g = Amount of ghosting<br>
+r = Rotation per click in degrees<br>
+z = Resizing during rotation<br>
+----<br>
+h = Show hints<br>
 
+<h4>MOVEMENT</h4>
+1-9 = Rotation in that plane (1-3 = X,Y,Z)<br>
+0 = Random rotation<br>
+Ctrl+1 etc. Rotates in the opposite direction<br>
++,- = Zoom in, out<br>
+Arrows = Movement<br>
+
+<h4>REPLAYING</h4>
+s = Replay with original visibility settings<br>
+Space = Replay<br>
+Esc = Stop<br>
+a = Show Actions<br>
+<br>
 """

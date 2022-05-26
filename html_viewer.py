@@ -5,8 +5,9 @@ from tkhtmlview import HTMLScrolledText
 
 class Name(Enum):
     NONE = 0
-    HELP = auto()
     ACTIONS = auto()
+    HELP = auto()
+    KEYS = auto()
 
 class HtmlViewer():
     def __init__(self, viewer):

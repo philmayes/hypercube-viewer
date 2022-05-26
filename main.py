@@ -115,9 +115,8 @@ class App(tk.Frame):
         # set up hooks for program close
         self.root = root
         self.args = args
-        root.protocol("WM_DELETE_WINDOW", self.on_escape)
-        root.bind('<Escape>', lambda e: self.on_escape())
-        root.bind('<F1>', lambda e: self.on_help())
+        root.protocol("WM_DELETE_WINDOW", self.on_close)
+        root.bind('<Key>', self.on_key)
 
         # create an instance for loading and saving data and get the filename
         # of the json file that holds data (.load_settings() and
@@ -132,6 +131,7 @@ class App(tk.Frame):
         self.actionQ = ActionQueue()    # queue of Action instances
         self.playback_index = -1        # if >= 0, we are replaying actionQ
         self.state = CLEAN
+        self.construct_keymap()
 
         self.dim_controls = []
         self.grid(sticky=tk.NSEW)
@@ -155,7 +155,7 @@ class App(tk.Frame):
         # create a frame for controls and add them
         self.left_frame = tk.Frame(self)
         self.left_frame.grid(row=0, column=0, sticky=tk.NW)
-        self.make_controls()
+        self.construct_controls()
         self.add_controls(self.left_frame, 0, 0)
         self.buttons = (self.replay_button, self.stop_button, self.record_button, self.play_button)
 
@@ -295,7 +295,7 @@ class App(tk.Frame):
         # file.add_command(label="Save")
         # file.add_command(label="Save as")
         # file.add_separator()
-        file.add_command(label="Exit", command=self.on_escape)
+        file.add_command(label="Exit", command=self.on_close)
         menubar.add_cascade(label="File", menu=file)
 
         edit = tk.Menu(menubar, tearoff=0)
@@ -305,6 +305,7 @@ class App(tk.Frame):
 
         help = tk.Menu(menubar, tearoff=0)
         help.add_command(label="Help", command=self.on_help)
+        help.add_command(label="Keyboard shortcuts", command=self.on_help_keys)
         help.add_command(label="About", command=partial(self.hints.show_static, "about"))
         menubar.add_cascade(label="Help", menu=help)
         self.root.config(menu=menubar)
@@ -498,6 +499,74 @@ class App(tk.Frame):
         control.add_control(frame, row, 0)
         row += 1
 
+    def construct_controls(self):
+        """Construct controls in a dictionary."""
+        self.controls = {
+            'show_faces': controls.CheckControl('Show faces', underline=5),
+            'show_edges': controls.CheckControl('Show edges', underline=5),
+            'show_nodes': controls.CheckControl('Show corners', underline=5),
+            'show_coords': controls.CheckControl('Show coordinates', underline=6),
+            'show_steps': controls.CheckControl('Show intermediate steps', underline=5),
+            'show_center': controls.CheckControl('Show center', underline=8),
+            'show_perspective': controls.CheckControl('Perspective view', underline=0),
+            'show_vp': controls.CheckControl('Show vanishing point', underline=5),
+            'depth': controls.SlideControl('Depth of perspective:', 2.0, 10.0, 0.5),
+            'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
+            'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
+            'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
+            'replay_visible': controls.CheckControl('Replay with original\nvisibility settings'),
+            'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
+            'show_hints': controls.CheckControl('Show hints', underline=5),
+        }
+
+        # set up a sleazy but convenient way of associating the control
+        # and the callback
+        callback = self.visibility_action
+        for dataname, control in self.controls.items():
+            control.set_data(dataname, self.data)
+            control.callback = callback
+            # show_hints uses a different callback
+            if dataname == "show_hints":
+                control.callback = self.on_hints
+            # If this control is a slider, tell the action queue so it is able
+            # to merge successive values together
+            if isinstance(control, controls.SlideControl) or isinstance(control, controls.ComboControl):
+                ActionQueue.sliders.append(dataname)
+
+    def construct_keymap(self):
+        """Construct the mapping from tkinter key events to actions."""
+        self.key_map = {
+            "f": (self.key_visible, "show_faces"),
+            "e": (self.key_visible, "show_edges"),
+            "c": (self.key_visible, "show_nodes"),
+            "o": (self.key_visible, "show_coords"),
+            "i": (self.key_visible, "show_steps"),
+            "t": (self.key_visible, "show_center"),
+            "p": (self.key_visible, "show_perspective"),
+            "v": (self.key_visible, "show_vp"),
+
+            "d": (self.key_slider, "depth"),
+            "g": (self.key_slider, "ghost"),
+            "r": (self.key_slider, "angle"),
+            "z": (self.key_slider, "auto_scale"),
+            "0": (self.key_rotate, None),
+
+            "minus": (self.key_action, Action(Cmd.ZOOM, '-')),
+            "plus": (self.key_action, Action(Cmd.ZOOM, '+')),
+            "left": (self.key_action, Action(Cmd.MOVE, 'l')),
+            "right": (self.key_action, Action(Cmd.MOVE, 'r')),
+            "up": (self.key_action, Action(Cmd.MOVE, 'u')),
+            "down": (self.key_action, Action(Cmd.MOVE, 'd')),
+            "h": (self.key_visible, "show_hints"),
+
+            "s": (self.key_visible, "replay_visible"),
+            "space": (self.key_action, Action(Cmd.PLAYBACK)),
+            "escape": (self.key_passthrough, self.on_escape),
+            "a": (self.key_passthrough, self.on_list),
+
+            "f1": (self.key_passthrough, self.on_help),
+        }
+
     def hint_manager(self):
         try:
             hint_id = None
@@ -514,6 +583,40 @@ class App(tk.Frame):
             # winfo_containing, but why not catch everything?
             pass
 
+    #
+    # key_xxxx() functions are callbacks from on_key()
+    #
+
+    def key_action(self, keysym, state, value):
+        if not state & 0x20004: # ignore Ctl and Alt modifiers
+            self.queue_action(value)
+
+    def key_passthrough(self, keysym, state, value):
+        value()
+
+    def key_rotate(self, keysym, state, value):
+        keysym = int(keysym)
+        direction = '+' if state & 4 else '-'
+        if keysym == 0:
+            self.on_random(direction)
+        else:
+            dim = keysym - 1
+            if dim < self.data.dims:
+                plane = self.dim_controls[dim]
+                self.on_rotate(direction, plane)
+
+    def key_slider(self, keysym, state, value):
+        control = self.controls[value]
+        step = -1 if keysym.islower() else 1
+        control.step(step)
+        self.visibility_action(value)
+
+    def key_visible(self, keysym, state, value):
+        if not state & 0x20004: # ignore Ctl and Alt modifiers
+            control = self.controls[value]
+            control.xor()
+            self.visibility_action(value)
+
     def load_settings(self):
         """Load initial settings."""
         self.aspect.delete(0,999)
@@ -523,40 +626,6 @@ class App(tk.Frame):
         for dataname, control in self.controls.items():
             value = getattr(self.data, dataname)
             control.set(value)
-
-    def make_controls(self):
-        """Construct controls in a dictionary."""
-        self.controls = {
-            'show_faces': controls.CheckControl('Show faces'),
-            'show_edges': controls.CheckControl('Show edges'),
-            'show_nodes': controls.CheckControl('Show corners'),
-            'show_coords': controls.CheckControl('Show coordinates'),
-            'show_steps': controls.CheckControl('Show intermediate steps'),
-            'show_center': controls.CheckControl('Show center'),
-            'show_perspective': controls.CheckControl('Perspective view'),
-            'show_vp': controls.CheckControl('Show vanishing point'),
-            'depth': controls.SlideControl('Depth of perspective:', 2.0, 10.0, 0.5),
-            'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
-            'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
-            'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
-            'replay_visible': controls.CheckControl('Replay with original\nvisibility settings'),
-            'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
-            'show_hints': controls.CheckControl('Show hints'),
-        }
-
-        # set up a sleazy but convenient way of associating the control
-        # and the callback
-        callback = self.visibility_action
-        for dataname, control in self.controls.items():
-            control.set_data(dataname, self.data)
-            control.callback = callback
-            # show_hints uses a different callback
-            if dataname == "show_hints":
-                control.callback = self.on_hints
-            # If this control is a slider, tell the action queue so it is able
-            # to merge successive values together
-            if isinstance(control, controls.SlideControl | controls.ComboControl):
-                ActionQueue.sliders.append(dataname)
 
     def on_aspect(self, _):
         """The aspect ratios have been changed.
@@ -578,6 +647,15 @@ class App(tk.Frame):
         """Left-click on canvas."""
         self.hints.stop_static()
 
+    def on_close(self):
+        # close the app
+        data = self.data
+        data.win_x = self.root.winfo_x()
+        data.win_y = self.root.winfo_y()
+        data.dims = int(self.dim_choice.get())
+        data.save(self.data_file)
+        self.root.destroy()
+
     def on_dim(self, param):
         """User has selected the number of dimensions via the combo box."""
         dims = int(param.widget.get())
@@ -588,20 +666,8 @@ class App(tk.Frame):
 
     def on_escape(self):
         """User has hit ESC key."""
-        if self.html_viewer.clear():
-            # an HTML window is active; cancel it
-            return
-        if self.hints.static:
-            # a static hint is active; cancel it
-            self.hints.stop_static()
-            return
-        # close the app
-        data = self.data
-        data.win_x = self.root.winfo_x()
-        data.win_y = self.root.winfo_y()
-        data.dims = int(self.dim_choice.get())
-        data.save(self.data_file)
-        self.root.destroy()
+        self.html_viewer.clear()
+        self.stop()
 
     def on_factory_reset(self):
         self.stop()
@@ -609,7 +675,11 @@ class App(tk.Frame):
 
     def on_help(self):
         if not self.html_viewer.clear_if_showing(Name.HELP):
-            self.html_viewer.show(help.htm, Name.HELP)
+            self.html_viewer.show(help.help, Name.HELP)
+
+    def on_help_keys(self):
+        if not self.html_viewer.clear_if_showing(Name.KEYS):
+            self.html_viewer.show(help.keys, Name.KEYS)
 
     def on_hints(self, dataname):
         """User has toggled whether hints are to be shown."""
@@ -617,6 +687,23 @@ class App(tk.Frame):
         value = bool(control.get())
         self.data.show_hints = value
         self.hints.visible(value)
+
+    def on_key(self, event):
+        print(event, 'state=', hex(event.state))
+        focus = self.focus_get()
+        # ignore keystroke when editing a field
+        if focus == self.aspect or focus == self.viewer_size:
+            return
+        # Convert to lower to simplify the keymap for, say, D and d
+        lower = event.keysym.lower()
+        # Again simplify the keymap by forcing all digits to zero
+        if lower.isdigit():
+            lower = '0'
+        # look for an action and a possible parameter
+        callback, value = self.key_map.get(lower, (None, None))
+        # if there is a handler for this keystroke, execute it
+        if callback:
+            callback(event.keysym, event.state, value)
 
     def on_list(self):
         if not self.html_viewer.clear_if_showing(Name.ACTIONS):
