@@ -1,7 +1,7 @@
 hint_about = """\
 Hypercube viewer
 
-Version 0.0.1"""
+Version 0.0.2"""
 hint_angle = """\
 Set the amount by which
 the movement controls
