@@ -880,13 +880,16 @@ class App(tk.Frame):
                 # there are more actions to take
                 action = self.viewer.actions[self.playback_index]
                 self.playback_index += 1
+                act = True
                 if action.visible:
-                    if self.data.replay_visible:
+                    # only replay visibility actions when asked
+                    if act := self.data.replay_visible:
                         # change the value in .data
                         # and the visible state of the control
                         self.set_data_value(action)
                         self.set_visible_state(action)
-                self.viewer.take_action(action, playback=True)
+                if act:
+                    self.viewer.take_action(action, playback=True)
             else:
                 # we've played back all the actions, so cancel playback
                 self.playback_index = -1
