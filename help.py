@@ -1,7 +1,9 @@
-help = """
-<h3>Hypercube-viewer</h3>
+import identity
 
-Hypercube-viewer is a program that draws a hypercube of 3 to 10 dimensions.
+help = f"""
+<h3>{identity.PRODUCT}</h3>
+
+{identity.PRODUCT} is a program that draws a hypercube of 3 to 10 dimensions.
 
 <h3>What is a hypercube?</h3>
 
@@ -37,7 +39,17 @@ the value above and in the previous column.</p>
 
 <p>The points, edges and/or faces are projected onto a plane surface 
 (the x-y plane) in either a perspective or orthographic view.
+<b>NOTE:</b> Some of the drawing calculations take a long time. Factors that exacerbate this are:
+<ul>
+<li>A large number of dimensions</li>
+<li>Drawing the faces</li>
+<li>Showing intermediate steps</li>
+<li>Showing ghosting</li>
+<li>Resizing during rotation</li>
+</ul>
+These delays do NOT occur in the video recording.
 </p>
+
 <h3>How is the hypercube rotated?</h3>
 
 <p>In the real world, we think of rotation as about an axis. A square on 
@@ -46,12 +58,13 @@ z-axis that projects perpendicularly from the screen, but what is actually
 changing are the x- and y-coordinates of the 4 corners. Similarly, rotation 
 around the x-axis is done by rotating the y-z plane. For a higher dimension D, 
 the only rotations visible on the screen (the x-y surface) are rotations in 
-the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate 
+the x-D plane and the y-D plane. {identity.PRODUCT} allows the user to rotate 
 in both directions around these higher planes.
 </p>
+
 <h3>Available controls</h3>
 
-<h4>SETUP</h4>
+<h5>SETUP</h5>
 <ul>
 <li><b>Number of dimensions:</b> Choose from 3 to 10.
 </li>
@@ -65,7 +78,7 @@ Hypercube is projected.
 </li>
 </ul>
 
-<h4>VISIBILITY</h4>
+<h5>VISIBILITY</h5>
 <ul>
 <li><b>Show faces, edges, corners:</b> Control what is drawn.
 </li>
@@ -102,7 +115,7 @@ the speed is even worse. This speed slowdown does not show in recorded videos.
 </li>
 </ul>
 
-<h4>MOVEMENT</h4>
+<h5>MOVEMENT</h5>
 <ul>
 <li>The object can be rotated around various planes, moved, zoomed and shrunk.
 </li>
@@ -120,7 +133,11 @@ unchecked, replay takes place using the current visibility settings.
 </li>
 </ul>
 
-<h4>RECORDING TO VIDEO</h4>
+<h5>RECORDING TO VIDEO</h5>
+<p>{identity.PRODUCT} can record the movements to a video. Recording will capture
+replay events as well as the original actions. Each start and stop creates a separate
+video file.
+</p>
 <ul>
 <li><b>Frame rate of videos:</b> Choose the frame rate which which videos are created.
 </li>
@@ -134,7 +151,7 @@ unchecked, replay takes place using the current visibility settings.
 """
 
 keys = """
-<h4>VISIBILITY</h4>
+<h5>VISIBILITY</h5>
 f = Show faces<br>
 e = Show edges<br>
 c = Show corners<br>
@@ -151,14 +168,14 @@ z = Resizing during rotation<br>
 ----<br>
 h = Show hints<br>
 
-<h4>MOVEMENT</h4>
+<h5>MOVEMENT</h5>
 1-9 = Rotation in that plane (1-3 = X,Y,Z)<br>
 0 = Random rotation<br>
 Ctrl+1 etc. Rotates in the opposite direction<br>
 +,- = Zoom in, out<br>
 Arrows = Movement<br>
 
-<h4>REPLAYING</h4>
+<h5>REPLAYING</h5>
 s = Replay with original visibility settings<br>
 Space = Replay<br>
 Esc = Stop<br>

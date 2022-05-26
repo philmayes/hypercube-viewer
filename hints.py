@@ -1,7 +1,9 @@
-hint_about = """\
-Hypercube viewer
+import identity
 
-Version 0.0.2"""
+hint_about = f"""\
+{identity.PRODUCT}
+
+Version {identity.VERSION}"""
 hint_angle = """\
 Set the amount by which
 the movement controls

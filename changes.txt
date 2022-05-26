@@ -1,0 +1,5 @@
+Hypercube 0.0.2 05/25/22
+Keyboard support
+
+Hypercube 0.0.1 05/20/22
+Initial release

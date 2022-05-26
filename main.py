@@ -689,17 +689,17 @@ class App(tk.Frame):
         self.hints.visible(value)
 
     def on_key(self, event):
-        print(event, 'state=', hex(event.state))
+        # print(event, 'state=', hex(event.state))
         focus = self.focus_get()
-        # ignore keystroke when editing a field
+        # Ignore keystroke when editing a field
         if focus == self.aspect or focus == self.viewer_size:
             return
-        # Convert to lower to simplify the keymap for, say, D and d
+        # Convert to lower to simplify the keymap for, say, A nd a
         lower = event.keysym.lower()
-        # Again simplify the keymap by forcing all digits to zero
+        # Simplify the keymap further by forcing all digits to zero
         if lower.isdigit():
             lower = '0'
-        # look for an action and a possible parameter
+        # Look for an action and a possible parameter
         callback, value = self.key_map.get(lower, (None, None))
         # if there is a handler for this keystroke, execute it
         if callback:
