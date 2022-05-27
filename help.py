@@ -52,14 +52,21 @@ These delays do NOT occur in the video recording.
 
 <h3>How is the hypercube rotated?</h3>
 
-<p>In the real world, we think of rotation as about an axis. A square on 
-your screen being rotated clockwise is though of as rotating around the 
-z-axis that projects perpendicularly from the screen, but what is actually 
-changing are the x- and y-coordinates of the 4 corners. Similarly, rotation 
-around the x-axis is done by rotating the y-z plane. For a higher dimension D, 
-the only rotations visible on the screen (the x-y surface) are rotations in 
-the x-D plane and the y-D plane. {identity.PRODUCT} allows the user to rotate 
+<p>In the real world, we think of rotation as about an axis. A square on your
+screen being rotated clockwise is though of as rotating around the z-axis that
+projects perpendicularly from the screen, but what is actually changing are
+the x- and y-coordinates of the 4 corners. Similarly, rotation around the
+x-axis is done by rotating the y-z plane. 
+</p>
+<p>The concept of rotating about an axis works in 3 dimensions because, for
+any axis, there is only one plane that that is perpendicular to that axis.
+For higher dimension, each dimension is perpendicular to more than one plane,
+so naming the dimension would be ambiguous and XXXX. For a higher dimension D, 
+the only rotations visible on the screen (the x-y surface) are rotations in
+the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate
 in both directions around these higher planes.
+</p>
+<p>For random rotations, Hypercube Viewer rotates about two randomly-chosen planes at once.
 </p>
 
 <h3>Available controls</h3>
@@ -127,7 +134,7 @@ from the beginning.
 <li><b>Begin Again:</b> This button will forget all movement that you have done 
 and start again.
 </li>
-<li><b>Replay uses original visibility settings:</b> This checkbox chooses whether 
+<li><b>Replay with original visibility settings:</b> This checkbox chooses whether 
 replay includes all changes to visibility settings that were made. When it is 
 unchecked, replay takes place using the current visibility settings.
 </li>
