@@ -816,7 +816,7 @@ class App(tk.Frame):
             self.dim_choice.set(str(dim_count))
             # create or destroy the dimension controls as appropriate
             for dim, control in enumerate(self.dim_controls):
-                if dim < dim_count:
+                if control.dim2 < dim_count:
                     if not control.active:
                         self.dim_controls[dim].add_controls()
                 else:
