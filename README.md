@@ -1,6 +1,6 @@
-# Hypercube-viewer
+# Hypercube Viewer
 
-Hypercube-viewer is a program that draws a hypercube of 3 to 10 dimensions.
+Hypercube Viewer is a program that draws a hypercube of 3 to 10 dimensions.
 
 ## What is a hypercube?
 
@@ -23,19 +23,32 @@ We can continue this process without end. A 5-cube has 32 points, etc. Each valu
 
 The points, edges and/or faces are projected onto a plane surface (the x-y plane) in either a perspective or orthographic view.
 
+**NOTE:** Some of the drawing calculations take a long time. Factors that exacerbate this are:
+* A large number of dimensions
+* Drawing the faces
+* Showing intermediate steps
+* Showing ghosting
+* Resizing during rotation
+
+These delays do NOT occur in the video recording.
+
 ## How is the hypercube rotated?
 
-In the real world, we think of rotation as about an axis. A square on your screen being rotated clockwise is though of as rotating around the z-axis that projects perpendicularly from the screen, but what is actually changing are the x- and y-coordinates of the 4 corners. Similarly, rotation around the x-axis is done by rotating the y-z plane. For a higher dimension D, the only rotations visible on the screen (the x-y surface) are rotations in the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate in both directions around these higher planes.
+In the real world, we think of rotation as about an axis. A square on your screen being rotated clockwise is though of as rotating around the z-axis that projects perpendicularly from the screen, but what is actually changing are the x- and y-coordinates of the 4 corners. Similarly, rotation around the x-axis is done by rotating the y-z plane. 
+
+The concept of rotating about an axis works in 3 dimensions because, for any axis, there is only one plane that that is perpendicular to that axis. For higher dimension, each dimension is perpendicular to more than one plane, so naming the dimension would be ambiguous and XXXX. For a higher dimension D, the only rotations visible on the screen (the x-y surface) are rotations in the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate in both directions around these higher planes.
+
+For random rotations, Hypercube Viewer rotates about two randomly-chosen planes at once.
 
 ## Available controls
 
-### Setup
+### SETUP
 
 * **Number of dimensions:** Choose from 3 to 10.
 * **Aspect ratios:** It need not be a cube. Here, you can set the ratios of the edges for each dimension, for instance: 16:9:4 specifies a cuboid with width of 16, height of 9 and depth of 4. Additional dimensions take the value of the rightmost one specified.
 * **Viewing size:** The size in pixels of the plane surface on which the Hypercube is projected.
 
-### Visibility
+### VISIBILITY
 
 * **Show faces, edges, corners:** Control what is drawn.
 * **Show coordinates:** Show the coordinates of every point. The points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
@@ -46,18 +59,23 @@ In the real world, we think of rotation as about an axis. A square on your scree
 * **Depth of perspective:** Controls the amount of perspective. The vanishing point is placed at this value times the screen width.
 * **Amount of ghosting:** As the hypercube is moved, the program can leave a ghost image that fades out. 0 indicates no ghosting, and with 10, no fading takes place.
 * **Rotation per click:** The rotation in degrees per click.
-* **Resizing during rotation:** The program can resize the object during rotation. This gives the amount by which the object is scaled. The rotation is slower because of this. Note that when intermediate steps are shown, a fraction of the scaling takes place for every step, making it much slower. When there are a large number of dimensions, the speed is even worse. This speed slowdown does not show in recorded videos.
+* **Resizing during rotation:** The program can resize the object during rotation. This gives the amount by which the object is scaled. The rotation is slower because of this. **Note** that when intermediate steps are shown, a fraction of the scaling takes place for every step, making it much slower. When there are a large number of dimensions, the speed is even worse. This speed slowdown does not show in recorded videos.
 
-### Movement
+### MOVEMENT
 
-* The object can be rotated around various planes, moved, zoomed and shrunk.
+The object can be rotated around various planes, moved, zoomed and shrunk.
 
 * **Replay** This button will replay all the movement and visibility actions from the beginning.
 * **Stop** This button will stop replay and also long movement operations.
+* **Show Actions** This button shows a list of all the actions performed so far.
 * **Begin Again** This button will forget all movement that you have done and start again.
-* **Replay uses original visibility settings** This checkbox chooses whether replay includes all changes to visibility settings that were made. When it is unchecked, replay takes place using the current visibility settings.
+* **Replay with original visibility settings** This checkbox chooses whether replay includes all changes to visibility settings that were made. When it is unchecked, replay takes place using the current visibility settings.
 
-### Recording to Video
+### RECORDING TO VIDEO
+
+Hypercube Viewer can record the movements to a video. Recording will capture
+replay events as well as the original actions. Each start and stop creates a separate
+video file.
 
 * **Frame rate of videos** Choose the frame rate which which videos are created.
 * **Record** Start recording to a video file whose name is time-stamped.
