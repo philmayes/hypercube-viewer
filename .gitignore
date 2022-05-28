@@ -1,0 +1,12 @@
+# files to ignore
+*.spec
+mynotes.txt
+*.pyo
+
+# folders to ignore
+__pycache__/**
+.vscode/**
+build/**
+dist/**
+output/**
+settings/**

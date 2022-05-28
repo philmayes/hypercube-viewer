@@ -61,15 +61,22 @@ For random rotations, Hypercube Viewer rotates about two randomly-chosen planes 
 * **Rotation per click:** The rotation in degrees per click.
 * **Resizing during rotation:** The program can resize the object during rotation. This gives the amount by which the object is scaled. The rotation is slower because of this. **Note** that when intermediate steps are shown, a fraction of the scaling takes place for every step, making it much slower. When there are a large number of dimensions, the speed is even worse. This speed slowdown does not show in recorded videos.
 
+In Preferences, accessed through the menu, you can also change:
+
+* **Corner radius**
+* **Center radius**
+* **Vanishing point radius**
+* **Line width**
+
 ### MOVEMENT
 
 The object can be rotated around various planes, moved, zoomed and shrunk.
 
-* **Replay** This button will replay all the movement and visibility actions from the beginning.
-* **Stop** This button will stop replay and also long movement operations.
-* **Show Actions** This button shows a list of all the actions performed so far.
-* **Begin Again** This button will forget all movement that you have done and start again.
-* **Replay with original visibility settings** This checkbox chooses whether replay includes all changes to visibility settings that were made. When it is unchecked, replay takes place using the current visibility settings.
+* **Replay:** This button will replay all the movement and visibility actions from the beginning.
+* **Stop:** This button will stop replay and also long movement operations.
+* **Show Actions:** This button shows a list of all the actions performed so far.
+* **Begin Again:** This button will forget all movement that you have done and start again.
+* **Replay with original visibility settings:** This checkbox chooses whether replay includes all changes to visibility settings that were made. When it is unchecked, replay takes place using the current visibility settings.
 
 ### RECORDING TO VIDEO
 

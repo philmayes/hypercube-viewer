@@ -1,3 +1,6 @@
+Hypercube 0.0.4 05/28/22
+Add preferences
+
 Hypercube 0.0.2 05/25/22
 Keyboard support
 
