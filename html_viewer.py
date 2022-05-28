@@ -1,7 +1,10 @@
 from enum import Enum, auto
+import re
 
 import tkinter as tk
 from tkhtmlview import HTMLScrolledText
+
+re_strip = re.compile(r"<.*?>")
 
 class Name(Enum):
     NONE = 0
@@ -26,6 +29,14 @@ class HtmlViewer():
             return True
         return False
 
+    def copy(self):
+        text = re_strip.sub("", self.html, 9999)
+        w = self.window
+        w.clipboard_clear()
+        w.clipboard_append(text)
+        w.update() # keep it on the clipboard after the window is closed
+
+
     def show(self, htm, name: Name):
         self.name = name
         frame = tk.Frame()
@@ -44,7 +55,17 @@ class HtmlViewer():
         vx = min(100, vx)
         vy = max(30, vy)
         window.config(width=vx, height=vy)
-        ctl = tk.Button(frame, text="Close", command=self.clear)
-        ctl.grid(row=1, column=0, sticky=tk.E, padx=10, pady=4)
+
+        # add buttons at the bottom of the window
+        frame2 = tk.Frame(frame)
+        frame2.grid(row=1, sticky=tk.E, padx=2)
+        ctl = tk.Button(frame2, width=10, text="Copy", command=self.copy)
+        ctl.grid(row=0, column=0, sticky=tk.E, padx=0, pady=4)
+        ctl = tk.Button(frame2, width=10, text="Close", command=self.clear)
+        ctl.grid(row=0, column=1, sticky=tk.E, padx=10, pady=4)
         self.viewer.show_window(frame)
+
+        # save values for possible copy operation
+        self.html = htm
+        self.window = window
 
