@@ -16,6 +16,12 @@ def find_latest_file(path):
     return latest
 
 
+def get_location(rel_dir, fname):
+    """Get the location of the data file."""
+    location = make_dir(rel_dir)
+    return os.path.join(location, fname)
+
+
 def make_dir(rel_dir):
     """Get the location of the data file."""
     base_dir = os.path.dirname(sys.argv[0])

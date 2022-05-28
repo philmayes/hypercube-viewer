@@ -2,14 +2,6 @@ import json
 import os
 import re
 
-import utils
-
-
-def get_location(rel_dir):
-    """Get the location of the data file."""
-    location = utils.make_dir(rel_dir)
-    return os.path.join(location, "values.json")
-
 
 class Data:
     """A class to hold persistent data.
