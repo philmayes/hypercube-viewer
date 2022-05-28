@@ -38,7 +38,7 @@ from tkinter import ttk, messagebox
 from action import Action, ActionQueue, Cmd
 import controls
 from controls import DISABLED, ENABLED, ACTIVE
-import data
+from data import Data
 import dims
 import display
 from preferences import Preferences
@@ -121,8 +121,8 @@ class App(tk.Frame):
         # .save_settings() will perform the actual transfers)
         # This is the canonical version of the persistent data. It is passed
         # into display.Viewer so that App and Viewer share the data.
-        self.data = data.Data()
-        self.data_file = data.get_location('settings')
+        self.data = Data()
+        self.data_file = utils.get_location("settings", "values.json")
         self.data.load(self.data_file)
         # set top-left position of window
         root.geometry(f'+{self.data.win_x}+{self.data.win_y}')
@@ -566,6 +566,39 @@ class App(tk.Frame):
             "f1": (self.key_passthrough, self.on_help),
         }
 
+    def copy_data(self, from_data: Data, skip=False):
+        """Update the data settings from another instance of Data().
+
+        This function is used for several purposes: for a full factory reset,
+        and to reset values as they were when starting. For the latter, there
+        are certain settings that the user will expect to remain the same, and
+        so skip is supplied to leave those untouched.
+
+        This function is used for several purposes:
+        * For a full factory reset
+        * To reset values as they were when starting. There are certain
+          settings that the user will expect to remain the same, and so
+          skip is supplied to leave those untouched.
+        * To update preferences. For this, we need to know what has changed
+          so we can push events on the actionQ.
+        """
+        changed = []
+        for attr in from_data.__dict__:
+            old_value = getattr(self.data, attr)
+            new_value = getattr(from_data, attr)
+            if new_value != old_value:
+                if skip and attr in ("replay_visible", "frame_rate"):
+                    # Keep the current replay_visible value because if it started
+                    # out one way but the user changed it, we don't want to use
+                    # the original setting. Same applies to frame_rate.
+                    continue
+                setattr(self.data, attr, new_value)
+                if attr in self.controls:
+                    control = self.controls[attr]
+                    control.set(new_value)
+                changed.append(attr)
+        return changed
+
     def hint_manager(self):
         try:
             hint_id = None
@@ -806,11 +839,11 @@ class App(tk.Frame):
         completed.
         """
         if flags & Reset.FACTORY:
-            self.restore_data(data.Data())
+            self.copy_data(Data())
             self.load_settings()
 
         if flags & Reset.DATA:
-            self.restore_data(self.data_copy, skip=True)
+            self.copy_data(self.data_copy, skip=True)
             self.load_settings()
 
         if flags & Reset.DIM:
@@ -846,28 +879,6 @@ class App(tk.Frame):
         # For reasons I do not understand, the controls "ghost" and "angle"
         # trigger callbacks when their value is set. Flush the spurious actions.
         self.actionQ.clear()
-
-    def restore_data(self, from_data, skip=False):
-        """Restore the data settings in place at the beginning.
-
-        This function is used for two purposes: to reset values as they were
-        when starting, and for a full factory reset. For the 
-        This function is used for two purposes: for a full factory reset,
-        and to reset values as they were when starting. For the latter, there
-        are certain settings that the user will expect to remain the same, and
-        so skip is supplied to leave those untouched.
-        """
-        for attr in from_data.__dict__:
-            value = getattr(from_data, attr)
-            if skip and attr in ("replay_visible", "frame_rate"):
-                # Keep the current replay_visible value because if it started
-                # out one way but the user flipped it, we don't want to use
-                # the original setting. Similar reasoning applies to frame_rate.
-                continue
-            setattr(self.data, attr, value)
-            if attr in self.controls:
-                control = self.controls[attr]
-                control.set(value)
 
     def run(self):
         """Run the actions on the action queue.
@@ -910,7 +921,7 @@ class App(tk.Frame):
                 self.set_button_state(REPLAYING)
                 if self.data.replay_visible:
                     # restore most data settings in place at the beginning
-                    self.restore_data(self.data_copy, skip=True)
+                    self.copy_data(self.data_copy, skip=True)
                 self.viewer.init(playback=True)
                 self.viewer.display()
             else:
@@ -984,8 +995,8 @@ class App(tk.Frame):
         setattr(self.data, data_name, value)
 
     def set_prefs(self, new_data):
-        self.restore_data(new_data, skip=True)
-        self.viewer.display()
+        for dataname in self.copy_data(new_data, skip=True):
+            self.visibility_action(dataname)
 
     def set_record_state(self, active=None):
         """Set or Xor the record button.
@@ -1005,13 +1016,14 @@ class App(tk.Frame):
     def set_visible_state(self, action: Action):
         """Set the visible state of the control associated with the action."""
         assert action.visible
-        data_name = action.p1
+        dataname = action.p1
         value = action.p2
 
-        # get the control associated with the data_name
-        # and change its state to match the data value
-        control = self.controls[data_name]
-        control.set(value)
+        # Get the control associated with the data_name (if any; might be
+        # adjusted in prefs) and change its state to match the data value.
+        control = self.controls.get(dataname, None)
+        if control:
+            control.set(value)
 
     def stop(self):
         """Stop the current and pending actions."""
@@ -1024,12 +1036,18 @@ class App(tk.Frame):
         # adjust button states
         self.set_button_state(IDLE)
 
-    def visibility_action(self, data_name):
+    def visibility_action(self, dataname):
         """Execute a visibility action."""
         # get the control associated with the data_name and the present value
-        control = self.controls[data_name]
-        control_value = control.get()
-        action = Action(Cmd.VISIBLE, data_name, self.data.coerce(control_value, data_name))
+        control = self.controls.get(dataname, None)
+        if control:
+            control_value = control.get()
+            value = self.data.coerce(control_value, dataname)
+        else:
+            # Some visibility settings are adjusted in preferences, so they
+            # don't have a control
+            value = getattr(self.data, dataname)
+        action = Action(Cmd.VISIBLE, dataname, value)
         self.queue_action(action)
 
 
