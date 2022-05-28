@@ -70,11 +70,6 @@ class Viewer:
         self.id_text = None
         self.id_window = None
 
-        # visibility settings...
-        self.node_radius = 4
-        self.center_radius = 1
-        self.vp_radius = 2
-
     def init(self, playback=False):
         """Initialize the viewer size and dimension count."""
         self.width, self.height = self.data.get_viewer_size()
@@ -144,8 +139,11 @@ class Viewer:
 
     def display(self):
         t1 = time.perf_counter()
+        # Draw the wireframe onto the xy plane
         self.draw()
+        # Show the xy plane on the tkinter canvas
         self.show()
+        # Write to video if needed
         self.video_write()
         # wait for the remaining duration of a video frame
         # (although writing a frame often takes longer than this),
@@ -166,19 +164,20 @@ class Viewer:
         wireframe = self.wireframe
         if self.data.show_vp:
             cv2.circle(
-                self.img, (self.vp[X], self.vp[Y]), self.vp_radius, colors.vp, -1
+                self.img, (self.vp[X], self.vp[Y]), self.data.vp_radius, colors.vp, -1
             )
 
         if self.data.show_center:
             cv2.circle(
                 self.img,
                 (self.get_xy(wireframe.center)),
-                self.center_radius,
+                self.data.center_radius,
                 colors.center,
                 -1,
             )
 
         if self.data.show_edges:
+            width = self.data.edge_width
             # If needed (because the wireframe has been rotated), the edges
             # are sorted in reverse z-order so that the edges at the front
             # overlay those at the back.
@@ -188,7 +187,7 @@ class Viewer:
             for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
-                cv2.line(self.img, self.get_xy(node1), self.get_xy(node2), color, 3)
+                cv2.line(self.img, self.get_xy(node1), self.get_xy(node2), color, width)
 
         if self.data.show_faces:
             # see the sort explanation for edges
@@ -206,10 +205,11 @@ class Viewer:
                 cv2.fillConvexPoly(self.img, shape, color)
 
         if self.data.show_nodes or self.data.show_coords:
+            radius = self.data.node_radius
             for node in wireframe.nodes:
                 xy = self.get_xy(node)
                 if self.data.show_nodes:
-                    cv2.circle(self.img, xy, self.node_radius, colors.node, -1)
+                    cv2.circle(self.img, xy, radius, colors.node, -1)
                 if self.data.show_coords:
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     values = [int(round(v)) for v in node[:-1]]
