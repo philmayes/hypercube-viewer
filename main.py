@@ -28,6 +28,7 @@ updates the control, wireframe and display.
 """
 import argparse
 import copy
+import enum
 from functools import partial
 import os
 import random
@@ -40,6 +41,7 @@ from controls import DISABLED, ENABLED, ACTIVE
 import data
 import dims
 import display
+from preferences import Preferences
 from hints import Hints
 from html_viewer import HtmlViewer, Name
 import help
@@ -96,10 +98,6 @@ button_states_recording = (
 )
 
 
-def preferences():
-    messagebox.showinfo('Hypercube', 'Not yet implemented')
-
-import enum
 class Reset(enum.IntFlag):
     FACTORY = 1 # restore factory settings
     DATA = 2    # restore settings at beginning
@@ -164,6 +162,7 @@ class App(tk.Frame):
         self.reset(Reset.DIM | Reset.ASPECT | Reset.VIEW)
 
         pubsub.subscribe('reset', self.reset)
+        pubsub.subscribe('prefs', self.set_prefs)
         pubsub.subscribe('vplay', self.on_play_end)
         self.run()
 
@@ -300,7 +299,7 @@ class App(tk.Frame):
 
         edit = tk.Menu(menubar, tearoff=0)
         edit.add_command(label="Factory reset", command=self.on_factory_reset)
-        edit.add_command(label="Preferences...", command=preferences)
+        edit.add_command(label="Preferences...", command=self.on_prefs)
         menubar.add_cascade(label="Edit", menu=edit)
 
         help = tk.Menu(menubar, tearoff=0)
@@ -733,6 +732,9 @@ class App(tk.Frame):
         else:
             self.set_button_state(IDLE)
 
+    def on_prefs(self):
+        Preferences(self.data)
+
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
         dims = list(range(self.data.dims))
@@ -980,6 +982,10 @@ class App(tk.Frame):
         old_data = getattr(self.data, data_name)
         assert type(value) is type(old_data)
         setattr(self.data, data_name, value)
+
+    def set_prefs(self, new_data):
+        self.restore_data(new_data, skip=True)
+        self.viewer.display()
 
     def set_record_state(self, active=None):
         """Set or Xor the record button.
