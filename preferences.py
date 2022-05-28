@@ -5,11 +5,13 @@ import tkinter as tk
 import pubsub
 
 class Preferences(tk.Toplevel):
-    def __init__(self, data):
+    def __init__(self, data, win_x, win_y):
         super().__init__(None)
         self.transient(None)
         self.title("Preferences")
         self.grab_set()
+        self.focus()
+        self.geometry(f'+{win_x + 100}+{win_y + 100}')
         self.protocol("WM_DELETE_WINDOW", self.destroy)
         frame = tk.Frame(self)
         frame.grid(row=0, column=0, padx=4, pady=4)

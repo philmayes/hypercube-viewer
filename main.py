@@ -766,7 +766,9 @@ class App(tk.Frame):
             self.set_button_state(IDLE)
 
     def on_prefs(self):
-        Preferences(self.data)
+        win_x = self.root.winfo_x()
+        win_y = self.root.winfo_y()
+        Preferences(self.data, win_x, win_y)
 
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
