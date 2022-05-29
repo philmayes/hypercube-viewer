@@ -138,17 +138,12 @@ class Viewer:
         self.id_window = None
 
     def display(self):
-        t1 = time.perf_counter()
         # Draw the wireframe onto the xy plane
         self.draw()
         # Show the xy plane on the tkinter canvas
         self.show()
         # Write to video if needed
         self.video_write()
-        # wait for the remaining duration of a video frame
-        # (although writing a frame often takes longer than this),
-        # thus emulating what a video would look like
-        self.wait_for_frame(t1)
 
     def draw(self):
         """Draw the wireframe onto the xy plane."""
@@ -403,12 +398,7 @@ class Viewer:
             acted = False
 
         if acted:
-            # Draw the wireframe onto the xy plane
-            self.draw()
-            # Show the xy plane on the tkinter canvas
-            self.show()
-            # Write to video if needed
-            self.video_write()
+            self.display()
             # Save the action for possible playback
             # We /don't/ keep history when the history is being played back
             if not playback:
