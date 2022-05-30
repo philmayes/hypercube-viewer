@@ -38,6 +38,10 @@ class Data:
         self.center_radius = 1
         self.vp_radius = 2
         self.edge_width = 3
+        # not sure if/where to show these
+        self.show_node_ids = False
+        self.font_size = 0.5
+        self.opacity = 1.0
 
         # settings for how the wireframe is rotated
         self.angle = 15
