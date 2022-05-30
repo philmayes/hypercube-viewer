@@ -438,7 +438,7 @@ class App(tk.Frame):
         self.dim_choice = ttk.Combobox(frame,
                           state='readonly',
                           width=3,
-                          values=[str(n+1) for n in range(2, dims.MAX)],
+                          values=[str(n) for n in range(dims.MIN, dims.MAX+1)],
                           )
         self.dim_choice.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)

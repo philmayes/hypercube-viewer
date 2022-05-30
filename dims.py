@@ -1,5 +1,6 @@
 # module to hold information about dimensions
 
+MIN = 3
 MAX = 10
 
 # all the planes where rotation is visible
