@@ -199,18 +199,25 @@ class Viewer:
                 shape = np.array(pts)
                 cv2.fillConvexPoly(self.img, shape, color)
 
-        if self.data.show_nodes or self.data.show_coords:
-            radius = self.data.node_radius
-            for node in wireframe.nodes:
+        if self.data.show_nodes or self.data.show_node_ids or self.data.show_coords:
+            radius = self.data.node_radius if self.data.show_nodes else 0
+            # for node in wireframe.nodes:
+            for index, node in enumerate(wireframe.nodes):
                 xy = self.get_xy(node)
                 if self.data.show_nodes:
                     cv2.circle(self.img, xy, radius, colors.node, -1)
+                text = ""
+                if self.data.show_node_ids:
+                    text = str(index)
                 if self.data.show_coords:
-                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    join = ":" if text else ""
                     values = [int(round(v)) for v in node[:-1]]
-                    text = str(values)
+                    text = f"{text}{join}{values}"
+                if text:
                     cv2.putText(
-                        self.img, text, (xy[X] + 5, xy[Y] + 3), font, 0.5, colors.text
+                        self.img, text, (xy[X] + radius, xy[Y] + 3),
+                        cv2.FONT_HERSHEY_SIMPLEX, self.data.font_size,
+                        colors.text
                     )
 
     def get_xy(self, node):
