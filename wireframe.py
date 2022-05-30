@@ -87,40 +87,42 @@ class Wireframe:
             begin = orgs[dim]
             end = begin + sizes[dim]
             node_count = len(nodes)
-            # When we extend this shape into the next dimension, there will be:
-            # * twice as many nodes as before,
-            # * twice as many edges,
-            # * twice as many faces,
-            # * (and twice as many cubes, tesseracts, etc., but we ignore those)
+            # When we extend this shape into the next dimension:
+            # * node count will be double
+            # * edge count will be double + number of nodes in previous dimension
+            # * face count will be double + number of edges in previous dimension
+            # * (and so on for cubes, tesseracts, etc., but we ignore those)
             # and their locations will be different,
-            # so copy the existing faces, edges and nodes...
+            # so copy the existing faces, edges and nodes:
 
+            # Make a copy of every existing face
             new_faces = copy.deepcopy(faces)
+            # Each new face will be defined by new nodes (that have not been
+            # created yet, but that doesn't matter) whose indices follow on
+            # from the existing ones.
             for new_face in new_faces:
                 new_face[0] += node_count
                 new_face[1] += node_count
                 new_face[2] += node_count
                 new_face[3] += node_count
 
+            # Make a copy of every existing edge
             new_edges = copy.deepcopy(edges)
-            # ...adjust their node indices
-            # ...and create a face for every edge that has been moved
+            # Adjust their node indices (again, these nodes don't exist yet)
+            # and create a face for every edge that has been moved.
             for new_edge in new_edges:
-                # a face is 4 nodes; the first two are the ends of the edge before moving it;
-                face = [new_edge[0], new_edge[1]]
+                # A face is 4 nodes; the first two are the ends of the edge before moving it;
+                face = [new_edge[0], new_edge[1], 0, 0]
                 # adjust the location of the new edge
                 new_edge[0] += node_count
                 new_edge[1] += node_count
                 # the second 2 nodes of the face are the ends of the edge after moving it
-                face.append(new_edge[1])
-                face.append(new_edge[0])
-                # add a color for the face and save it
-                # face.append(new_edge[2])
-                # face.append(edge_color)
+                face[2] = new_edge[1]
+                face[3] = new_edge[0]
                 faces.append(face)
 
+            # Make a copy of every existing node
             new_nodes = []
-            # for every existing node...
             for ndx, node in enumerate(nodes):
                 # create a new node
                 new_node = node.copy()
