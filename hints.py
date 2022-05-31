@@ -46,6 +46,14 @@ image left behind as the object is rotated is:
 10 = no fading out."""
 hint_list = "Show a list of all the actions so far"
 hint_move = "Move the object up, down, left or right."
+hint_opacity = """\
+Change the opacity of the faces.
+1.0 is completely opaque.
+
+WARNING:
+This is a very slow operation.
+To see it at the correct speed,
+record the movements to video."""
 hint_play = "Play back the last recorded video file"
 hint_random = "Rotate the object randomly\naround 3 dimensions"
 hint_record = "Record all movement to a video file"
@@ -64,6 +72,10 @@ In most circumstances, these will overlap
 until the object is rotated appropriately."""
 hint_show_edges = "Show the edges of the object"
 hint_show_faces = "Show the faces of the object"
+hint_show_hints = """\
+Show a hint like this
+when moving the mouse
+over a control"""
 hint_show_nodes = "Show the corners of the object"
 hint_show_perspective = "Show the object in perspective view"
 hint_show_steps = """\
@@ -90,6 +102,7 @@ lookup = {
     "ghost": hint_ghost,
     "list": hint_list,
     "move": hint_move,
+    "opacity": hint_opacity,
     "play": hint_play,
     "random": hint_random,
     "record": hint_record,
@@ -101,6 +114,7 @@ lookup = {
     "show_coords": hint_show_coords,
     "show_edges": hint_show_edges,
     "show_faces": hint_show_faces,
+    "show_hints": hint_show_hints,
     "show_nodes": hint_show_nodes,
     "show_perspective": hint_show_perspective,
     "show_steps": hint_show_steps,

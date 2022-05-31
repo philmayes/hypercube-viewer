@@ -22,6 +22,7 @@ from PIL import ImageTk
 
 from action import Action, ActionQueue, Cmd
 import colors
+from data import Data
 import pubsub
 import utils
 import wireframe as wf
@@ -55,7 +56,7 @@ class Viewer:
         "d": (Y, TRANSLATE),
     }
 
-    def __init__(self, data, canvas):
+    def __init__(self, data: Data, canvas):
         self.data = data
         # make a directory to hold video output
         self.output_dir = utils.make_dir("output")
@@ -197,7 +198,13 @@ class Viewer:
                     self.get_xy(wireframe.nodes[n4]),
                 ]
                 shape = np.array(pts)
-                cv2.fillConvexPoly(self.img, shape, color)
+                if self.data.opacity < 1.0:
+                    alpha = self.data.opacity
+                    overlay = self.img.copy()
+                    cv2.fillConvexPoly(overlay, shape, color)
+                    self.img = cv2.addWeighted(overlay, alpha, self.img, 1-alpha, 0)
+                else:
+                    cv2.fillConvexPoly(self.img, shape, color)
 
         if self.data.show_nodes or self.data.show_node_ids or self.data.show_coords:
             radius = self.data.node_radius if self.data.show_nodes else 0

@@ -489,6 +489,7 @@ class App(tk.Frame):
             'ghost',
             'angle',
             'auto_scale',
+            'opacity',
             ):
             control = self.controls[dataname]
             control.add_control(frame, row, 1)
@@ -513,9 +514,10 @@ class App(tk.Frame):
             'ghost': controls.SlideControl('Amount of ghosting:', 0, 10, 1),
             'angle': controls.SlideControl('Rotation per click in degrees:', 1, 20, 1),
             'auto_scale': controls.SlideControl('Resizing during rotation:', 0.90, 1.10, 0.02),
+            'opacity': controls.SlideControl('Opacity:', 0.1, 1.0, 0.1),
             'replay_visible': controls.CheckControl('Replay with original\nvisibility settings'),
             'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
-            'show_hints': controls.CheckControl('Show hints', underline=5),
+            'show_hints': controls.CheckControl('Show hints'),
         }
 
         # set up a sleazy but convenient way of associating the control
@@ -717,6 +719,11 @@ class App(tk.Frame):
         """User has toggled whether hints are to be shown."""
         control = self.controls[dataname]
         value = bool(control.get())
+        if not value:
+            # Special case: when turning off hints, the hint for this control
+            # wouldn't get hidden by hint_manager because Hints.active==False,
+            # so force it to be hidden here.
+            self.hints.show(None)
         self.data.show_hints = value
         self.hints.visible(value)
 
