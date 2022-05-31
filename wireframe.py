@@ -150,6 +150,19 @@ class Wireframe:
         self.faces = faces
         self.center = center
 
+    def get_edge_z(self, edge):
+        """Get 2x the z-value of the midpoint of the edge."""
+        return self.nodes[edge[0]][2] + self.nodes[edge[1]][2]
+
+    def get_face_z(self, face):
+        """Get 4x the z-value of the midpoint of the face."""
+        return (
+            self.nodes[face[0]][2] +
+            self.nodes[face[1]][2] +
+            self.nodes[face[2]][2] +
+            self.nodes[face[3]][2]
+        )
+
     def get_rotate_matrix(self, dim1, dim2, radians, a=None):
         """Return matrix for rotating about the x-axis by 'radians' radians"""
 
@@ -221,23 +234,12 @@ class Wireframe:
         by 2 for each edge)
         """
 
-        def get_key(edge):
-            return self.nodes[edge[0]][2] + self.nodes[edge[1]][2]
-
-        self.edges.sort(key=get_key, reverse=True)
+        self.edges.sort(key=self.get_edge_z, reverse=True)
 
     def sort_faces(self):
         """See explanation for sort_edges()."""
 
-        def get_key(face):
-            return (
-                self.nodes[face[0]][2]
-                + self.nodes[face[1]][2]
-                + self.nodes[face[2]][2]
-                + self.nodes[face[3]][2]
-            )
-
-        self.faces.sort(key=get_key, reverse=True)
+        self.faces.sort(key=self.get_face_z, reverse=True)
 
     def transform(self, matrix):
         """Apply a transformation defined by a given matrix."""
