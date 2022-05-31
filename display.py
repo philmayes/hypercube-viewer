@@ -186,11 +186,18 @@ class Viewer:
                 cv2.line(self.img, self.get_xy(node1), self.get_xy(node2), color, width)
 
         if self.data.show_faces:
+            faces = wireframe.faces
             # see the sort explanation for edges
             if self.sort_faces:
                 wireframe.sort_faces()
                 self.sort_faces = False
-            for n1, n2, n3, n4, color in wireframe.faces:
+            if self.data.opacity < 1.0:
+                zmax = wireframe.get_face_z(faces[0])
+                zmin = wireframe.get_face_z(faces[-1])
+                zrange = zmax - zmin
+
+            for face in faces:
+                n1, n2, n3, n4, color = face
                 pts = [
                     self.get_xy(wireframe.nodes[n1]),
                     self.get_xy(wireframe.nodes[n2]),
@@ -200,6 +207,10 @@ class Viewer:
                 shape = np.array(pts)
                 if self.data.opacity < 1.0:
                     alpha = self.data.opacity
+                    # scale the opacity from supplied value at front
+                    # to fully opaque at back
+                    z = wireframe.get_face_z(face)
+                    alpha += (z - zmin) / zrange * (1.0 - alpha)
                     overlay = self.img.copy()
                     cv2.fillConvexPoly(overlay, shape, color)
                     self.img = cv2.addWeighted(overlay, alpha, self.img, 1-alpha, 0)
