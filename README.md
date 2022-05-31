@@ -21,7 +21,7 @@ We can continue this process without end. A 5-cube has 32 points, etc. Each valu
 
 ## Drawing the hypercube
 
-The points, edges and/or faces are projected onto a plane surface (the x-y plane) in either a perspective or orthographic view.
+The points, edges and/or faces are projected onto a plane surface (the x-y plane) in either a perspective or orthographic view. The origin is at the top left with the x-axis horizontal, the y-axis pointing down, and the Z-axis projecting into the screen,
 
 **NOTE:** Some of the drawing calculations take a long time. Factors that exacerbate this are:
 * A large number of dimensions
@@ -29,6 +29,7 @@ The points, edges and/or faces are projected onto a plane surface (the x-y plane
 * Showing intermediate steps
 * Showing ghosting
 * Resizing during rotation
+* Showing partially transparent faces
 
 These delays do NOT occur in the video recording.
 
