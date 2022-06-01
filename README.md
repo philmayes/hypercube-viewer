@@ -21,7 +21,7 @@ We can continue this process without end. A 5-cube has 32 points, etc. Each valu
 
 ## Drawing the hypercube
 
-The points, edges and/or faces are projected onto a plane surface (the x-y plane) in either a perspective or orthographic view. The origin is at the top left with the x-axis horizontal, the y-axis pointing down, and the Z-axis projecting into the screen,
+The points, edges and/or faces are projected onto a plane surface (the x-y plane) in either a perspective or orthographic view. The origin is at the top left with the x-axis horizontal, the y-axis pointing down, and the Z-axis projecting into the screen.
 
 **NOTE:** Some of the drawing calculations take a long time. Factors that exacerbate this are:
 * A large number of dimensions
@@ -52,7 +52,6 @@ For random rotations, Hypercube Viewer rotates about two randomly-chosen planes 
 ### VISIBILITY
 
 * **Show faces, edges, corners:** Control what is drawn.
-* **Show coordinates:** Show the coordinates of every point. The points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
 * **Show intermediate steps:** Draw the intermediate steps of moves and rotations. Note that this may slow the operation, especially when the hypercube has a large number of dimensions.
 * **Show center:** Show the centerpoint of the hypercube.
 * **Perspective view:** Choose whether the hypercube is projected as a perspective or orthographic view.
@@ -60,7 +59,8 @@ For random rotations, Hypercube Viewer rotates about two randomly-chosen planes 
 * **Depth of perspective:** Controls the amount of perspective. The vanishing point is placed at this value times the screen width.
 * **Amount of ghosting:** As the hypercube is moved, the program can leave a ghost image that fades out. 0 indicates no ghosting, and with 10, no fading takes place.
 * **Rotation per click:** The rotation in degrees per click.
-* **Resizing during rotation:** The program can resize the object during rotation. This gives the amount by which the object is scaled. The rotation is slower because of this. **Note** that when intermediate steps are shown, a fraction of the scaling takes place for every step, making it much slower. When there are a large number of dimensions, the speed is even worse. This speed slowdown does not show in recorded videos.
+* **Resizing during rotation:** The program can resize the object during rotation. This gives the amount by which the object is scaled. The rotation is slower because of this. <ins>Note</ins> that when intermediate steps are shown, a fraction of the scaling takes place for every step, making it much slower. When there are a large number of dimensions, the speed is even worse. This speed slowdown does not show in recorded videos.
+* **Opacity:** The opacity of the faces. <ins>Note</ins> that when the faces are translucent, drawing times are much slower.
 
 In Preferences, accessed through the menu, you can also change:
 
@@ -68,6 +68,9 @@ In Preferences, accessed through the menu, you can also change:
 * **Center radius**
 * **Vanishing point radius**
 * **Line width**
+* **Font Size:** The font size for coordinates and corner IDs.
+* **Show coordinates:** Show the coordinates of every point. The points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
+* **Show corner IDs:** Show the internal index number of all corners.
 
 ### MOVEMENT
 

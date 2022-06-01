@@ -39,6 +39,9 @@ the value above and in the previous column.</p>
 
 <p>The points, edges and/or faces are projected onto a plane surface 
 (the x-y plane) in either a perspective or orthographic view.
+ The origin is at the top left with the x-axis horizontal, the y-axis
+ pointing down, and the Z-axis projecting into the screen.
+ <br>
 <b>NOTE:</b> Some of the drawing calculations take a long time. Factors that exacerbate this are:
 <ul>
 <li>A large number of dimensions</li>
@@ -46,6 +49,7 @@ the value above and in the previous column.</p>
 <li>Showing intermediate steps</li>
 <li>Showing ghosting</li>
 <li>Resizing during rotation</li>
+<li>Showing partially transparent faces</li>
 </ul>
 These delays do NOT occur in the video recording.
 </p>
@@ -89,10 +93,6 @@ Hypercube is projected.
 <ul>
 <li><b>Show faces, edges, corners:</b> Control what is drawn.
 </li>
-<li><b>Show coordinates:</b> Show the coordinates of every point. The points 
-may overlap for, say, a cube in orthogonal view. Avoid this by using perspective 
-view and/or rotating the object so that every point is at a different place on screen.
-</li>
 <li><b>Show intermediate steps:</b> Draw the intermediate steps of moves and 
 rotations. Note that this may slow the operation, especially when the hypercube has 
 a large number of dimensions.
@@ -120,7 +120,24 @@ this. Note that when intermediate steps are shown, a fraction of the scaling tak
 for every step, making it <i>much slower</i>. When there are a large number of dimensions, 
 the speed is even worse. This speed slowdown does not show in recorded videos.
 </li>
+<li><b>Opacity:</b> The opacity of the faces. Note that when the faces are
+translucent, drawing times are <i>much slower</i>.
+</li>
+
 </ul>
+
+<p>In preferences, you can also control:</p>
+<ul>
+<li><b>Corner radius</b></li>
+<li><b>Center radius</b></li>
+<li><b>Vanishing point radius</b></li>
+<li><b>Line width</b></li>
+<li><b>Font size:</b> The font size for coordinates and corner IDs</li>
+<li><b>Show coordinates:</b> Show the coordinates of every point. The points 
+may overlap for, say, a cube in orthogonal view. Avoid this by using perspective 
+view and/or rotating the object so that every point is at a different place on screen.
+</li>
+<li><b>Show corner IDs:</b> The internal index number of all corners.</li>
 
 <h5>MOVEMENT</h5>
 <ul>
@@ -162,7 +179,6 @@ keys = """
 f = Show faces<br>
 e = Show edges<br>
 c = Show corners<br>
-o = Show coordinates<br>
 i = Show intermediate steps<br>
 t = Show center<br>
 p = Perspective view<br>

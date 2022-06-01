@@ -66,10 +66,6 @@ using the current visibility settings.."""
 hint_restart = "Forget all movement\nthat you have done\nand start again"
 hint_rotate = "Rotate the object around the given plane"
 hint_show_center = "Show the center point of the object"
-hint_show_coords = """\
-Show the coordinates of each corner.
-In most circumstances, these will overlap
-until the object is rotated appropriately."""
 hint_show_edges = "Show the edges of the object"
 hint_show_faces = "Show the faces of the object"
 hint_show_hints = """\
@@ -111,7 +107,6 @@ lookup = {
     "restart": hint_restart,
     "rotate": hint_rotate,
     "show_center": hint_show_center,
-    "show_coords": hint_show_coords,
     "show_edges": hint_show_edges,
     "show_faces": hint_show_faces,
     "show_hints": hint_show_hints,

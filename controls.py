@@ -67,6 +67,7 @@ class Control:
     def __init__(self, label):
         self.label = label
         self.callback = None
+        self.dataname = None
 
     def action(self, x=None):
         self.callback(self.dataname)

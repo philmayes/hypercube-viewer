@@ -1,7 +1,7 @@
 import copy
-from functools import partial
 import tkinter as tk
 
+import controls
 import pubsub
 
 class Preferences(tk.Toplevel):
@@ -11,7 +11,7 @@ class Preferences(tk.Toplevel):
         self.title("Preferences")
         self.grab_set()
         self.focus()
-        self.geometry(f'+{win_x + 100}+{win_y + 100}')
+        self.geometry(f"+{win_x + 100}+{win_y + 100}")
         self.protocol("WM_DELETE_WINDOW", self.destroy)
         frame = tk.Frame(self)
         frame.grid(row=0, column=0, padx=4, pady=4)
@@ -26,14 +26,22 @@ class Preferences(tk.Toplevel):
         ctl = tk.Label(frame, text="VISIBILITY", font=big_font, fg="red3")
         ctl.grid(row=row, column=0, sticky=tk.W, pady=2)
         row += 1
-        for values in (
-            ("node_radius", "Corner radius (1-9):", 1, 9),
-            ("center_radius", "Center radius (1-9):", 1, 9),
-            ("vp_radius", "Vanishing point radius (1-9):", 1, 9),
-            ("edge_width", "Line width (1-9):", 1, 9),
-        ):
-            self.add_control(frame, row, *values)
+        self.controls = {
+            "node_radius": controls.SlideControl("Corner radius:", 1, 9, 1),
+            "center_radius": controls.SlideControl("Center radius:", 1, 9, 1),
+            "vp_radius": controls.SlideControl("Vanishing point radius:", 1, 9, 1),
+            "edge_width": controls.SlideControl("Line width:", 1, 9, 1),
+            "font_size": controls.SlideControl("Font size:", 0.2, 2.0, 0.2),
+            'show_coords': controls.CheckControl('Show coordinates'),
+            "show_node_ids": controls.CheckControl("Show corner IDs"),
+        }
+        for dataname, control in self.controls.items():
+            control.set_data(dataname, self.data)
+            control.add_control(frame, row, 1)
+            control.callback = self.on_data
+            control.set(getattr(self.data, dataname))
             row += 1
+
         frame2 = tk.Frame(frame)
         frame2.grid(row=row, columnspan=2, sticky=tk.E)
         self.ok = tk.Button(frame2, width=10, text="OK", command=self.on_ok)
@@ -41,19 +49,12 @@ class Preferences(tk.Toplevel):
         ctl = tk.Button(frame2, width=10, text="Cancel", command=self.destroy)
         ctl.grid(row=0, column=1, padx=0, pady=4)
 
-    def add_control(self, frame, row, dataname, label, vmin, vmax):
-            text = str(getattr(self.data, dataname))
-            ctl = tk.Label(frame, text=label)
-            ctl.grid(row=row, column=0, sticky=tk.W, padx=4, pady=4)
-            ctl = tk.Entry(frame, width=5)
-            ctl.grid(row=row, column=1, sticky=tk.W, padx=4, pady=4)
-            ctl.insert(0, text)
-            vcmd = (self.register(partial(self.validate, ctl)), '%P')
-            ctl.config(validate="key", validatecommand=vcmd)
-            # stash various values in the control for later use
-            ctl.dataname = dataname
-            ctl.vmin = vmin
-            ctl.vmax = vmax
+    def on_data(self, dataname):
+        control = self.controls.get(dataname, None)
+        if control:
+            control_value = control.get()
+            value = self.data.coerce(control_value, dataname)
+            setattr(self.data, dataname, value)
 
     def on_ok(self):
         """The user is happy with the changes.
@@ -63,25 +64,3 @@ class Preferences(tk.Toplevel):
         """
         pubsub.publish("prefs", self.data)
         self.destroy()
-
-    def validate(self, ctl, value):
-        """Validate the control.
-
-        If it is valid:
-            set value in copy of data
-        else:
-            indicate invalid
-            disable OK
-            tell tkinter it's valid
-            (otherwise the invalid value is not shown in the control)
-        """
-        if value.isdigit():
-            value = int(value)
-            if ctl.vmin <= value <= ctl.vmax:
-                ctl.configure(bg='white')
-                self.ok["state"] = tk.NORMAL
-                setattr(self.data, ctl.dataname, value)
-                return True
-        ctl.configure(bg='yellow')
-        self.ok["state"] = tk.DISABLED
-        return True

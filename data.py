@@ -26,22 +26,21 @@ class Data:
         self.show_faces = False
         self.show_edges = True
         self.show_nodes = False
-        self.show_coords = False
         self.show_steps = True
         self.show_center = False
         self.show_perspective = False
         self.show_vp = False
         self.depth = 2.0
         self.ghost = 0
+        self.opacity = 1.0
         # these values are set in in preferences, not the main window.
         self.node_radius = 4
         self.center_radius = 1
         self.vp_radius = 2
         self.edge_width = 3
-        # not sure if/where to show these
+        self.font_size = 0.4
+        self.show_coords = False
         self.show_node_ids = False
-        self.font_size = 0.5
-        self.opacity = 1.0
 
         # settings for how the wireframe is rotated
         self.angle = 15
