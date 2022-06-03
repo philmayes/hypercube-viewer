@@ -8,5 +8,6 @@ __pycache__/**
 .vscode/**
 build/**
 dist/**
+other/**
 output/**
 settings/**

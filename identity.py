@@ -4,12 +4,9 @@ https://semver.org/
 """
 PRODUCT = "Hypercube Viewer"
 MAJOR = 0
-MINOR = 0
-PATCH = 4
+MINOR = 1
+PATCH = 0
 
-VERSION = "%d.%d" % (MAJOR, MINOR)
-if PATCH:
-    VERSION = "%s.%d" % (VERSION,PATCH)
-
-IDENTITY = "%s %s" % (PRODUCT, VERSION)
+VERSION = f"{MAJOR}.{MINOR}.{PATCH}"
+IDENTITY = f"{PRODUCT} {VERSION}"
 

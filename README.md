@@ -92,3 +92,7 @@ video file.
 * **Record** Start recording to a video file whose name is time-stamped.
 * **Play** Play back the last recorded video file.
 * **View Folder** Open the folder where the video files are saved.
+
+### EXAMPLE
+
+[Youtube demonstration](https://www.youtube.com/embed/KZZ3qxXrC58)
