@@ -1,3 +1,8 @@
+Hypercube 0.1.0 06/02/22
+Add opacity Control
+Add fontsize control
+Use sliders in preferences
+
 Hypercube 0.0.4 05/28/22
 Add preferences
 
