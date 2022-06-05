@@ -122,23 +122,24 @@ class Wireframe:
                 faces.append(face)
 
             # Make a copy of every existing node
-            new_nodes = []
-            for ndx, node in enumerate(nodes):
+            new_nodes = [None] * node_count
+            nodes.extend(new_nodes)
+            for ndx in range(node_count):
+                old_node = nodes[ndx]
                 # create a new node
-                new_node = node.copy()
+                new_node = old_node.copy()
                 # add the location in this dimension to the existing node
-                node.append(begin)
+                old_node.append(begin)
                 # add the location in this dimension to the new node
                 new_node.append(end)
-                # add the new node to a temporary list
-                new_nodes.append(new_node)
+                # put the new node on the list
+                nodes[ndx + node_count] = new_node
                 # extending this node into the next dimension creates another
                 # edge, identified by the two node indices
                 edges.append([ndx, ndx + node_count, edge_color])
 
             # add these extended objects to the existing ones
             faces.extend(new_faces)
-            nodes.extend(new_nodes)
             edges.extend(new_edges)
 
         # color the faces
