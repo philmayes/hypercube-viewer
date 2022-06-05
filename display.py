@@ -197,12 +197,12 @@ class Viewer:
                 zrange = zmax - zmin
 
             for face in faces:
-                n0, n1, n2, n3, color = face
+                # n0, n1, n2, n3, color = face
                 # Get the x,y,z coordinates of each corner
-                xyz0 = wireframe.nodes[n0][0:3]
-                xyz1 = wireframe.nodes[n1][0:3]
-                xyz2 = wireframe.nodes[n2][0:3]
-                xyz3 = wireframe.nodes[n3][0:3]
+                xyz0 = wireframe.nodes[face.node[0]][0:3]
+                xyz1 = wireframe.nodes[face.node[1]][0:3]
+                xyz2 = wireframe.nodes[face.node[2]][0:3]
+                xyz3 = wireframe.nodes[face.node[3]][0:3]
                 # Map those points onto the screen
                 pts = [
                         self.get_xy(xyz0),
@@ -212,16 +212,26 @@ class Viewer:
                 ]
                 shape = np.array(pts)
                 if self.data.opacity < 1.0:
+                    # When the faces are translucent, draw every face
                     alpha = self.data.opacity
                     # scale the opacity from supplied value at front
                     # to fully opaque at back
                     z = wireframe.get_face_z(face)
                     alpha += (z - zmin) / zrange * (1.0 - alpha)
                     overlay = self.img.copy()
-                    cv2.fillConvexPoly(overlay, shape, color)
+                    cv2.fillConvexPoly(overlay, shape, face.color)
                     self.img = cv2.addWeighted(overlay, alpha, self.img, 1-alpha, 0)
                 else:
-                    cv2.fillConvexPoly(self.img, shape, color)
+                    # When the faces are opaque
+                    vec0 = xyz1 - xyz0
+                    vec1 = xyz3 - xyz0
+                    orth = np.cross(vec0, vec1)
+                    if orth[Z] > 0:
+                        print(f"face={face.node} Z-vector = {orth[Z]:,.0f} = DRAW THIS FACE")
+                        cv2.fillConvexPoly(self.img, shape, face.color)
+                    else:
+                        print(f"face={face.node} Z-vector = {orth[Z]:,.0f} = SKIP THIS FACE")
+                        continue
 
         if self.data.show_nodes or self.data.show_node_ids or self.data.show_coords:
             radius = self.data.node_radius if self.data.show_nodes else 0

@@ -28,10 +28,10 @@ def add_face_color(face, nodes):
     of every dimension, looking for the two dimensions where the values vary.
     That pair is mapped to a unique color by colors.face()
     """
-    node0 = nodes[face[0]]
-    node1 = nodes[face[1]]
-    node2 = nodes[face[2]]
-    node3 = nodes[face[3]]
+    node0 = nodes[face.node[0]]
+    node1 = nodes[face.node[1]]
+    node2 = nodes[face.node[2]]
+    node3 = nodes[face.node[3]]
     other = [node1, node2, node3]
     # make a list of every dimension whose values are not all the same
     changes = []
@@ -43,8 +43,13 @@ def add_face_color(face, nodes):
             # no need to look any further; there are only two dimensions
             # that differ
             break
-    face.append(colors.face(changes))
+    face.color = colors.face(changes)
 
+
+class Face:
+    def __init__(self):
+        self.node = [0] * 4
+        self.color = ""
 
 class Wireframe:
     def __init__(self, dims):
@@ -101,10 +106,10 @@ class Wireframe:
             # created yet, but that doesn't matter) whose indices follow on
             # from the existing ones.
             for new_face in new_faces:
-                new_face[0] += node_count
-                new_face[1] += node_count
-                new_face[2] += node_count
-                new_face[3] += node_count
+                new_face.node[0] += node_count
+                new_face.node[1] += node_count
+                new_face.node[2] += node_count
+                new_face.node[3] += node_count
 
             # Make a copy of every existing edge
             new_edges = copy.deepcopy(edges)
@@ -112,13 +117,16 @@ class Wireframe:
             # and create a face for every edge that has been moved.
             for new_edge in new_edges:
                 # A face is 4 nodes; the first two are the ends of the edge before moving it;
-                face = [new_edge[0], new_edge[1], 0, 0]
+                # face = [new_edge[0], new_edge[1], 0, 0]
+                face = Face()
+                face.node[0] = new_edge[0]
+                face.node[1] = new_edge[1]
                 # adjust the location of the new edge
                 new_edge[0] += node_count
                 new_edge[1] += node_count
                 # the second 2 nodes of the face are the ends of the edge after moving it
-                face[2] = new_edge[1]
-                face[3] = new_edge[0]
+                face.node[2] = new_edge[1]
+                face.node[3] = new_edge[0]
                 faces.append(face)
 
             # Make a copy of every existing node
@@ -158,10 +166,10 @@ class Wireframe:
     def get_face_z(self, face):
         """Get 4x the z-value of the midpoint of the face."""
         return (
-            self.nodes[face[0]][2] +
-            self.nodes[face[1]][2] +
-            self.nodes[face[2]][2] +
-            self.nodes[face[3]][2]
+            self.nodes[face.node[0]][2] +
+            self.nodes[face.node[1]][2] +
+            self.nodes[face.node[2]][2] +
+            self.nodes[face.node[3]][2]
         )
 
     def get_rotate_matrix(self, dim1, dim2, radians, a=None):
