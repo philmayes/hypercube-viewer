@@ -197,12 +197,18 @@ class Viewer:
                 zrange = zmax - zmin
 
             for face in faces:
-                n1, n2, n3, n4, color = face
+                n0, n1, n2, n3, color = face
+                # Get the x,y,z coordinates of each corner
+                xyz0 = wireframe.nodes[n0][0:3]
+                xyz1 = wireframe.nodes[n1][0:3]
+                xyz2 = wireframe.nodes[n2][0:3]
+                xyz3 = wireframe.nodes[n3][0:3]
+                # Map those points onto the screen
                 pts = [
-                    self.get_xy(wireframe.nodes[n1]),
-                    self.get_xy(wireframe.nodes[n2]),
-                    self.get_xy(wireframe.nodes[n3]),
-                    self.get_xy(wireframe.nodes[n4]),
+                        self.get_xy(xyz0),
+                        self.get_xy(xyz1),
+                        self.get_xy(xyz2),
+                        self.get_xy(xyz3),
                 ]
                 shape = np.array(pts)
                 if self.data.opacity < 1.0:
@@ -278,10 +284,10 @@ class Viewer:
         self.norm_matrix = wireframe.get_translation_matrix(normalize)
         self.denorm_matrix = wireframe.get_translation_matrix(wireframe.center)
 
-    def repeat_frame(self, count):
-        """Wait for <count> frames."""
-        for _ in range(count):
-            self.display()
+    # def repeat_frame(self, count):
+    #     """Wait for <count> frames."""
+    #     for _ in range(count):
+    #         self.display()
 
     def rotate_all(self, dim1, dim2, theta, dim3=None):
         """Rotate all wireframes about their center, around one or two planes
@@ -393,12 +399,14 @@ class Viewer:
     def take_action(self, action: Action, playback=False):
         """Perform and display the supplied action."""
         acted = True
+        showed = False
         self.stop = False
         cmd = action.cmd
         if cmd == Cmd.ROTATE:
             # The 3rd dimension is optional
             rotation = self.rotation if action.p4 == "+" else -self.rotation
             self.rotate_all(action.p1, action.p2, rotation, action.p3)
+            showed = True
         elif cmd == Cmd.VISIBLE:
             # This is a visibility action like showing faces, etc.
             # It does not make any changes to the wireframe model, but we need
@@ -409,9 +417,11 @@ class Viewer:
                 self.scale_all(Viewer.SCALE)
             else:
                 self.scale_all(1 / Viewer.SCALE)
+            showed = True
         elif cmd == Cmd.MOVE:
             dim, amount = Viewer.direction_to_values[action.p1]
             self.translate_all(dim, amount)
+            showed = True
         elif cmd == Cmd.DIMS:
             assert isinstance(action.p1, int)
             self.data.dims = action.p1
@@ -423,7 +433,8 @@ class Viewer:
             acted = False
 
         if acted:
-            self.display()
+            if not showed:
+                self.display()
             # Save the action for possible playback
             # We /don't/ keep history when the history is being played back
             if not playback:
