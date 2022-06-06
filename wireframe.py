@@ -49,6 +49,7 @@ def add_face_color(face, nodes):
 class Face:
     def __init__(self):
         self.node = [0] * 4
+        self.out = True
         self.color = ""
 
 class Wireframe:
@@ -110,6 +111,7 @@ class Wireframe:
                 new_face.node[1] += node_count
                 new_face.node[2] += node_count
                 new_face.node[3] += node_count
+                new_face.out ^= True
 
             # Make a copy of every existing edge
             new_edges = copy.deepcopy(edges)
