@@ -146,6 +146,7 @@ class Viewer:
         # Write to video if needed
         self.video_write()
 
+    @utils.time_function
     def draw(self):
         """Draw the wireframe onto the xy plane."""
 
@@ -196,7 +197,12 @@ class Viewer:
                 zmin = wireframe.get_face_z(faces[-1])
                 zrange = zmax - zmin
 
-            for face in faces:
+            face_count = len(faces)
+            start = 0
+            if self.data.opacity == 1.0:
+                start = face_count // 2
+            for ndx in range(start, face_count):
+                face = faces[ndx]
                 # n0, n1, n2, n3, color = face
                 # Get the x,y,z coordinates of each corner
                 xyz0 = wireframe.nodes[face.node[0]][0:3]
@@ -226,8 +232,8 @@ class Viewer:
                     vec0 = xyz1 - xyz0
                     vec1 = xyz3 - xyz0
                     orth = np.cross(vec0, vec1)
-                    if orth[Z] > 0:
-                        print(f"face={face.node} Z-vector = {orth[Z]:,.0f} = DRAW THIS FACE")
+                    if 1:#orth[Z] > 0:
+                        # print(f"face={face.node} Z-vector = {orth[Z]:,.0f} = DRAW THIS FACE")
                         cv2.fillConvexPoly(self.img, shape, face.color)
                     else:
                         print(f"face={face.node} Z-vector = {orth[Z]:,.0f} = SKIP THIS FACE")
