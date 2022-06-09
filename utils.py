@@ -40,9 +40,9 @@ def make_filename(prefix: str, ext: str):
 def time_function(func):
     """Decorator to time a function."""
     def wrapper(*args, **kwargs):
-        t1 = time.process_time()
+        t1 = time.perf_counter()
         res = func(*args, **kwargs)
-        t2 = time.process_time()
+        t2 = time.perf_counter()
         print('%s took %0.3f ms' % (func.__name__, (t2-t1)*1000.0))
         return res
     return wrapper

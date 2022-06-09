@@ -481,7 +481,7 @@ class Viewer:
             print(self.video_reader, self.video_reader.isOpened())
             if self.video_reader.isOpened():
                 while not self.stop:
-                    t1 = time.process_time()
+                    t1 = time.perf_counter()
                     ret, frame = self.video_reader.read()
                     if not ret:
                         break
