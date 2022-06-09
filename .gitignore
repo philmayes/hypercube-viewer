@@ -4,7 +4,7 @@ mynotes.txt
 *.pyo
 
 # folders to ignore
-__pycache__/**
+**/__pycache__/**
 .vscode/**
 build/**
 dist/**
