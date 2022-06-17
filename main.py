@@ -599,6 +599,12 @@ class App(tk.Frame):
                 changed.append(attr)
         return changed
 
+    def get_previous_action(self):
+        if self.actionQ:
+            return self.actionQ[-1]
+        if self.viewer.actions:
+            return self.viewer.actions[-1]
+
     def hint_manager(self):
         try:
             hint_id = None
@@ -777,12 +783,29 @@ class App(tk.Frame):
 
     def on_random(self, direction):
         """Rotate the wireframe randomly in 3 dimensions."""
+
+        # Make a list of every dimension. A random dimension is chosen from
+        # this list and then removed to ensure that a later pick has a
+        # different value.
         dims = list(range(self.data.dims))
+
+        # The first dimension is always X or Y so we can see it on screen
         dim1 = random.randint(0, 1)
         dims.remove(dim1)
-        dim2 = random.choice(dims)
+
+        # If the previous action was also a random rotation, reuse one of its
+        # dimensions to reduce the jerkiness, otherwise just pick a random one
+        prev = self.get_previous_action()
+        if prev and prev.cmd == Cmd.ROTATE and prev.p3 is not None:
+            dim2 = random.choice([prev.p2, prev.p3])
+        else:
+            dim2 = random.choice(dims)
         dims.remove(dim2)
+
+        # pick the 3rd dimension from the remaining ones
         dim3 = random.choice(dims)
+
+        # Create and queue the action
         action = Action(Cmd.ROTATE, dim1, dim2, dim3, direction)
         self.queue_action(action)
 

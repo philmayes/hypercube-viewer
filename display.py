@@ -146,7 +146,7 @@ class Viewer:
         # Write to video if needed
         self.video_write()
 
-    @utils.time_function
+    # @utils.time_function
     def draw(self):
         """Draw the wireframe onto the xy plane."""
 
