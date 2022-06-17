@@ -23,11 +23,10 @@ from PIL import ImageTk
 from action import Action, ActionQueue, Cmd
 import colors
 from data import Data
+from dims import X, Y, Z    # syntactic sugar for the first three dimensions
 import pubsub
 import utils
 import wireframe as wf
-
-X, Y, Z = range(3)  # syntactic sugar for the first three dimensions
 
 
 class Viewer:

@@ -40,6 +40,7 @@ import controls
 from controls import DISABLED, ENABLED, ACTIVE
 from data import Data
 import dims
+from dims import X, Y, Z    # syntactic sugar for the first three dimensions
 import display
 from preferences import Preferences
 from hints import Hints
@@ -790,7 +791,7 @@ class App(tk.Frame):
         dims = list(range(self.data.dims))
 
         # The first dimension is always X or Y so we can see it on screen
-        dim1 = random.randint(0, 1)
+        dim1 = random.randint(X, Y)
         dims.remove(dim1)
 
         # If the previous action was also a random rotation, reuse one of its
