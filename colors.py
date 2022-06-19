@@ -22,6 +22,10 @@ def face(pair: list):
     return face_colors[key]
 
 
+def bgr_to_html(b, g, r):
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
 def hex_to_rgb(s):
     """Convert a string of 6 hex values into an RGB 3-tuple."""
     return int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)

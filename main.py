@@ -400,6 +400,7 @@ class App(tk.Frame):
             'Direction of\nRotation',
             'Color of 1st\nDimension',
             'Color of 2nd\nDimension',
+            'Color of\nface',
             )
         for col, label in enumerate(labels):
             ctl = tk.Label(frame, text=label)

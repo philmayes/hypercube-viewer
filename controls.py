@@ -188,6 +188,8 @@ class PlaneControl:
         dim2str = dims.labels[self.dim2]
         color1 = colors.html[self.dim1]
         color2 = colors.html[self.dim2]
+        bgr = colors.face([self.dim1, self.dim2])
+        color3 = colors.bgr_to_html(*bgr)
         text = f"{dim1str}-{dim2str}"
         self.planes = tk.Label(self.frame, text=text)
         self.planes.grid(row=self.row, column=0, sticky=tk.EW, padx=2, pady=2)
@@ -217,6 +219,10 @@ class PlaneControl:
             self.frame, text=f"{dim2str}: ████", bg="black", fg=color2
         )
         self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
+        self.swatch3 = tk.Label(
+            self.frame, text=f"████", bg="black", fg=color3
+        )
+        self.swatch3.grid(row=self.row, column=4, sticky=tk.NSEW)
         self.active = True
 
     def delete_controls(self):
@@ -226,4 +232,5 @@ class PlaneControl:
         self.rotate2.destroy()
         self.swatch1.destroy()
         self.swatch2.destroy()
+        self.swatch3.destroy()
         self.active = False
