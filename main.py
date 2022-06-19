@@ -794,11 +794,14 @@ class App(tk.Frame):
         dim1 = random.randint(X, Y)
         dims.remove(dim1)
 
-        # If the previous action was also a random rotation, reuse one of its
-        # dimensions to reduce the jerkiness, otherwise just pick a random one
+        # If the previous action was also a random rotation, reuse its second
+        # dimension to reduce the jerkiness unless that is dim1
+        # otherwise just pick a random one
         prev = self.get_previous_action()
         if prev and prev.cmd == Cmd.ROTATE and prev.p3 is not None:
-            dim2 = random.choice([prev.p2, prev.p3])
+            dim2 = prev.p2
+            if dim2 == dim1:
+                dim2 = random.choice(dims)
         else:
             dim2 = random.choice(dims)
         dims.remove(dim2)
