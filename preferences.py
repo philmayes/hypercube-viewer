@@ -4,6 +4,11 @@ import tkinter as tk
 import controls
 import pubsub
 
+help4 = """\
+Show dimensions
+4 and up
+differently:"""
+
 class Preferences(tk.Toplevel):
     def __init__(self, data, win_x, win_y):
         super().__init__(None)
@@ -34,6 +39,8 @@ class Preferences(tk.Toplevel):
             "font_size": controls.SlideControl("Font size:", 0.2, 2.0, 0.2),
             'show_coords': controls.CheckControl('Show coordinates'),
             "show_node_ids": controls.CheckControl("Show corner IDs"),
+            "edge4_width": controls.CheckControl("Line width is 1"),
+            "edge4_color": controls.CheckControl("Line color is gray"),
         }
         for dataname, control in self.controls.items():
             control.set_data(dataname, self.data)
@@ -41,6 +48,9 @@ class Preferences(tk.Toplevel):
             control.callback = self.on_data
             control.set(getattr(self.data, dataname))
             row += 1
+
+        ctl = tk.Label(frame, text=help4, justify=tk.LEFT)
+        ctl.grid(row=row-2, column=0, rowspan=2, sticky=tk.W)
 
         frame2 = tk.Frame(frame)
         frame2.grid(row=row, columnspan=2, sticky=tk.E)

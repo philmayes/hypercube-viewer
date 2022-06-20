@@ -41,6 +41,8 @@ class Data:
         self.font_size = 0.4
         self.show_coords = False
         self.show_node_ids = False
+        self.edge4_width = False    # True: Line width is 1
+        self.edge4_color = False    # True: Line color is gray
 
         # settings for how the wireframe is rotated
         self.angle = 15

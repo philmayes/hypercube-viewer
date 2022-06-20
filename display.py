@@ -173,7 +173,10 @@ class Viewer:
             )
 
         if self.data.show_edges:
-            width = self.data.edge_width
+            w0 = self.data.edge_width
+            w4 = self.data.edge4_width  # True: Line width is 1
+            c4 = self.data.edge4_color  # True: Line color is gray
+            w4c4 = w4 or c4
             # If needed (because the wireframe has been rotated), the edges
             # are sorted in reverse z-order so that the edges at the front
             # overlay those at the back.
@@ -183,6 +186,14 @@ class Viewer:
             for n1, n2, color in wireframe.edges:
                 node1 = wireframe.nodes[n1]
                 node2 = wireframe.nodes[n2]
+                width = w0
+                if w4c4:
+                    # Don't show width or color for higher dimensions
+                    if n1 >= 8 or n2 >= 8:
+                        if w4:
+                            width = 1
+                        if c4:
+                            color = colors.dim4gray
                 cv2.line(self.img, self.get_xy(node1), self.get_xy(node2), color, width)
 
         if self.data.show_faces:

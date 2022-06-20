@@ -42,6 +42,7 @@ center = (255, 255, 255)
 vp = (244, 208, 140)  # vanishing point: a shade of aqua
 text = (200, 200, 250)
 bg = (0, 0, 0)  # must be zeros so we can fade to black in .draw()
+dim4gray = (128,128,128)
 names = (
     ("ff0000", "red"),
     ("ffffff", "white"),

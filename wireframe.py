@@ -57,7 +57,9 @@ class Wireframe:
         self.dims = dims
         # create a NumPy array with 0 rows, 1 col per dim, 1 for scale
         self.nodes = np.zeros((0, dims + 1))
+        # List of edges; each edge is [node_index1, node_index2, color]
         self.edges = []
+        # List of Face() instances
         self.faces = []
 
     def add_nodes(self, node_array):
