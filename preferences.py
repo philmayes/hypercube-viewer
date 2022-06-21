@@ -38,9 +38,9 @@ class Preferences(tk.Toplevel):
             "edge_width": controls.SlideControl("Line width:", 1, 9, 1),
             "font_size": controls.SlideControl("Font size:", 0.2, 2.0, 0.2),
             'show_coords': controls.CheckControl('Show coordinates'),
-            "show_node_ids": controls.CheckControl("Show corner IDs"),
-            "edge4_width": controls.CheckControl("Line width is 1"),
-            "edge4_color": controls.CheckControl("Line color is gray"),
+            "show_node_ids": controls.CheckControl("Show corner numbers"),
+            "show_4_narrow": controls.CheckControl("Line width is 1"),
+            "show_4_gray": controls.CheckControl("Line color is gray"),
         }
         for dataname, control in self.controls.items():
             control.set_data(dataname, self.data)

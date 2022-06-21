@@ -132,12 +132,12 @@ translucent, drawing times are <i>much slower</i>.
 <li><b>Center radius</b></li>
 <li><b>Vanishing point radius</b></li>
 <li><b>Line width</b></li>
-<li><b>Font size:</b> The font size for coordinates and corner IDs</li>
+<li><b>Font size:</b> The font size for coordinates and corner numbers</li>
 <li><b>Show coordinates:</b> Show the coordinates of every point. The points 
 may overlap for, say, a cube in orthogonal view. Avoid this by using perspective 
 view and/or rotating the object so that every point is at a different place on screen.
 </li>
-<li><b>Show corner IDs:</b> The internal index number of all corners.</li>
+<li><b>Show corner numbers:</b> The internal index number of all corners.</li>
 <li><b>Set line width to 1:</b> For dimensions of 4 or more, set the line width to 1.</li>
 <li><b>Set line color to gray:</b> For dimensions of 4 or more, set the line color to gray.</li>
 
@@ -192,7 +192,7 @@ r = Rotation per click in degrees<br>
 z = Resizing during rotation<br>
 ----<br>
 o = Show coordinates<br>
-n = Show corner IDs<br>
+n = Show corner numbers<br>
 For dimensions of 4 or more:<br>
 w = Set edge width to 1<br>
 o = Set edge color to gray<br>

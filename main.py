@@ -523,8 +523,8 @@ class App(tk.Frame):
             # keyboard shortcuts, see key_visible().
             'show_coords': None,
             "show_node_ids": None,
-            "edge4_width": None,
-            "edge4_color": None,
+            "show_4_narrow": None,
+            "show_4_gray": None,
         }
 
         # set up a sleazy but convenient way of associating the control
@@ -577,8 +577,8 @@ class App(tk.Frame):
             # keys for values that are set in preferences
             "o": (self.key_visible, "show_coords"),
             "n": (self.key_visible, "show_node_ids"),
-            "w": (self.key_visible, "edge4_width"),
-            "q": (self.key_visible, "edge4_color"),
+            "w": (self.key_visible, "show_4_narrow"),
+            "q": (self.key_visible, "show_4_gray"),
         }
 
     def copy_data(self, from_data: Data, skip=False):

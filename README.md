@@ -68,9 +68,9 @@ In Preferences, accessed through the menu, you can also change:
 * **Center radius**
 * **Vanishing point radius**
 * **Line width**
-* **Font Size:** The font size for coordinates and corner IDs.
+* **Font Size:** The font size for coordinates and corner numbers.
 * **Show coordinates:** Show the coordinates of every point. The points may overlap for, say, a cube in orthogonal view. Avoid this by using perspective view and/or rotating the object so that every point is at a different place on screen.
-* **Show corner IDs:** Show the internal index number of all corners.
+* **Show corner numbers:** Show the internal index number of all corners.
 * **Set line width to 1:** For dimensions of 4 or more, set the line width to 1.
 * **Set line color to gray:** For dimensions of 4 or more, set the line color to gray.
 

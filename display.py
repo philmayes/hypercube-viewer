@@ -174,8 +174,8 @@ class Viewer:
 
         if self.data.show_edges:
             w0 = self.data.edge_width
-            w4 = self.data.edge4_width  # True: Line width is 1
-            c4 = self.data.edge4_color  # True: Line color is gray
+            w4 = self.data.show_4_narrow  # True: Line width is 1
+            c4 = self.data.show_4_gray  # True: Line color is gray
             w4c4 = w4 or c4
             # If needed (because the wireframe has been rotated), the edges
             # are sorted in reverse z-order so that the edges at the front
