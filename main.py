@@ -518,21 +518,29 @@ class App(tk.Frame):
             'replay_visible': controls.CheckControl('Replay with original\nvisibility settings'),
             'frame_rate': controls.ComboControl('Frame rate of video:', ['24', '25', '30', '60', '120']),
             'show_hints': controls.CheckControl('Show hints'),
+            # The following datanames are changed in preferences and have no
+            # widget in this window. They exist here for the benefit of
+            # keyboard shortcuts, see key_visible().
+            'show_coords': None,
+            "show_node_ids": None,
+            "edge4_width": None,
+            "edge4_color": None,
         }
 
         # set up a sleazy but convenient way of associating the control
         # and the callback
         callback = self.visibility_action
         for dataname, control in self.controls.items():
-            control.set_data(dataname, self.data)
-            control.callback = callback
-            # show_hints uses a different callback
-            if dataname == "show_hints":
-                control.callback = self.on_hints
-            # If this control is a slider, tell the action queue so it is able
-            # to merge successive values together
-            if isinstance(control, controls.SlideControl) or isinstance(control, controls.ComboControl):
-                ActionQueue.sliders.append(dataname)
+            if control:
+                control.set_data(dataname, self.data)
+                control.callback = callback
+                # show_hints uses a different callback
+                if dataname == "show_hints":
+                    control.callback = self.on_hints
+                # If this control is a slider, tell the action queue so it is able
+                # to merge successive values together
+                if isinstance(control, controls.SlideControl) or isinstance(control, controls.ComboControl):
+                    ActionQueue.sliders.append(dataname)
 
     def construct_keymap(self):
         """Construct the mapping from tkinter key events to actions."""
@@ -540,7 +548,6 @@ class App(tk.Frame):
             "f": (self.key_visible, "show_faces"),
             "e": (self.key_visible, "show_edges"),
             "c": (self.key_visible, "show_nodes"),
-            "o": (self.key_visible, "show_coords"),
             "i": (self.key_visible, "show_steps"),
             "t": (self.key_visible, "show_center"),
             "p": (self.key_visible, "show_perspective"),
@@ -566,6 +573,12 @@ class App(tk.Frame):
             "a": (self.key_passthrough, self.on_list),
 
             "f1": (self.key_passthrough, self.on_help),
+
+            # keys for values that are set in preferences
+            "o": (self.key_visible, "show_coords"),
+            "n": (self.key_visible, "show_node_ids"),
+            "w": (self.key_visible, "edge4_width"),
+            "q": (self.key_visible, "edge4_color"),
         }
 
     def copy_data(self, from_data: Data, skip=False):
@@ -597,7 +610,8 @@ class App(tk.Frame):
                 setattr(self.data, attr, new_value)
                 if attr in self.controls:
                     control = self.controls[attr]
-                    control.set(new_value)
+                    if control:
+                        control.set(new_value)
                 changed.append(attr)
         return changed
 
@@ -627,12 +641,12 @@ class App(tk.Frame):
     # key_xxxx() functions are callbacks from on_key()
     #
 
-    def key_action(self, keysym, state, value):
+    def key_action(self, keysym, state, action):
         if not state & 0x20004: # ignore Ctl and Alt modifiers
-            self.queue_action(value)
+            self.queue_action(action)
 
-    def key_passthrough(self, keysym, state, value):
-        value()
+    def key_passthrough(self, keysym, state, function):
+        function()
 
     def key_rotate(self, keysym, state, value):
         keysym = int(keysym)
@@ -645,17 +659,27 @@ class App(tk.Frame):
                 plane = self.dim_controls[dim]
                 self.on_rotate(direction, plane)
 
-    def key_slider(self, keysym, state, value):
-        control = self.controls[value]
+    def key_slider(self, keysym, state, dataname):
+        control = self.controls[dataname]
         step = -1 if keysym.islower() else 1
         control.step(step)
-        self.visibility_action(value)
+        self.visibility_action(dataname)
 
-    def key_visible(self, keysym, state, value):
+    def key_visible(self, keysym, state, dataname):
         if not state & 0x20004: # ignore Ctl and Alt modifiers
-            control = self.controls[value]
-            control.xor()
-            self.visibility_action(value)
+            control = self.controls[dataname]
+            if control:
+                # Change the value and visible appearance of the control.
+                # In visibility_action, the value will be extracted and put
+                # into an Action object. The value is not set into the data
+                # instance until run() processes the queue.
+                control.xor()
+            else:
+                # If there is no control, it is because the keystroke is a
+                # shortcut for a value managed by preferences, so flip it
+                # here and visibility_action will extract it from self.data.
+                self.data.xor(dataname)
+            self.visibility_action(dataname)
 
     def load_settings(self):
         """Load initial settings."""
@@ -665,7 +689,8 @@ class App(tk.Frame):
         self.viewer_size.insert(0, self.data.viewer_size)
         for dataname, control in self.controls.items():
             value = getattr(self.data, dataname)
-            control.set(value)
+            if control:
+                control.set(value)
 
     def on_aspect(self, _):
         """The aspect ratios have been changed.
@@ -1080,7 +1105,10 @@ class App(tk.Frame):
             value = self.data.coerce(control_value, dataname)
         else:
             # Some visibility settings are adjusted in preferences, so they
-            # don't have a control
+            # don't have a control in this window; the new value has already
+            # been put into self.data by copy_data().
+            # Alternatively, the shortcut key for a setting in preferences has
+            # been typed and the new value has been set in key_visible().
             value = getattr(self.data, dataname)
         action = Action(Cmd.VISIBLE, dataname, value)
         self.queue_action(action)

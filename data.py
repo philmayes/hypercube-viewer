@@ -83,6 +83,12 @@ class Data:
             ):
                 return x, y
 
+    def xor(self, dataname):
+        """Xor the value of a boolean attribute."""
+        old = getattr(self, dataname)
+        assert isinstance(old, bool)
+        setattr(self, dataname, not old)
+
     def load(self, fname):
         """Load and validate settings from a json file."""
         try:

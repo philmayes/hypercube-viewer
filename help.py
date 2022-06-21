@@ -138,6 +138,8 @@ may overlap for, say, a cube in orthogonal view. Avoid this by using perspective
 view and/or rotating the object so that every point is at a different place on screen.
 </li>
 <li><b>Show corner IDs:</b> The internal index number of all corners.</li>
+<li><b>Set line width to 1:</b> For dimensions of 4 or more, set the line width to 1.</li>
+<li><b>Set line color to gray:</b> For dimensions of 4 or more, set the line color to gray.</li>
 
 <h5>MOVEMENT</h5>
 <ul>
@@ -188,6 +190,12 @@ d = Depth of perspective<br>
 g = Amount of ghosting<br>
 r = Rotation per click in degrees<br>
 z = Resizing during rotation<br>
+----<br>
+o = Show coordinates<br>
+n = Show corner IDs<br>
+For dimensions of 4 or more:<br>
+w = Set edge width to 1<br>
+o = Set edge color to gray<br>
 ----<br>
 h = Show hints<br>
 
