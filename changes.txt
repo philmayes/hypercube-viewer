@@ -1,3 +1,9 @@
+Hypercube 0.2.0 06/22/22
+Add keyboard shortcuts for preference settings
+Add different color/width for dims 4+; Can conceal X-Y-Z edges
+Show face color to user
+Make random rotations smoother
+
 Hypercube 0.1.0 06/02/22
 Add opacity Control
 Add fontsize control
