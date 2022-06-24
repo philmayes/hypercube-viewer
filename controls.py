@@ -186,10 +186,6 @@ class PlaneControl:
     def add_controls(self):
         dim1str = dims.labels[self.dim1]
         dim2str = dims.labels[self.dim2]
-        color1 = colors.html[self.dim1]
-        color2 = colors.html[self.dim2]
-        bgr = colors.face([self.dim1, self.dim2])
-        color3 = colors.bgr_to_html(*bgr)
         text = f"{dim1str}-{dim2str}"
         self.planes = tk.Label(self.frame, text=text)
         self.planes.grid(row=self.row, column=0, sticky=tk.EW, padx=2, pady=2)
@@ -211,19 +207,14 @@ class PlaneControl:
         self.rotate2.hint_id = "rotate"
 
         # insert information about colors of dimensions
-        self.swatch1 = tk.Label(
-            self.frame, text=f"{dim1str}: ████", bg="black", fg=color1
-        )
+        self.swatch1 = tk.Label(self.frame, text=f"{dim1str}: ████", bg=colors.html_bg)
         self.swatch1.grid(row=self.row, column=2, sticky=tk.NSEW)
-        self.swatch2 = tk.Label(
-            self.frame, text=f"{dim2str}: ████", bg="black", fg=color2
-        )
+        self.swatch2 = tk.Label(self.frame, text=f"{dim2str}: ████", bg=colors.html_bg)
         self.swatch2.grid(row=self.row, column=3, sticky=tk.NSEW)
-        self.swatch3 = tk.Label(
-            self.frame, text=f"████", bg="black", fg=color3
-        )
+        self.swatch3 = tk.Label(self.frame, text=f"████", bg=colors.html_bg)
         self.swatch3.grid(row=self.row, column=4, sticky=tk.NSEW)
         self.active = True
+        # self.show_colors()
 
     def delete_controls(self):
         self.rot_frame.destroy()
@@ -234,3 +225,23 @@ class PlaneControl:
         self.swatch2.destroy()
         self.swatch3.destroy()
         self.active = False
+
+    def show_colors(self, data):
+        if self.active:
+            no_color = colors.html_bg
+            if data.show_edges:
+                if data.show_4_gray and (self.dim1 > 2 or self.dim2 > 2):
+                    color1 = color2 = colors.html_dim4gray
+                else:
+                    color1 = colors.html[self.dim1]
+                    color2 = colors.html[self.dim2]
+            else:
+                color1 = color2 = no_color
+            if data.show_faces:
+                bgr = colors.face([self.dim1, self.dim2])
+                color3 = colors.bgr_to_html(*bgr)
+            else:
+                color3 = no_color
+            self.swatch1.configure(fg=color1)
+            self.swatch2.configure(fg=color2)
+            self.swatch3.configure(fg=color3)

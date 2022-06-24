@@ -408,7 +408,9 @@ class App(tk.Frame):
         row += 1
 
         for plane in dims.planes:
-            self.dim_controls.append(controls.PlaneControl(frame, row, plane[0], plane[1], self))
+            control = controls.PlaneControl(frame, row, plane[0], plane[1], self)
+            self.dim_controls.append(control)
+            control.show_colors(self.data)
             row += 1
 
         # add a random rotation
@@ -914,6 +916,7 @@ class App(tk.Frame):
                 if control.dim2 < dim_count:
                     if not control.active:
                         self.dim_controls[dim].add_controls()
+                        control.show_colors(self.data)
                 else:
                     if control.active:
                         self.dim_controls[dim].delete_controls()
@@ -1002,7 +1005,7 @@ class App(tk.Frame):
                         if not self.data.show_faces:
                             real_ghost = self.data.ghost
                             self.data.ghost = 0
-                        pass
+                        self.show_colors()
                     elif vis == 'depth':
                         self.viewer.set_depth()
                     elif vis == 'angle':
@@ -1011,6 +1014,8 @@ class App(tk.Frame):
                         need_action = False
                     elif vis == 'replay_visible':
                         need_action = False
+                    elif vis in ('show_4_gray', 'show_edges'):
+                        self.show_colors()
 
                 if need_action:
                     # execute the action
@@ -1113,6 +1118,9 @@ class App(tk.Frame):
         action = Action(Cmd.VISIBLE, dataname, value)
         self.queue_action(action)
 
+    def show_colors(self):
+        for control in self.dim_controls:
+            control.show_colors(self.data)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Hypercube')

@@ -42,7 +42,9 @@ center = (255, 255, 255)
 vp = (244, 208, 140)  # vanishing point: a shade of aqua
 text = (200, 200, 250)
 bg = (0, 0, 0)  # must be zeros so we can fade to black in .draw()
+html_bg = bgr_to_html(*bg)
 dim4gray = (128,128,128)
+html_dim4gray = bgr_to_html(*dim4gray)
 names = (
     ("ff0000", "red"),
     ("ffffff", "white"),
