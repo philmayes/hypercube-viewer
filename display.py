@@ -12,7 +12,6 @@ There are four primitive actions:
 
 import math
 import os
-import re
 import time
 
 import cv2
@@ -23,6 +22,7 @@ from PIL import ImageTk
 from action import Action, ActionQueue, Cmd
 import colors
 from data import Data
+from dims import MAX
 from dims import X, Y, Z    # syntactic sugar for the first three dimensions
 import pubsub
 import utils
@@ -54,13 +54,21 @@ class Viewer:
         "u": (Y, -TRANSLATE),
         "d": (Y, TRANSLATE),
     }
+    # Construct the ratio of edge size to screen size such that the wireframe
+    # will be nearly always fully displayed on the screen for all rotations.
+    # These numbers were chosen pragmatically.
+    r3 = 0.56
+    r10 = 0.3
+    ratio = math.pow(r10 / r3, 1 / 7)
+    screen_fraction = [r3] * (MAX + 1)
+    for dim in range(4, MAX + 1):
+        screen_fraction[dim] = screen_fraction[dim - 1] * ratio
 
     def __init__(self, data: Data, canvas):
         self.data = data
         # make a directory to hold video output
         self.output_dir = utils.make_dir("output")
         # fraction of screen that the wireframe should occupy
-        self.screen_fraction = 0.6
         self.canvas = canvas
         self.actions = ActionQueue()
         self.recording = False
@@ -86,7 +94,7 @@ class Viewer:
         ratios = [int(r) for r in self.data.aspects.split(":")]
         max_r = max(ratios)
         # calculate the size of the largest dimension in pixels
-        screen_size = min(self.width, self.height) * self.screen_fraction
+        screen_size = min(self.width, self.height) * Viewer.screen_fraction[self.data.dims]
         # scale all dimensions to that one
         sizes = [screen_size * r / max_r for r in ratios]
         self.set_rotation()
