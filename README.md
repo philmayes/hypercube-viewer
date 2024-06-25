@@ -84,6 +84,15 @@ The object can be rotated around various planes, moved, zoomed and shrunk.
 * **Begin Again:** This button will forget all movement that you have done and start again.
 * **Replay with original visibility settings:** This checkbox chooses whether replay includes all changes to visibility settings that were made. When it is unchecked, replay takes place using the current visibility settings.
 
+### REQUIREMENTS
+
+It requires the following packages:
+
+* numpy
+* opencv-python
+* pillow
+* tkhtmlview
+
 ### RECORDING TO VIDEO
 
 Hypercube Viewer can record the movements to a video. Recording will capture
