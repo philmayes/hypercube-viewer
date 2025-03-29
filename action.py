@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from typing import Any
 
 class Cmd(Enum):
     RESET = auto()
@@ -24,12 +25,16 @@ class Action:
     Visibility      VISIBLE     data name   data value
     """
 
-    def __init__(self, cmd, p1=None, p2=None, p3=None, p4=None):
-        self.cmd = cmd
-        self.p1 = p1
-        self.p2 = p2
-        self.p3 = p3
-        self.p4 = p4
+    def __init__(self, cmd: Cmd,
+                 p1: Any=None,
+                 p2: Any=None,
+                 p3: Any=None,
+                 p4: Any=None):
+        self.cmd: Cmd = cmd
+        self.p1: Any = p1
+        self.p2: Any = p2
+        self.p3: Any = p3
+        self.p4: Any = p4
 
     @property
     def visible(self):
