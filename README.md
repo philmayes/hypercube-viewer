@@ -37,7 +37,7 @@ These delays do NOT occur in the video recording.
 
 In the real world, we think of rotation as about an axis. A square on your screen being rotated clockwise is though of as rotating around the z-axis that projects perpendicularly from the screen, but what is actually changing are the x- and y-coordinates of the 4 corners. Similarly, rotation around the x-axis is done by rotating the y-z plane. 
 
-The concept of rotating about an axis works in 3 dimensions because, for any axis, there is only one plane that that is perpendicular to that axis. For higher dimension, each dimension is perpendicular to more than one plane, so naming the dimension would be ambiguous and XXXX. For a higher dimension D, the only rotations visible on the screen (the x-y surface) are rotations in the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate in both directions around these higher planes.
+The concept of rotating about an axis works in 3 dimensions because, for any axis, there is only one plane that that is perpendicular to that axis. For higher dimension, each dimension is perpendicular to more than one plane, so naming the dimension would be ambiguous. For a higher dimension D, the only rotations visible on the screen (the x-y surface) are rotations in the x-D plane and the y-D plane. Hypercube-viewer allows the user to rotate in both directions around these higher planes.
 
 For random rotations, Hypercube Viewer rotates about two randomly-chosen planes at once.
 
@@ -103,6 +103,30 @@ video file.
 * **Record** Start recording to a video file whose name is time-stamped.
 * **Play** Play back the last recorded video file.
 * **View Folder** Open the folder where the video files are saved.
+
+### LINT PROBLEMS
+
+If you load this project in (say) VS Code, the Lint Police will complain loudly
+because the code associates tkinter controls with data and hint text by
+injecting variables into the controls. Ignore the problems; the program will
+run without assertions.
+
+    class Control:
+        """Abstract base class for widgets."""
+        ...
+        def set_data(self, dataname, data):
+            """Construct a tkinter variable that is compatible with our data."""
+            self.dataname = dataname        # this is injected
+            value = getattr(data, dataname)
+            datatype = type(value)
+            if datatype is int or datatype is bool:
+                self.var = tk.IntVar()      # this is injected
+            elif datatype is float:
+                self.var = tk.DoubleVar()   # or this is injected
+            elif datatype is str:
+                self.var = tk.StringVar()   # or this is injected
+            else:
+                raise TypeError
 
 ### EXAMPLE
 
