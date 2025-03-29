@@ -43,7 +43,7 @@ import dims
 from dims import X, Y, Z    # syntactic sugar for the first three dimensions
 import display
 from preferences import Preferences
-from hints import Hints
+from hints import Hints, get_hint_for_ctl, set_hint_for_ctl
 from html_viewer import HtmlViewer, Name
 import help
 import pubsub
@@ -285,7 +285,7 @@ class App(tk.Frame):
         self.aspect.grid(row=0, column=0, sticky=tk.W)
         self.aspect.bind('<FocusOut>', self.on_aspect)
         self.aspect.bind('<Return>', self.on_aspect)
-        self.aspect.hint_id = "aspect"
+        set_hint_for_ctl(self.aspect, "aspect")
 
     def add_menu(self):
         menubar = tk.Menu(self.root, background='#ff8000', foreground='black', activebackground='white', activeforeground='black')
@@ -324,13 +324,13 @@ class App(tk.Frame):
         PB = Action(Cmd.PLAYBACK)
         ctl = tk.Button(frame, text='-', font=self.big_font, command=partial(self.queue_action, Zm))
         ctl.grid(row=row, column=0, sticky=tk.E, padx=2, pady=2)
-        ctl.hint_id = "zoom_m"
+        set_hint_for_ctl(ctl, "zoom_m")
         ctl = tk.Button(frame, text=STR_UP, font=self.big_font, command=partial(self.queue_action, Mu))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl.hint_id = "move"
+        set_hint_for_ctl(ctl, "move")
         ctl = tk.Button(frame, text='+', font=self.big_font, command=partial(self.queue_action, Zp))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
-        ctl.hint_id = "zoom_p"
+        set_hint_for_ctl(ctl, "zoom_p")
         # add a "Replay" control
         spacer1 = tk.Label(frame, text="")
         spacer1.grid(row=row, column=3, padx=20)
@@ -339,31 +339,31 @@ class App(tk.Frame):
                                              font=self.big_font,
                                              width=12,
                                              command=partial(self.queue_action, PB))
-        self.replay_button.hint_id = "replay"
+        set_hint_for_ctl(self.replay_button, "replay")
         self.replay_button.grid(row=row, column=4, columnspan=2, sticky=tk.NSEW, padx=2, pady=2)
         row += 1
         ctl = tk.Button(frame, text=STR_LEFT, font=self.big_font, command=partial(self.queue_action, Ml))
         ctl.grid(row=row, column=0, sticky=tk.W, padx=2, pady=2)
-        ctl.hint_id = "move"
+        set_hint_for_ctl(ctl, "move")
         ctl = tk.Button(frame, text=STR_DN, font=self.big_font, command=partial(self.queue_action, Md))
         ctl.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
-        ctl.hint_id = "move"
+        set_hint_for_ctl(ctl, "move")
         ctl = tk.Button(frame, text=STR_RIGHT, font=self.big_font, command=partial(self.queue_action, Mr))
         ctl.grid(row=row, column=2, sticky=tk.W, padx=2, pady=2)
-        ctl.hint_id = "move"
+        set_hint_for_ctl(ctl, "move")
         # add a "Stop" control
         self.stop_button = controls.Button(frame, text="Stop", color2="red", font=self.big_font, width=12, command=self.on_stop)
         self.stop_button.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
-        self.stop_button.hint_id = "stop"
+        set_hint_for_ctl(self.stop_button, "stop")
         row += 1
         # add a "Restart" control
         self.restart_button = controls.Button(frame, text="Begin Again", command=self.on_restart)
         self.restart_button.grid(row=row, column=0, columnspan=3, sticky=tk.NSEW, padx=2, pady=2)
-        self.restart_button.hint_id = "restart"
+        set_hint_for_ctl(self.restart_button, "restart")
         # add a "Restart" control
         ctl = controls.Button(frame, text="Show Actions", command=self.on_list)
         ctl.grid(row=row, column=4, sticky=tk.NSEW, padx=2, pady=2)
-        ctl.hint_id = "list"
+        set_hint_for_ctl(ctl, "list")
         row += 1
 
     def add_recording_controls(self, parent_frame, row, col):
@@ -380,13 +380,13 @@ class App(tk.Frame):
         w = 10
         self.record_button = controls.Button(frame, texts=["Record", "Record", "Stop"], color2="red", width=w, command=self.set_record_state)
         self.record_button.grid(row=row, column=0, sticky=tk.E, pady=2)
-        self.record_button.hint_id = "record"
+        set_hint_for_ctl(self.record_button, "record")
         self.play_button = controls.Button(frame, texts=["Play", "Play", "Stop"], color2="red", width=w, command=self.on_play_video)
         self.play_button.grid(row=row, column=1, pady=2)
-        self.play_button.hint_id = "play"
+        set_hint_for_ctl(self.play_button, "play")
         ctl = tk.Button(frame, text='View Folder', width=w, command=self.on_view_files)
         ctl.grid(row=row, column=2, pady=2)
-        ctl.hint_id = "folder"
+        set_hint_for_ctl(ctl, "folder")
         row += 1
 
     def add_rotation_controls(self, parent_frame, row, col):
@@ -421,10 +421,10 @@ class App(tk.Frame):
         rot_frame.grid(row=row, column=1)
         btn = tk.Button(rot_frame, text=' < ', command=partial(self.on_random, '-'))
         btn.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        btn.hint_id = "random"
+        set_hint_for_ctl(btn, "random")
         btn = tk.Button(rot_frame, text=' > ', command=partial(self.on_random, '+'))
         btn.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
-        btn.hint_id = "random"
+        set_hint_for_ctl(btn, "random")
 
         # add a checkbox for whether replay tracks the visible settings
         ctl = self.controls['replay_visible']
@@ -446,7 +446,7 @@ class App(tk.Frame):
                           )
         self.dim_choice.grid(row=row, column=1, sticky=tk.W, pady=0)
         self.dim_choice.bind('<<ComboboxSelected>>', self.on_dim)
-        self.dim_choice.hint_id = "dims"
+        set_hint_for_ctl(self.dim_choice, "dims")
         row += 1
 
         # add control of aspect ratios
@@ -469,7 +469,7 @@ class App(tk.Frame):
         self.viewer_size.grid(row=0, column=0, sticky=tk.W)
         self.viewer_size.bind('<FocusOut>', self.on_viewer_size)
         self.viewer_size.bind('<Return>', self.on_viewer_size)
-        self.viewer_size.hint_id = "viewsize"
+        set_hint_for_ctl(self.viewer_size, "viewsize")
 
     def add_visibility_controls(self, parent_frame, row, col):
         """Add controls for what to display to the window."""
@@ -625,14 +625,14 @@ class App(tk.Frame):
 
     def hint_manager(self):
         try:
-            hint_id = None
             # get the widget under the cursor
             x, y = self.winfo_pointerxy()
             widget = self.winfo_containing(x, y)
             if widget:
                 # get possible hint id for this control...
-                if hasattr(widget, "hint_id"):
-                    hint_id = widget.hint_id
+                hint_id = get_hint_for_ctl(widget)
+            else:
+                hint_id = ''
             self.hints.show(hint_id)
         except:
             # specifically, we are catching a popdown exception in
@@ -756,7 +756,7 @@ class App(tk.Frame):
             # Special case: when turning off hints, the hint for this control
             # wouldn't get hidden by hint_manager because Hints.active==False,
             # so force it to be hidden here.
-            self.hints.show(None)
+            self.hints.show('')
         self.data.show_hints = value
         self.hints.visible(value)
 
@@ -1051,7 +1051,7 @@ class App(tk.Frame):
 
     def set_data_value(self, action: Action):
         assert action.visible
-        data_name = action.p1
+        data_name: str = action.p1
         value = action.p2
 
         # change the data value
@@ -1130,7 +1130,7 @@ if __name__ == '__main__':
     app = App(root, args)
     try:
         # if compiled with pyinstaller, close any flash screen
-        import pyi_splash
+        import pyi_splash # type: ignore
         pyi_splash.close()
     except:
         pass

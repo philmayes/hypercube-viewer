@@ -6,6 +6,7 @@ from tkinter import ttk
 
 import colors
 import dims
+import hints
 
 # Names for the states of buttons. Values are indices into lists.
 DISABLED = 0
@@ -67,10 +68,12 @@ class Control:
     def __init__(self, label):
         self.label = label
         self.callback = None
-        self.dataname = None
+        self.dataname = ''
 
     def action(self, x=None):
-        self.callback(self.dataname)
+        if self.callback is not None:
+            # condition is always satisfied; test is to keep lint happy
+            self.callback(self.dataname)
 
     def get(self):
         return self.var.get()
@@ -78,7 +81,7 @@ class Control:
     def set(self, value):
         self.ctl.set(value)
 
-    def set_data(self, dataname, data):
+    def set_data(self, dataname: str, data):
         """Construct a tkinter variable that is compatible with our data."""
         self.dataname = dataname
         value = getattr(data, dataname)
@@ -105,7 +108,7 @@ class CheckControl(Control):
             frame, text=self.label, variable=self.var, underline=self.underline, command=self.action
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
-        self.ctl.hint_id = self.dataname
+        hints.set_hint_for_ctl(self.ctl, self.dataname)
 
     def set(self, value):
         if isinstance(value, str):
@@ -136,7 +139,7 @@ class ComboControl(Control):
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
         self.ctl.bind("<<ComboboxSelected>>", self.action)
-        self.ctl.hint_id = self.dataname
+        hints.set_hint_for_ctl(self.ctl, self.dataname)
 
     def get(self):
         return self.ctl.get()
@@ -163,7 +166,7 @@ class SlideControl(Control):
             command=self.action,
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
-        self.ctl.hint_id = self.dataname
+        hints.set_hint_for_ctl(self.ctl, self.dataname)
 
     def get(self):
         return self.ctl.get()
@@ -199,12 +202,12 @@ class PlaneControl:
             self.rot_frame, text=" < ", command=partial(self.app.on_rotate, "+", self)
         )
         self.rotate1.grid(row=0, column=0, sticky=tk.W, padx=2, pady=2)
-        self.rotate1.hint_id = "rotate"
+        hints.set_hint_for_ctl(self.rotate1, "rotate")
         self.rotate2 = tk.Button(
             self.rot_frame, text=" > ", command=partial(self.app.on_rotate, "-", self)
         )
         self.rotate2.grid(row=0, column=1, sticky=tk.W, padx=2, pady=2)
-        self.rotate2.hint_id = "rotate"
+        hints.set_hint_for_ctl(self.rotate2, "rotate")
 
         # insert information about colors of dimensions
         self.swatch1 = tk.Label(self.frame, text=f"{dim1str}: ████", bg=colors.html_bg)

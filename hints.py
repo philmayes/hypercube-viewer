@@ -86,7 +86,7 @@ The width and height need not be the same."""
 hint_zoom_m = "Shrink the size of the object"
 hint_zoom_p = "Expand the size of the object"
 
-lookup = {
+lookup: dict[str, str] = {
     "about": hint_about,
     "angle": hint_angle,
     "aspect": hint_aspect,
@@ -120,6 +120,14 @@ lookup = {
     "zoom_p": hint_zoom_p,
 }
 
+from typing import Any
+_ctl_to_hint_id: dict[Any, str] = {}
+
+def get_hint_for_ctl(ctl: Any) -> str:
+    return _ctl_to_hint_id.get(ctl, '')
+
+def set_hint_for_ctl(ctl: Any, hint: str) -> None:
+    _ctl_to_hint_id[ctl] = hint
 
 class Hints:
     def __init__(self, viewer):
@@ -132,7 +140,7 @@ class Hints:
         """Set whether hints are to show or not."""
         self.active = active
 
-    def show(self, hint_id):
+    def show(self, hint_id: str):
         """Show a hint.
 
         State table:                        hint
@@ -152,7 +160,7 @@ class Hints:
               See the docstring for show_static for details.
         """
         if self.active:
-            if hint_id is None:
+            if not hint_id:
                 if self.showing is not None and not self.static:
                     self.viewer.clear_text()
                     self.showing = None
@@ -166,7 +174,7 @@ class Hints:
                     self.viewer.clear_text()
                     self.showing = None
 
-    def show_static(self, hint_id):
+    def show_static(self, hint_id: str):
         """Show a static hint.
 
         For example, about. This hint:
