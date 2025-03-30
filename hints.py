@@ -1,3 +1,5 @@
+from typing import Any
+
 import identity
 
 hint_about = f"""\
@@ -120,7 +122,6 @@ lookup: dict[str, str] = {
     "zoom_p": hint_zoom_p,
 }
 
-from typing import Any
 _ctl_to_hint_id: dict[Any, str] = {}
 
 def get_hint_for_ctl(ctl: Any) -> str:
