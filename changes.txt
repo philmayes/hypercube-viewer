@@ -1,3 +1,6 @@
+Hypercube 0.2.1 03/29/25
+Tweaks to avoid spurious lint problems
+
 Hypercube 0.2.0 06/22/22
 Add keyboard shortcuts for preference settings
 Add different color/width for dims 4+; Can conceal X-Y-Z edges

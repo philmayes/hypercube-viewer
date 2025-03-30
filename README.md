@@ -104,30 +104,6 @@ video file.
 * **Play** Play back the last recorded video file.
 * **View Folder** Open the folder where the video files are saved.
 
-### LINT PROBLEMS
-
-If you load this project in (say) VS Code, the Lint Police will complain loudly
-because the code associates tkinter controls with data and hint text by
-injecting variables into the controls. Ignore the problems; the program will
-run without assertions.
-
-    class Control:
-        """Abstract base class for widgets."""
-        ...
-        def set_data(self, dataname, data):
-            """Construct a tkinter variable that is compatible with our data."""
-            self.dataname = dataname        # this is injected
-            value = getattr(data, dataname)
-            datatype = type(value)
-            if datatype is int or datatype is bool:
-                self.var = tk.IntVar()      # this is injected
-            elif datatype is float:
-                self.var = tk.DoubleVar()   # or this is injected
-            elif datatype is str:
-                self.var = tk.StringVar()   # or this is injected
-            else:
-                raise TypeError
-
 ### EXAMPLE
 
 [Youtube demonstration](https://www.youtube.com/embed/KZZ3qxXrC58)
