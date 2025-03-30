@@ -69,6 +69,12 @@ class Control:
         self.label = label
         self.callback = None
         self.dataname = ''
+        # child classes will set .ctl to a tk control 
+        self.ctl = None
+        self.datatype = type
+        self.int_var = tk.IntVar()
+        self.float_var = tk.DoubleVar()
+        self.str_var = tk.StringVar()
 
     def action(self, x=None):
         if self.callback is not None:
@@ -76,24 +82,25 @@ class Control:
             self.callback(self.dataname)
 
     def get(self):
-        return self.var.get()
+        if self.datatype is int or self.datatype is bool:
+            return self.int_var.get()
+        elif self.datatype is float:
+            return self.float_var.get()
+        elif self.datatype is str:
+            return self.str_var.get()
+        else:
+            raise TypeError
 
     def set(self, value):
-        self.ctl.set(value)
+        # ctl is a ttk.Checkbutton, ttk.Combobox or tk.Scale,
+        # so ignore lint complaint
+        self.ctl.set(value) # type: ignore
 
     def set_data(self, dataname: str, data):
         """Construct a tkinter variable that is compatible with our data."""
         self.dataname = dataname
         value = getattr(data, dataname)
-        datatype = type(value)
-        if datatype is int or datatype is bool:
-            self.var = tk.IntVar()
-        elif datatype is float:
-            self.var = tk.DoubleVar()
-        elif datatype is str:
-            self.var = tk.StringVar()
-        else:
-            raise TypeError
+        self.datatype = type(value)
 
 
 class CheckControl(Control):
@@ -105,7 +112,7 @@ class CheckControl(Control):
 
     def add_control(self, frame, row, col, **kwargs):
         self.ctl = ttk.Checkbutton(
-            frame, text=self.label, variable=self.var, underline=self.underline, command=self.action
+            frame, text=self.label, variable=self.int_var, underline=self.underline, command=self.action
         )
         self.ctl.grid(row=row, column=col, sticky=tk.W, **kwargs)
         hints.set_hint_for_ctl(self.ctl, self.dataname)
@@ -115,10 +122,10 @@ class CheckControl(Control):
             value = 1 if value == "True" else 0
         else:
             value = int(value)
-        self.var.set(value)
+        self.int_var.set(value)
 
     def xor(self):
-        self.var.set(self.var.get() ^ 1)
+        self.int_var.set(self.int_var.get() ^ 1)
 
 
 class ComboControl(Control):
